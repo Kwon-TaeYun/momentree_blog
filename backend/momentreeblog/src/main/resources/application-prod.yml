@@ -1,1 +1,7 @@
 # 배포 할때...
+custom:
+  site:
+    name: "BLOG"
+    cookieDomain: "${custom.prod.cookieDomain}"
+    frontUrl: "${custom.prod.frontUrl}"
+    backUrl: "${custom.prod.backUrl}"
