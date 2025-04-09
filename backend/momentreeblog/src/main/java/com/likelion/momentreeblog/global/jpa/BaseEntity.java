@@ -1,10 +1,7 @@
 package com.likelion.momentreeblog.global.jpa;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -14,7 +11,7 @@ import java.time.LocalDateTime;
 
 @SuperBuilder
 @MappedSuperclass
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter @Setter
 @ToString
 @EntityListeners(AuditingEntityListener.class)
