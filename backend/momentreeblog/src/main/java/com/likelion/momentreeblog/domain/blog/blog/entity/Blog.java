@@ -15,10 +15,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Blog extends BaseEntity {
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
-
+    @Column(nullable = false)
     private String name;
+    @Column(name = "view_count", columnDefinition = "BIGINT default 0")
+    private Long viewCount;
 }
