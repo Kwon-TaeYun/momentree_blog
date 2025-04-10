@@ -33,12 +33,12 @@ public class Board extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "blog_id")
-    private Blog blog;
+    private Blog blog; // 블로그 테이블
 
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Like like;
+    private Like like; // 좋아요 테이블
 }
