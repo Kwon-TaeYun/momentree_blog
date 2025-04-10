@@ -32,7 +32,7 @@ public class Board extends BaseEntity {
     private String photoSavedUrl; // 사진저장주소
 
     @ManyToOne
-    @JoinColumn(name = "blog_id")
+    @JoinColumn(name = "blog_id", nullable = false)
     private Blog blog; // 블로그 테이블
 
     @ManyToOne
