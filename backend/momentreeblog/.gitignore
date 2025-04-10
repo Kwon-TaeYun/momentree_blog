@@ -38,3 +38,7 @@ out/
 .vscode/
 
 application-secret.yml
+
+### Idea ###
+.idea/
+.idea/*
