@@ -5,10 +5,8 @@ import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Getter
@@ -16,8 +14,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "roles")
+@SuperBuilder
+@ToString
 public class Role extends BaseEntity {
 
-    @Column(name = "role_name", nullable = false)
-    private String role;
+    @Column( nullable = false)
+    private String name;
 }
