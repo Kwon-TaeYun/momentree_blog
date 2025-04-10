@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 import java.util.List;
 
 @Entity
-@Table(name = "category")
+@Table(name = "categories")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
