@@ -33,7 +33,7 @@ public class User extends BaseEntity {
     private String oauth2Provider;
 
     @Column(nullable = false, name = "refresh_token")
-    private String refreshToken;
+    private String refreshToken; //리프레쉬 토큰
 
     @Column(name = "profile_photo")
     private String profilePhoto; //프로필 사진
