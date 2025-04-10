@@ -1,5 +1,8 @@
 package com.likelion.momentreeblog.domain.board.like.entity;
 
+import com.likelion.momentreeblog.domain.board.board.entity.Board;
+import com.likelion.momentreeblog.domain.user.user.entity.User;
+import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +18,8 @@ import org.hibernate.mapping.ToOne;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-public class Like extends BaseEntity {
+public class Like extends BaseEntity
+{
 
     @ManyToOne
     @JoinColumn(name = "board_id")

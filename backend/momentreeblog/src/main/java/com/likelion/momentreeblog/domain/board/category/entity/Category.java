@@ -1,6 +1,8 @@
 package com.likelion.momentreeblog.domain.board.category.entity;
 
 
+import com.likelion.momentreeblog.domain.board.board.entity.Board;
+import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
