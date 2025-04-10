@@ -43,5 +43,5 @@ public class Board extends BaseEntity {
     private Category category;
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> likes = new ArrayList<>(); // 좋아요 테이블
+    private List<Like> likes = new ArrayList<>(); // 좋아요 테이블, 리스트타입
 }
