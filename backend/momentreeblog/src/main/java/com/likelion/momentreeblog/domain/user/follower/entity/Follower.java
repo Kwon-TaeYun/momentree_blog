@@ -1,32 +1,24 @@
 package com.likelion.momentreeblog.domain.user.follower.entity;
 
 import com.likelion.momentreeblog.domain.user.user.entity.User;
+import com.likelion.momentreeblog.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Getter @Setter
+@Table(name = "followers")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Follower {
+public class Follower extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_user_id")
+    private User fromUser;
 
-    // 팔로우한 사람
-    @ManyToOne
-    @JoinColumn(name = "follower_id", nullable = false)
-    private User follower;
-
-    // 팔로우 당한 사람
-    @ManyToOne
-    @JoinColumn(name = "following_id", nullable = false)
-    private User following;
-
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_user_id")
+    private User toUser;
 }
