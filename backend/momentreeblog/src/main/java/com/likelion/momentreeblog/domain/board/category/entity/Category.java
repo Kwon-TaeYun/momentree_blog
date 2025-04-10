@@ -20,9 +20,9 @@ import java.util.List;
 public class Category extends BaseEntity {
 
     @Column(nullable = false)
-    private String category;
+    private String name;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "category",orphanRemoval = true)
     private List<Board> boards;
 
 }
