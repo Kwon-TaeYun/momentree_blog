@@ -17,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @ToString
 public class Comment extends BaseEntity {
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne
