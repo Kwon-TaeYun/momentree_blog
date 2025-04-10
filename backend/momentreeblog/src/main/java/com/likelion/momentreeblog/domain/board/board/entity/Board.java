@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
+@Table(name = "board")
 public class Board extends BaseEntity {
     @Column(nullable = false)
     private String title; // 제목
@@ -30,14 +31,14 @@ public class Board extends BaseEntity {
     @Column(name = "photo_saved_url")
     private String photoSavedUrl; // 사진저장주소
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "blog_id")
     private Blog blog;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private Like like;
-
-
 }
