@@ -4,8 +4,8 @@ import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "blogs")
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class Blog extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "user_id")
