@@ -17,4 +17,6 @@ import lombok.experimental.SuperBuilder;
 public class Board extends BaseEntity {
     private String title;
     private String content;
+
+    //test 주석
 }
