@@ -11,13 +11,16 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-@Table(name = "board")
+@Table(name = "boards")
 public class Board extends BaseEntity {
     @Column(nullable = false)
     private String title; // 제목
@@ -39,6 +42,6 @@ public class Board extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Like like; // 좋아요 테이블
+    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>(); // 좋아요 테이블
 }
