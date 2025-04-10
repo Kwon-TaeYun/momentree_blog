@@ -36,7 +36,7 @@ public class User extends BaseEntity {
     private String refreshToken;
 
     @Column(name = "profile_photo")
-    private String profilePhoto;
+    private String profilePhoto; //프로필 사진
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
