@@ -15,6 +15,12 @@ public class UserFindServiceImpl implements UserFindService{
     private final FollowRepository followRepository;
 
     @Override
+    public User getUserById(Long id) {
+        return userFindRepository.findById(id)
+                .orElseThrow( () -> new NoSuchElementException("해당 아이디를 가진 유저를 찾을 수 없습니다."));
+    }
+
+    @Override
     public User getUserByEmail(String email) {
         return userFindRepository.findByEmail(email)
                 .orElseThrow( () -> new NoSuchElementException("해당 이메일을 가진 유저를 찾을 수 없습니다."));
