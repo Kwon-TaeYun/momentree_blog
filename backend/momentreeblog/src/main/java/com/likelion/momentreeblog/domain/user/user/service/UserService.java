@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -60,6 +62,17 @@ public class UserService {
         userRepository.save(user);
 
         return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
+    }
+
+    @Transactional
+    public User findUserByEmail(String email){
+        return userRepository.findByEmail(email)
+                .orElse(null); // 또는 예외 던지기
+    }
+
+    @Transactional
+    public User editUser(User user){
+        return userRepository.save(user);
     }
 
 }
