@@ -71,8 +71,16 @@ public class UserService {
     }
 
     @Transactional
+    public User findUserById(Long id){
+        return userRepository.findById(id)
+                .orElse(null);
+    }
+
+    @Transactional
     public User editUser(User user){
         return userRepository.save(user);
     }
+
+
 
 }

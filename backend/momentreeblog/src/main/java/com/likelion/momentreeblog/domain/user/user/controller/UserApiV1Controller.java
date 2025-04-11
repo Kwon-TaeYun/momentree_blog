@@ -10,6 +10,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,11 +18,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/v1/members")
 public class UserApiV1Controller {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
+    //회원 가입
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody UserSignupDto userSignupDto){
         try{
@@ -31,6 +34,7 @@ public class UserApiV1Controller {
         }
     }
 
+    //로그인
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginDto userLoginDto, HttpServletResponse response){
         //계정 인증
@@ -68,14 +72,30 @@ public class UserApiV1Controller {
         response.addCookie(refreshCookie);
 
         UserLoginResponseDto userLoginResponseDto = UserLoginResponseDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .accessToken("Bearer "+ accessToken)
+                .refreshToken("Bearer "+ refreshToken)
                 .email(user.getEmail())
                 .name(user.getName())
                 .build();
 
         return ResponseEntity.ok(userLoginResponseDto);
     }
+
+    //로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String acccessToken){
+        try {
+            Long userId = jwtTokenizer.getUserIdFromToken(acccessToken);
+            User user = userService.findUserById(userId);
+            user.setRefreshToken(null);
+            userService.editUser(user);
+            return ResponseEntity.ok("로그아웃 되었습니다 !!");
+        }catch (Exception e){
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+        }
+    }
+
 
 
 
