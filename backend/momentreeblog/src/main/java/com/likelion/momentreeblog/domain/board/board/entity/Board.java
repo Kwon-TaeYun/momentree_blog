@@ -5,10 +5,7 @@ import com.likelion.momentreeblog.domain.board.category.entity.Category;
 import com.likelion.momentreeblog.domain.board.like.entity.Like;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
@@ -42,6 +39,7 @@ public class Board extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Builder.Default
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes = new ArrayList<>(); // 좋아요 테이블, 리스트타입
 }
