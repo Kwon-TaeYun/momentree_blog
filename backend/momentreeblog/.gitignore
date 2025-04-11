@@ -42,3 +42,6 @@ application-secret.yml
 ### Idea ###
 .idea/
 .idea/*
+
+### Custom ###
+db_dev.*
