@@ -38,6 +38,10 @@ dependencies {
 
 	// Swagger를 위한 springdoc-openapi
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+
+	//s3을 위한 설정
+	implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
+	implementation("com.amazonaws:aws-java-sdk-s3:1.12.520")
 }
 
 tasks.withType<Test> {
