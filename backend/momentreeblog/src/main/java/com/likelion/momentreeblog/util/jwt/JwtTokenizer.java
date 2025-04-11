@@ -72,17 +72,23 @@ public class JwtTokenizer {
         if(token == null || token.isBlank()){
             throw new IllegalArgumentException("Jwt 토큰이 없습니다.");
         }
-        if(!token.startsWith("Bearer ")){
+
+        // Bearer 제거
+        if(token.startsWith("Bearer ")){
+            token = token.substring(7);
+        } else {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
+
         Claims claims = parseToken(token, accessSecret);
         if(claims == null){
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
+
         Object userId = claims.get("userId");
         if(userId instanceof Number){
-            return ((Number)userId).longValue();
-        }else{
+            return ((Number) userId).longValue();
+        } else {
             throw new IllegalArgumentException("Jwt 토큰에서 userId를 찾을 수 없습니다.");
         }
     }

@@ -30,7 +30,7 @@ public class User extends BaseEntity {
     @Column(name = "oauth2_provider")
     private String oauth2Provider;
 
-    @Column(name = "refresh_token", nullable = false)
+    @Column(name = "refresh_token")
     private String refreshToken;
 
     @Column(name = "profile_photo")
