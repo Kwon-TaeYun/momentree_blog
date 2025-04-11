@@ -58,4 +58,15 @@ public class FollowApiV1Controller {
         followService.unfollow(follower, following);
         return ResponseEntity.ok("언팔로우 성공");
     }
+
+    @Operation(summary = "팔로우 여부 확인", description = "특정 유저가 팔로우 중인지 확인합니다.")
+    @GetMapping("/check")
+    public ResponseEntity<Boolean> isFollowing(
+            @RequestParam Long followerId,
+            @RequestParam Long followingId) {
+        User follower = userFindService.getUserById(followerId);
+        User following = userFindService.getUserById(followingId);
+        boolean result = followService.isFollowing(follower, following);
+        return ResponseEntity.ok(result);
+    }
 }
