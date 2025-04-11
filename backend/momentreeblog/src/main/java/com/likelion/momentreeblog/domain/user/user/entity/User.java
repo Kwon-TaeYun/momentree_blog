@@ -4,15 +4,13 @@ import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "users")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
@@ -32,7 +30,7 @@ public class User extends BaseEntity {
     @Column(name = "oauth2_provider")
     private String oauth2Provider;
 
-    @Column(nullable = false, name = "refresh_token")
+    @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
     @Column(name = "profile_photo")
@@ -45,4 +43,4 @@ public class User extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "blog_id", nullable = false)
     private Blog blog;
-}
+} //push 할 때 수정 예정

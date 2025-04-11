@@ -18,6 +18,6 @@ import lombok.experimental.SuperBuilder;
 @ToString
 public class Role extends BaseEntity {
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String name;
 }
