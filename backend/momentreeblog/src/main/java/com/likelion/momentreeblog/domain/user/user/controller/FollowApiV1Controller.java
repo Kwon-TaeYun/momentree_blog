@@ -24,4 +24,12 @@ public class FollowApiV1Controller {
         long count = userFindService.getFollowerCount(user);
         return ResponseEntity.ok(count);
     }
+
+    // 특정 유저의 팔로잉 수 조회
+    @GetMapping("/members/{id}/followings")
+    public ResponseEntity<Long> getFollowingCount(@PathVariable Long id){
+        User user = userFindService.getUserById(id);
+        long count = userFindService.getFollowingCount(user);
+        return ResponseEntity.ok(count);
+    }
 }
