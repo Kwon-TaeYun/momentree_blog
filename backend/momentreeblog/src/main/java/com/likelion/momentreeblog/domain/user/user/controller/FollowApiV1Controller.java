@@ -47,4 +47,15 @@ public class FollowApiV1Controller {
         followService.follow(follower, following);
         return ResponseEntity.ok("팔로우 성공");
     }
+
+    @Operation(summary = "팔로우 취소 (언팔로우)", description = "팔로우를 취소합니다.")
+    @DeleteMapping("/unfollow")
+    public ResponseEntity<String> unfollow(
+            @RequestParam Long followerId,
+            @RequestParam Long followingId) {
+        User follower = userFindService.getUserById(followerId);
+        User following = userFindService.getUserById(followingId);
+        followService.unfollow(follower, following);
+        return ResponseEntity.ok("언팔로우 성공");
+    }
 }
