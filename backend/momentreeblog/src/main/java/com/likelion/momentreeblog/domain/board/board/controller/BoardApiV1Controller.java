@@ -29,13 +29,13 @@ public class BoardApiV1Controller {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateBoard(@PathVariable Long id, @Valid @RequestBody BoardRequestDto requestDto) {
+    public ResponseEntity<String> updateBoard(@PathVariable(name="id") Long id, @Valid @RequestBody BoardRequestDto requestDto) {
         String message = boardService.updateBoard(id, requestDto);
         return ResponseEntity.ok(message);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteBoard(@PathVariable Long id) {
+    public ResponseEntity<String> deleteBoard(@PathVariable(name="id") Long id) {
          String message = boardService.deleteBoard(id);
          return ResponseEntity.ok(message);
     }
