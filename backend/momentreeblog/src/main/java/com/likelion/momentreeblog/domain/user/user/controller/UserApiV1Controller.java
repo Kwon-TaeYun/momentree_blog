@@ -92,10 +92,11 @@ public class UserApiV1Controller {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader, HttpServletResponse response) {
         {
-            String accessToken = authorizationHeader.startsWith("Bearer ") ? authorizationHeader.substring(7) : authorizationHeader;
+            String accessToken = authorizationHeader;
             try {
                 Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
                 User user = userService.findUserById(userId);
+                System.out.println(user);
                 user.setRefreshToken(null);
                 userService.editUser(user);
 

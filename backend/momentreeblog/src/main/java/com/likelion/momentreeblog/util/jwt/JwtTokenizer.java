@@ -73,7 +73,9 @@ public class JwtTokenizer {
         if(token == null || token.isBlank()){
             throw new IllegalArgumentException("Jwt 토큰이 없습니다.");
         }
-        if(!token.startsWith("Bearer ")){
+        if(token.startsWith("Bearer ")) {
+            token = token.substring(7).trim(); // 공백 제거도 같이
+        } else {
             throw new IllegalArgumentException("bearer 유효하지 않은 토큰입니다.");
         }
         Claims claims = parseToken(token, accessSecret);
