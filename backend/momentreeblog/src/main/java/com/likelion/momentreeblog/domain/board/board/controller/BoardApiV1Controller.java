@@ -41,8 +41,8 @@ public class BoardApiV1Controller {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BoardListResponseDto>> getBoards(Pageable pageable) {
-        Page<BoardListResponseDto> boards = boardService.getBoardList(pageable);
+    public ResponseEntity<Page<BoardListResponseDto>> getBoards() {
+        Page<BoardListResponseDto> boards = boardService.getBoardList();
         return  ResponseEntity.ok(boards);
     }
 
