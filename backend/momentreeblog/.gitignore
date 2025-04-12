@@ -41,5 +41,9 @@ application-secret.yml
 
 ### Idea ###
 .idea/
+<<<<<<< HEAD
 .idea/*
 .terraform/
+=======
+.idea/*
+>>>>>>> 0b70de49dd34c0e1a1a296aea4151cb889367836
