@@ -83,7 +83,7 @@ public class UserApiV1Controller {
 
     //로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String acccessToken, HttpServletResponse response){
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String acccessToken, HttpServletResponse response){{
         try {
             Long userId = jwtTokenizer.getUserIdFromToken(acccessToken);
             User user = userService.findUserById(userId);
