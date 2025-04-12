@@ -22,13 +22,14 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         this.token = token;
         this.setAuthenticated(false);
     }
+
     @Override
     public Object getCredentials() {
-        return null;
+        return this.credentials;
     }
 
     @Override
     public Object getPrincipal() {
-        return null;
+        return this.principal;
     }
 }

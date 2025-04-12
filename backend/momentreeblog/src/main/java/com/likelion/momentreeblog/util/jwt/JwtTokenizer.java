@@ -1,6 +1,7 @@
 package com.likelion.momentreeblog.util.jwt;
 
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -28,11 +29,11 @@ public class JwtTokenizer {
         this.refreshSecret = refreshSecret.getBytes(StandardCharsets.UTF_8);
     }
 
-    private String createToken(Long id, String email, String username, String role, Long expire, byte[] secretKey){
+    private String createToken(Long id, String email, String username, List<String> roles, Long expire, byte[] secretKey){
         Claims claims = Jwts.claims().setSubject(email); //고유한 식별자 값
         claims.put("username", username);
         claims.put("userId", id);
-        claims.put("role", role);
+        claims.put("roles", roles);
         return Jwts.builder().setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime()+expire)) //expire 1000 * 60 * 60 = 1시간
@@ -44,13 +45,14 @@ public class JwtTokenizer {
         return Keys.hmacShaKeyFor(secretKey);
     }
 
-    public String createAccessToken(Long id, String email, String username, String role){
-        return createToken(id, email, username, role, ACCESS_TOKEN_EXPIRE_COUNT, accessSecret);
+    public String createAccessToken(Long id, String email, String username, List<String> roles){
+        System.out.println("Roles in Token: " + roles);
+        return createToken(id, email, username, roles, ACCESS_TOKEN_EXPIRE_COUNT, accessSecret);
     }
 
     //REFRESH_TOKEN 생성하는 메서드
-    public String createRefreshToken(Long id, String email, String username, String role){
-        return createToken(id, email, username, role, REFRESH_TOKEN_EXPIRE_COUNT, refreshSecret);
+    public String createRefreshToken(Long id, String email, String username, List<String> roles){
+        return createToken(id, email, username, roles,REFRESH_TOKEN_EXPIRE_COUNT, refreshSecret);
     }
 
     public Claims parseToken(String token, byte[] secretKey){
@@ -68,27 +70,20 @@ public class JwtTokenizer {
     }
 
     public Long getUserIdFromToken(String token){
-        //Bearer
         if(token == null || token.isBlank()){
             throw new IllegalArgumentException("Jwt 토큰이 없습니다.");
         }
-
-        // Bearer 제거
-        if(token.startsWith("Bearer ")){
-            token = token.substring(7);
-        } else {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+        if(!token.startsWith("Bearer ")){
+            throw new IllegalArgumentException("bearer 유효하지 않은 토큰입니다.");
         }
-
         Claims claims = parseToken(token, accessSecret);
         if(claims == null){
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+            throw new IllegalArgumentException("claim 유효하지 않은 토큰입니다.");
         }
-
         Object userId = claims.get("userId");
         if(userId instanceof Number){
-            return ((Number) userId).longValue();
-        } else {
+            return ((Number)userId).longValue();
+        }else{
             throw new IllegalArgumentException("Jwt 토큰에서 userId를 찾을 수 없습니다.");
         }
     }

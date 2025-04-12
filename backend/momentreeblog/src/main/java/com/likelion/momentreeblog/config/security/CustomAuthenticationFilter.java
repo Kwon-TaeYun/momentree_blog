@@ -3,6 +3,9 @@ package com.likelion.momentreeblog.config.security;
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.config.security.exception.JwtExceptionCode;
 import com.likelion.momentreeblog.config.security.token.JwtAuthenticationToken;
+import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.entity.User;
+import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -24,6 +27,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +35,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenizer jwtTokenizer;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         //request 로부터 토큰을 얻어온다.
@@ -74,17 +79,24 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private void handleJwtException(HttpServletRequest request, JwtExceptionCode code, String token, Exception e) {
+        SecurityContextHolder.clearContext();
+        request.setAttribute("exception", code.getCode());
+        log.error("{} : {}", code.name(), token, e);
+        throw new BadCredentialsException(code.name() + " exception", e);
+    }
+
     private Authentication getAuthentication(String token){
         Claims claims = jwtTokenizer.parseAccessToken(token);
+        log.info("JWT Claims: {}", claims); // 👉 요기!
         String email = claims.getSubject();
         Long userId = claims.get("userId", Long.class);
         String username = claims.get("username", String.class);
 
-        //권한
         List<GrantedAuthority> grantedAuthorization = getGrantedAuthorization(claims);
-
-        //UserDetails
+        // UserDetails 생성
         CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization);
+
         return new JwtAuthenticationToken(grantedAuthorization, customUserDetails, null);
     }
 
@@ -109,6 +121,4 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         return null;
     }
-
-
 }

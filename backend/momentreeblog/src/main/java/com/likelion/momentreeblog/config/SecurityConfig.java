@@ -1,10 +1,12 @@
 package com.likelion.momentreeblog.config;
 import com.likelion.momentreeblog.config.security.CustomAuthenticationFilter;
 import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
+import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -44,12 +46,10 @@ public class SecurityConfig {
                 .formLogin(form->form.disable())
                 .sessionManagement(session-> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable()) // H2는 CSRF 미지원 → disable
+                .csrf(csrf->csrf.disable())
                 .httpBasic(httpBasic->httpBasic.disable())//기본으로 헤더에 유저정보를 저장하나, 보안에 취약하므로 뺀다
                 .cors(cors->cors.configurationSource(configurationSource()))
                 .exceptionHandling(exception->exception.authenticationEntryPoint(customAuthenticationEntryPoint))
-
-                .csrf(csrf -> csrf.disable()) // H2는 CSRF 미지원 → disable
 
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.disable())
@@ -65,6 +65,7 @@ public class SecurityConfig {
         config.addAllowedOrigin("*"); //http://example.com
         config.addAllowedHeader("*"); //content-type 같은 헤더 정보
         config.addAllowedMethod("*");
+        config.addAllowedOrigin("http://localhost:3000");
         config.setAllowedMethods(List.of("GET","POST","DELETE"));
         source.registerCorsConfiguration("/**",config);
         return source;

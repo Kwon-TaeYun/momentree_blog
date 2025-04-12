@@ -4,23 +4,25 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
     private final String username;
     private final String password;
-    private final String email; // 이메일 필드 추가
-    private final List<GrantedAuthority> authorities;
+    private final String email;  // 이메일 필드 추가
+    private final List<GrantedAuthority> authorities; // 단일 Role로 수정
 
     public CustomUserDetails(String username, String password, String email, List<GrantedAuthority> roles) {
         this.username = username;
         this.password = password;
-        this.email = email;  // 이메일 값 저장
+        this.email = email;
         this.authorities = roles;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        // 단일 role을 반환
         return authorities;
     }
 
@@ -35,10 +37,9 @@ public class CustomUserDetails implements UserDetails {
     }
 
     public String getEmail() {
-        return email;  // 이메일 반환
+        return email;
     }
 
-    // 계정 만료 여부
     @Override
     public boolean isAccountNonExpired() {
         return true;

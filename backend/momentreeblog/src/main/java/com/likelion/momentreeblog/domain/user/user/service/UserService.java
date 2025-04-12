@@ -2,6 +2,7 @@ package com.likelion.momentreeblog.domain.user.user.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
+import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.role.repository.RoleRepository;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
@@ -13,7 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -44,13 +47,18 @@ public class UserService {
             return "비밀번호는 최소 8자리 이상이어야 합니다!";
         }
 
+        Set<Role> roles = new HashSet<>();
+        roles.add(roleRepository.findById(2L).orElseThrow(() -> new IllegalArgumentException("Role이 존재하지 않습니다.")));
+
+        // 2. User 객체 생성
         User user = User.builder()
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
-                .role(roleRepository.findById(1L).get())
+                .roles(roles)
                 .build();
 
+        // 3. Blog 객체 생성
         Blog blog = Blog.builder()
                 .name(dto.getBlogName())
                 .viewCount(0L)
@@ -61,8 +69,7 @@ public class UserService {
         String refreshToken = jwtTokenizer.createRefreshToken(
                 user.getId(), // 아직 id가 없으므로 null (필요하다면 id 없이 생성하는 오버로드 만들 수도 있음)
                 user.getEmail(),
-                user.getName(), // or username
-                user.getRole().getName()
+               user.getName(),null
         );
         user.setRefreshToken(refreshToken);
 

@@ -7,6 +7,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -36,9 +39,13 @@ public class User extends BaseEntity {
     @Column(name = "profile_photo")
     private String profilePhoto;
 
-    @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     @OneToOne
     @JoinColumn(name = "blog_id", nullable = false)
