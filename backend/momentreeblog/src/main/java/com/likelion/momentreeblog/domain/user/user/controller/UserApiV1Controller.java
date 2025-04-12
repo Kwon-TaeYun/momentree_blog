@@ -52,7 +52,7 @@ public class UserApiV1Controller {
         //토큰 굽기
         String accessToken = jwtTokenizer.createAccessToken(user.getId(), user.getEmail(),
                 user.getName(), role);
-        String refreshToken = jwtTokenizer.createAccessToken(user.getId(), user.getEmail(),
+        String refreshToken = jwtTokenizer.createRefreshToken(user.getId(), user.getEmail(),
                 user.getName(), role);
 
         user.setRefreshToken(refreshToken);
@@ -83,12 +83,26 @@ public class UserApiV1Controller {
 
     //로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String acccessToken){
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String acccessToken, HttpServletResponse response){
         try {
             Long userId = jwtTokenizer.getUserIdFromToken(acccessToken);
             User user = userService.findUserById(userId);
             user.setRefreshToken(null);
             userService.editUser(user);
+
+            // 로그아웃 시 쿠키 삭제 추가
+            Cookie cookie = new Cookie("accessToken", null);
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+
+            Cookie refreshCookie = new Cookie("refreshToken", null);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(0);
+            response.addCookie(refreshCookie);
+
             return ResponseEntity.ok("로그아웃 되었습니다 !!");
         }catch (Exception e){
             log.info(e.getMessage());

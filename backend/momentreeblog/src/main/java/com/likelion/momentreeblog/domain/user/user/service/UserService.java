@@ -34,6 +34,16 @@ public class UserService {
             return "이미 존재하는 블로그 이름입니다!";
         }
 
+        // 이메일 형식 체크 추가
+        if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return "이메일 형식이 올바르지 않습니다!";
+        }
+
+        // 비밀번호 길이 체크 추가
+        if (dto.getPassword().length() < 8) {
+            return "비밀번호는 최소 8자리 이상이어야 합니다!";
+        }
+
         User user = User.builder()
                 .name(dto.getName())
                 .email(dto.getEmail())
@@ -46,8 +56,6 @@ public class UserService {
                 .viewCount(0L)
                 .user(user)
                 .build();
-
-
 
         user.setBlog(blog);
         String refreshToken = jwtTokenizer.createRefreshToken(
