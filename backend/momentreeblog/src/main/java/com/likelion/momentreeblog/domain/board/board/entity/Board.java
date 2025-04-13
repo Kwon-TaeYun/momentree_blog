@@ -4,6 +4,7 @@ import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
 import com.likelion.momentreeblog.domain.board.like.entity.Like;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,11 +27,6 @@ public class Board extends BaseEntity {
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content; // 내용
 
-    @Column(name = "main_photo_id", nullable = false)
-    private Long mainPhotoId; // 대표사진ID
-
-    @Column(name = "photo_saved_url")
-    private String photoSavedUrl; // 사진저장주소
 
     @ManyToOne
     @JoinColumn(name = "blog_id", nullable = false)
@@ -42,6 +38,15 @@ public class Board extends BaseEntity {
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes; // 좋아요 테이블, 리스트타입
+
+    // 대표 이미지
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "main_photo_id")
+    private Photo mainPhoto;
+
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Photo> photos; // 사진 테이블
 
     public Board(BoardRequestDto dto, Blog blog) {
         this.title = dto.getTitle();

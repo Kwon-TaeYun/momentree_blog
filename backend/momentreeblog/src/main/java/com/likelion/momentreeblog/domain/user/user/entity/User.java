@@ -1,6 +1,7 @@
 package com.likelion.momentreeblog.domain.user.user.entity;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
@@ -11,6 +12,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -28,7 +32,7 @@ public class User extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column
+    @Column(nullable = false)
     private String password;
 
     private String oauth2;
@@ -36,11 +40,9 @@ public class User extends BaseEntity {
     @Column(name = "oauth2_provider")
     private String oauth2Provider;
 
-    @Column(name = "refresh_token")
+    @Column(nullable = false, name = "refresh_token")
     private String refreshToken;
 
-    @Column(name = "profile_photo")
-    private String profilePhoto;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -82,4 +84,13 @@ public class User extends BaseEntity {
     public boolean isAdmin() {
         return "admin".equals(name);
     }
+
+    @OneToOne
+    @JoinColumn(name = "profile_photo_id")
+    private Photo profilePhoto;  // 프로필 사진으로 설정된 Photo
+
+    // 내가 올린 사진들 (프로필 사진 포함)
+    @OneToMany(mappedBy = "user")
+    private List<Photo> photos = new ArrayList<>();
+
 }
