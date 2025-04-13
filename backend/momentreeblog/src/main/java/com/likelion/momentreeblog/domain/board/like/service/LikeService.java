@@ -9,14 +9,17 @@ import com.likelion.momentreeblog.domain.user.user.dto.UserLikeDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LikeService {
     private final LikeRepository likeRepository;
     private final BoardRepository boardRepository;
@@ -34,10 +37,14 @@ public class LikeService {
 
     @Transactional
     public String likeBoard(Long userId, Long boardId) {
+        System.out.println("userId: " + userId);
+        System.out.println("boardId: " + boardId);
         // 이미 좋아요 눌렀는지 체크
-        boolean exists = likeRepository.existsByUserIdAndBoardId(userId, boardId);
-        if (exists) {
-            return "이미 좋아요를 눌렀습니다.";
+        Optional<Like> optionalLike = likeRepository.findByUserIdAndBoardId(userId, boardId);
+
+        if (optionalLike.isPresent()) {
+            likeRepository.delete(optionalLike.get());
+            return "좋아요 취소!";
         }
 
         Board board = boardRepository.findById(boardId)

@@ -19,9 +19,6 @@ public class BoardRequestDto {
 
     private String photoSavedUrl;
 
-    @NotNull(message = "블로그 ID 값 필수입력")
-    private Long blogId;
-
     private Long categoryId;
 
 }

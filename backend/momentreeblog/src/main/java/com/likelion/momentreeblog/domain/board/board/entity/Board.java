@@ -1,6 +1,7 @@
 package com.likelion.momentreeblog.domain.board.board.entity;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
 import com.likelion.momentreeblog.domain.board.like.entity.Like;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
@@ -41,4 +42,13 @@ public class Board extends BaseEntity {
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes; // 좋아요 테이블, 리스트타입
+
+    public Board(BoardRequestDto dto, Blog blog) {
+        this.title = dto.getTitle();
+        this.content = dto.getContent();
+        this.mainPhotoId = dto.getMainPhotoId();
+        this.photoSavedUrl = dto.getPhotoSavedUrl();
+        this.blog = blog;
+        this.category = null; // 혹은 dto에서 categoryId 받아서 처리
+    }
 }
