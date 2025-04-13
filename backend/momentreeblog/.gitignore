@@ -42,4 +42,4 @@ application-secret.yml
 ### Idea ###
 .idea/
 .idea/*
-db_dev.*
+/db_dev.*
