@@ -85,6 +85,19 @@ public class BoardService {
                 ));
     }
 
+    @Transactional(readOnly = true)
+    public Page<BoardListResponseDto> searchBoardsByContent(String keyword) {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Board> findBoard = boardRepository.findByContentContaining(keyword, pageable);
+
+        return findBoard.map(board -> new BoardListResponseDto(
+                board.getId(),
+                board.getTitle(),
+                board.getBlog().getId()
+        ));
+    }
+
+
 
 
 }
