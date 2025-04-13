@@ -29,6 +29,14 @@ public class JwtTokenizer {
         this.refreshSecret = refreshSecret.getBytes(StandardCharsets.UTF_8);
     }
 
+    public Long extractUserIdFromAuthorization(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Authorization 헤더가 유효하지 않습니다.");
+        }
+
+        return getUserIdFromToken(authorization);
+    }
+
     private String createToken(Long id, String email, String username, List<String> roles, Long expire, byte[] secretKey){
         Claims claims = Jwts.claims().setSubject(email); //고유한 식별자 값
         claims.put("username", username);
