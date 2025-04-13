@@ -1,6 +1,6 @@
 package com.likelion.momentreeblog.config;
 import com.likelion.momentreeblog.config.security.CustomAuthenticationFilter;
-import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
+//import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtTokenizer jwtTokenizer;
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    //private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,7 +50,7 @@ public class SecurityConfig {
                 .csrf(csrf->csrf.disable())
                 .httpBasic(httpBasic->httpBasic.disable())//기본으로 헤더에 유저정보를 저장하나, 보안에 취약하므로 뺀다
                 .cors(cors->cors.configurationSource(configurationSource()))
-                .exceptionHandling(exception->exception.authenticationEntryPoint(customAuthenticationEntryPoint))
+              //  .exceptionHandling(exception->exception.authenticationEntryPoint(customAuthenticationEntryPoint))
 
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.disable())
