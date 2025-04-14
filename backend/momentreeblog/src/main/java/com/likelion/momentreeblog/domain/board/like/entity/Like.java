@@ -12,7 +12,9 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.mapping.ToOne;
 
 @Entity
-@Table(name = "likes")
+@Table(name = "likes", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "board_id"})
+})
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,13 +22,12 @@ import org.hibernate.mapping.ToOne;
 @ToString
 public class Like extends BaseEntity
 {
-
     @ManyToOne
-    @JoinColumn(name = "board_id")
+    @JoinColumn(name = "board_id", nullable = false)
     private Board board;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
 }
