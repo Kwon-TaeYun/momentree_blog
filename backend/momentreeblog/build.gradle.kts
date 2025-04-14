@@ -36,8 +36,9 @@ dependencies {
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("com.mysql:mysql-connector-j")
 
-	// Swagger/OpenAPI
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
+	// Swagger를 위한 springdoc-openapi
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+
 }
 
 tasks.withType<Test> {
