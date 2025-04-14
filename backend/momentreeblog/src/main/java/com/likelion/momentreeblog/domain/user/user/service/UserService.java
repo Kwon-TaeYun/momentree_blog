@@ -29,6 +29,7 @@ public class UserService {
     private final AuthTokenService authTokenService;
 
     @Transactional
+
     public String saveUser(UserSignupDto dto){
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             return "이미 존재하는 이메일입니다!";
@@ -47,7 +48,7 @@ public class UserService {
             return "비밀번호는 최소 8자리 이상이어야 합니다!";
         }
 
-        Set<Role> roles = new HashSet<>();
+        List<Role> roles = new ArrayList<>();
         roles.add(roleRepository.findById(2L).orElseThrow(() -> new IllegalArgumentException("Role이 존재하지 않습니다.")));
 
         // 2. User 객체 생성
@@ -116,22 +117,59 @@ public class UserService {
         return authTokenService.genAccessToken(member);
     }
 
-    public User join(String username, String password, String email, String provider) {
+    public User join(String name, String email, String provider) {
+        // 이미 존재하는 사용자인지 체크
         userRepository
-                .findByName(username)
-                .ifPresent(member -> {
-                    throw new RuntimeException("해당 username은 이미 사용중입니다.");
+                .findByEmail(email)
+                .ifPresent(user -> {
+                    throw new RuntimeException("해당 이메일은 이미 사용중입니다.");
                 });
 
-        User member = User.builder()
-                .name(username)       // name은 로그인 식별용
-                .password(password)
-                .email(email)         // email은 닉네임/이메일
-                .oauth2Provider(provider)
+        // 기본 Role 조회
+        Role userRole = roleRepository.findById(2L)
+                .orElseThrow(() -> new RuntimeException("ROLE_USER가 DB에 존재하지 않습니다."));
+
+        // Blog 객체 자동 생성
+        Blog newBlog = Blog.builder()
+                .name(name + "'s Blog")
                 .build();
 
-        return userRepository.save(member);
+        // User 객체 임시 생성 (refreshToken 생성용 ID는 null 가능)
+//        User user = User.builder()
+//                .name(name)
+//                .email(email)
+//                .password("") // 소셜 로그인이라 비워둠
+//                .oauth2Provider(provider)  // 올바르게 oauth2Provider에 값 설정
+//                .roles(new ArrayList<>(Collections.singletonList(userRole)))
+//                .blog(newBlog)
+//                .build();
+        User user = User.builder()
+                .name(name)
+                .email(email)
+                .password("") // ❗ null 대신 빈 문자열
+                .oauth2(provider)
+                .roles(new ArrayList<>(Collections.singletonList(userRole)))
+                .blog(newBlog)
+                .build();
+
+        // refreshToken JWT로 생성
+        String refreshToken = jwtTokenizer.createRefreshToken(
+                null, // user.getId()는 아직 null이지만, 필요 없다면 null로 가능
+                email,
+                name,
+                List.of(userRole.getName())
+        );
+        user.setRefreshToken(refreshToken);
+
+        // Blog 저장 및 연결
+        if (newBlog.getId() == null) {  // 만약 새로운 Blog라면 저장
+            blogRepository.save(newBlog);
+        }
+
+        return userRepository.save(user);  // User 저장
     }
+
+
 
 
     public void modify(User member, @NotBlank String nickname) {
@@ -147,7 +185,7 @@ public class UserService {
             return member;
         }
 
-        return join(username, "", nickname, provider);
+        return join(username, nickname, provider);
     }
 
 

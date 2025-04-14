@@ -27,7 +27,7 @@ public class User extends BaseEntity{
     @Column(unique = true, nullable = false)
     private String email; //nickname으로도 사용
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     private String oauth2;
@@ -47,7 +47,7 @@ public class User extends BaseEntity{
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles = new HashSet<>();
+    private List<Role> roles = new ArrayList<>();
 
     @OneToOne
     @JoinColumn(name = "blog_id", nullable = false)

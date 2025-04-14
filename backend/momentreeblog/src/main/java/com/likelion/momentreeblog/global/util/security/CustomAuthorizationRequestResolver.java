@@ -5,11 +5,12 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
-//oauth2 추가
+@Component
 public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
     private final DefaultOAuth2AuthorizationRequestResolver defaultResolver;
     public CustomAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository) {
