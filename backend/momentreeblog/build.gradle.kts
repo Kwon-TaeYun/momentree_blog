@@ -37,7 +37,7 @@ dependencies {
 	runtimeOnly("com.mysql:mysql-connector-j")
 
 	// OAuth2
-	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+//	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
 	// Swagger
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")

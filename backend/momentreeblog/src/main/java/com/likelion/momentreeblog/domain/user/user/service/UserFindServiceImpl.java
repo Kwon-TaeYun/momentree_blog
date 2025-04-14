@@ -1,7 +1,6 @@
 package com.likelion.momentreeblog.domain.user.user.service;
 
 import com.likelion.momentreeblog.domain.user.user.entity.User;
-import com.likelion.momentreeblog.domain.user.user.repository.FollowRepository;
 import com.likelion.momentreeblog.domain.user.user.repository.UserFindRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
