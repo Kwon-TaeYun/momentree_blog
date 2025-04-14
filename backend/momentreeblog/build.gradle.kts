@@ -38,6 +38,7 @@ dependencies {
 
 	// Swagger를 위한 springdoc-openapi
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+
 }
 
 tasks.withType<Test> {

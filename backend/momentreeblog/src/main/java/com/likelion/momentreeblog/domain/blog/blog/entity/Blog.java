@@ -14,8 +14,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class Blog extends BaseEntity {
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    @OneToOne(mappedBy = "blog") // User가 주인, Blog가 피소유자
     private User user;
     @Column(nullable = false)
     private String name;
