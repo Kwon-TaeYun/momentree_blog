@@ -38,9 +38,11 @@ out/
 
 application-secret.yml
 
+
 .idea/
 db_dev.*
 .idea/*
 .terraform/
 
 db_dev.mv.db
+
