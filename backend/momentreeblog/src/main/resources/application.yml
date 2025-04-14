@@ -2,6 +2,22 @@
 server:
   port: 8090
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            clientId: ON_SECRET
+            scope: profile_nickname, profile_image
+            client-name: Kakao
+            authorization-grant-type: authorization_code
+            redirect-uri: "${custom.site.backUrl}/{action}/oauth2/code/{registrationId}"
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
   output:
     ansi:
       enabled: ALWAYS
@@ -13,9 +29,10 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
-  sql:
-    init:
-      mode: never
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   jpa:
     open-in-view: false
     hibernate:
