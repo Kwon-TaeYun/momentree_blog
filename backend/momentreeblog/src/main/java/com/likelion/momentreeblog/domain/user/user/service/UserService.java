@@ -147,7 +147,7 @@ public class UserService {
                 .name(name)
                 .email(email)
                 .password("") // ❗ null 대신 빈 문자열
-                .oauth2(provider)
+                .oauth2Provider(provider)
                 .roles(new ArrayList<>(Collections.singletonList(userRole)))
                 .blog(newBlog)
                 .build();
