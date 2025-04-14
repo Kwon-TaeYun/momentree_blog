@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface BlogRepository extends JpaRepository<Blog, Long> {
     Optional<Blog> findByName(String name);
     Optional<Blog> findByUserId(Long userId);
+
 }
