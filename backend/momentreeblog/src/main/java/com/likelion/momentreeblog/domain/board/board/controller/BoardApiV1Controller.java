@@ -2,25 +2,20 @@ package com.likelion.momentreeblog.domain.board.board.controller;
 
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardResponseDto;
 import com.likelion.momentreeblog.domain.board.board.service.BoardService;
 import com.likelion.momentreeblog.domain.board.comment.dto.CommentDto;
 import com.likelion.momentreeblog.domain.board.comment.dto.CommentRequestDto;
 import com.likelion.momentreeblog.domain.board.comment.service.CommentService;
 import com.likelion.momentreeblog.domain.board.like.dto.BoardLikeInfoDto;
 import com.likelion.momentreeblog.domain.board.like.service.LikeService;
-import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/boards")

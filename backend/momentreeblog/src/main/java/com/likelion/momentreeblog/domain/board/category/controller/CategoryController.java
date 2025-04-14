@@ -25,7 +25,7 @@ public class CategoryController {
 
     // 카테고리 단건 조회
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryResponseDto> getCategory(@PathVariable Long id) {
+    public ResponseEntity<CategoryResponseDto> getCategory(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(categoryService.getCategory(id));
     }
 
@@ -38,14 +38,14 @@ public class CategoryController {
     // 카테고리 수정
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestBody CategoryUpdateRequestDto requestDto) {
         return ResponseEntity.ok(categoryService.updateCategory(id, requestDto));
     }
 
     // 카테고리 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCategory(@PathVariable(name = "id") Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }

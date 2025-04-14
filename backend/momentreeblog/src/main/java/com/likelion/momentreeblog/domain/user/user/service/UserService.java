@@ -7,16 +7,15 @@ import com.likelion.momentreeblog.domain.user.role.repository.RoleRepository;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
-import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -27,6 +26,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
+    private final AuthTokenService authTokenService;
 
     @Transactional
     public String saveUser(UserSignupDto dto){
@@ -91,10 +91,71 @@ public class UserService {
                 .orElse(null);
     }
 
+    public Optional<User> findByName(String username) {
+        return userRepository.findByName(username);
+    }
+
     @Transactional
     public User editUser(User user){
         return userRepository.save(user);
     }
+
+    public User getMemberFromAccessToken(String accessToken) {
+        Map<String, Object> payload = authTokenService.payload(accessToken);
+
+        if (payload == null) return null;
+
+        Long id = ((Number) payload.get("id")).longValue();
+
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
+
+    }
+
+    public String genAccessToken(User member) {
+        return authTokenService.genAccessToken(member);
+    }
+
+    public User join(String username, String password, String email, String provider) {
+        userRepository
+                .findByName(username)
+                .ifPresent(member -> {
+                    throw new RuntimeException("해당 username은 이미 사용중입니다.");
+                });
+
+        User member = User.builder()
+                .name(username)       // name은 로그인 식별용
+                .password(password)
+                .email(email)         // email은 닉네임/이메일
+                .oauth2Provider(provider)
+                .build();
+
+        return userRepository.save(member);
+    }
+
+
+    public void modify(User member, @NotBlank String nickname) {
+        member.setEmail(nickname);
+    }
+
+    public User modifyOrJoin(String username, String nickname, String provider) {
+        Optional<User> opMember = findByName(username);
+
+        if (opMember.isPresent()) {
+            User member = opMember.get();
+            modify(member, nickname);
+            return member;
+        }
+
+        return join(username, "", nickname, provider);
+    }
+
+
+    public Optional<User> findById(Long id){
+        Optional<User> user = userRepository.findById(id);
+        return user;
+    }
+
 
 
 

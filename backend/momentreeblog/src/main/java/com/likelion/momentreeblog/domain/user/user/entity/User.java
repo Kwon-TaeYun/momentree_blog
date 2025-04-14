@@ -6,9 +6,11 @@ import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -18,12 +20,12 @@ import java.util.Set;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-public class User extends BaseEntity {
+public class User extends BaseEntity{
     @Column(nullable = false)
-    private String name;
+    private String name; //username으로 사용
 
     @Column(unique = true, nullable = false)
-    private String email;
+    private String email; //nickname으로도 사용
 
     @Column(nullable = false)
     private String password;
@@ -50,4 +52,30 @@ public class User extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "blog_id", nullable = false)
     private Blog blog;
+
+
+    public User(long id, String username, String nickname) {
+        this.setId(id);
+        this.name = username;
+        this.email = nickname;
+    }
+
+    public List<String> getAuthoritiesAsStringList() {
+        List<String> authorities = new ArrayList<>();
+
+        if (isAdmin())
+            authorities.add("ROLE_ADMIN");
+
+        return authorities;
+    }
+
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
+    }
+
+    public boolean isAdmin() {
+        return "admin".equals(name);
+    }
 } //push 할 때 수정 예정

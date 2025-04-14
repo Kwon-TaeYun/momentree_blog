@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.util.jwt;
+package com.likelion.momentreeblog.global.util.jwt;
 
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.entity.User;

@@ -1,14 +1,13 @@
 package com.likelion.momentreeblog.config;
 import com.likelion.momentreeblog.config.security.CustomAuthenticationFilter;
 //import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
-import com.likelion.momentreeblog.domain.user.user.service.UserService;
-import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.global.util.security.CustomAuthorizationRequestResolver;
+import com.likelion.momentreeblog.global.util.security.CustomOAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +25,8 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtTokenizer jwtTokenizer;
     //private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomOAuth2AuthenticationSuccessHandler customOAuth2AuthenticationSuccessHandler;
+    private final CustomAuthorizationRequestResolver customAuthorizationRequestResolver;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,6 +34,7 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
                                 "/api/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -42,7 +44,14 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-
+                .oauth2Login(oauth2Login -> oauth2Login
+                        .successHandler(customOAuth2AuthenticationSuccessHandler)
+                        .authorizationEndpoint(
+                                authorizationEndpoint ->
+                                        authorizationEndpoint
+                                                .authorizationRequestResolver(customAuthorizationRequestResolver)
+                        )
+                )
                 .addFilterBefore(new CustomAuthenticationFilter(jwtTokenizer), UsernamePasswordAuthenticationFilter.class)
                 .formLogin(form->form.disable())
                 .sessionManagement(session-> session

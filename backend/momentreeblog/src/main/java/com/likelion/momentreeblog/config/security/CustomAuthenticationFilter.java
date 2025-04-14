@@ -3,10 +3,7 @@ package com.likelion.momentreeblog.config.security;
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.config.security.exception.JwtExceptionCode;
 import com.likelion.momentreeblog.config.security.token.JwtAuthenticationToken;
-import com.likelion.momentreeblog.domain.user.role.entity.Role;
-import com.likelion.momentreeblog.domain.user.user.entity.User;
-import com.likelion.momentreeblog.domain.user.user.service.UserService;
-import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -27,7 +24,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 

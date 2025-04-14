@@ -42,6 +42,5 @@ application-secret.yml
 db_dev.*
 .idea/*
 .terraform/
-.idea/*
 
-
+db_dev.mv.db
