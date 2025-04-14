@@ -2,11 +2,11 @@ package com.likelion.momentreeblog.domain.board.category.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
-import com.likelion.momentreeblog.domain.blog.category.dto.CategoryCreateRequestDto;
-import com.likelion.momentreeblog.domain.blog.category.dto.CategoryResponseDto;
-import com.likelion.momentreeblog.domain.blog.category.dto.CategoryUpdateRequestDto;
-import com.likelion.momentreeblog.domain.blog.category.entity.Category;
-import com.likelion.momentreeblog.domain.blog.category.repository.CategoryRepository;
+import com.likelion.momentreeblog.domain.board.category.dto.CategoryCreateRequestDto;
+import com.likelion.momentreeblog.domain.board.category.dto.CategoryResponseDto;
+import com.likelion.momentreeblog.domain.board.category.dto.CategoryUpdateRequestDto;
+import com.likelion.momentreeblog.domain.board.category.entity.Category;
+import com.likelion.momentreeblog.domain.board.category.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

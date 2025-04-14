@@ -1,9 +1,9 @@
 package com.likelion.momentreeblog.domain.board.category.controller;
 
-import com.likelion.momentreeblog.domain.blog.category.dto.CategoryCreateRequestDto;
-import com.likelion.momentreeblog.domain.blog.category.dto.CategoryUpdateRequestDto;
-import com.likelion.momentreeblog.domain.blog.category.dto.CategoryResponseDto;
-import com.likelion.momentreeblog.domain.blog.category.service.CategoryService;
+import com.likelion.momentreeblog.domain.board.category.dto.CategoryCreateRequestDto;
+import com.likelion.momentreeblog.domain.board.category.dto.CategoryUpdateRequestDto;
+import com.likelion.momentreeblog.domain.board.category.dto.CategoryResponseDto;
+import com.likelion.momentreeblog.domain.board.category.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
