@@ -14,10 +14,20 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class Blog extends BaseEntity {
-    @OneToOne(mappedBy = "blog") // User가 주인, Blog가 피소유자
+
+    @OneToOne(mappedBy = "blog")
     private User user;
+
     @Column(nullable = false)
     private String name;
+
     @Column(name = "view_count", columnDefinition = "BIGINT default 0")
     private Long viewCount;
+
+    public void setUser(User user) {
+        this.user = user;
+        if (user.getBlog() != this) {
+            user.setBlog(this);
+        }
+    }
 }

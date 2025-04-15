@@ -23,12 +23,12 @@ import java.util.stream.Collectors;
 public class BoardService {
     private final BoardRepository boardRepository;
     private final BlogRepository blogRepository;
-    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
-        Blog blog = blogRepository.findById(blogId)
-                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
-
-        return blog.getUser().getId().equals(userId);
-    }
+//    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
+//        Blog blog = blogRepository.findById(blogId)
+//                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
+//
+//        return blog.getUser().getId().equals(userId);
+//    }
     //게시글 작성
     @Transactional
     public String createBoard(BoardRequestDto requestDto, Long userId) {

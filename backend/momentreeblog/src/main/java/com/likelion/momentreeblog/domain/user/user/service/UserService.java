@@ -7,16 +7,15 @@ import com.likelion.momentreeblog.domain.user.role.repository.RoleRepository;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
-import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -27,8 +26,10 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
+    private final AuthTokenService authTokenService;
 
     @Transactional
+
     public String saveUser(UserSignupDto dto){
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             return "이미 존재하는 이메일입니다!";
@@ -47,7 +48,7 @@ public class UserService {
             return "비밀번호는 최소 8자리 이상이어야 합니다!";
         }
 
-        Set<Role> roles = new HashSet<>();
+        List<Role> roles = new ArrayList<>();
         roles.add(roleRepository.findById(2L).orElseThrow(() -> new IllegalArgumentException("Role이 존재하지 않습니다.")));
 
         // 2. User 객체 생성
@@ -91,10 +92,117 @@ public class UserService {
                 .orElse(null);
     }
 
+    public Optional<User> findByName(String username) {
+        return userRepository.findByName(username);
+    }
+
     @Transactional
     public User editUser(User user){
         return userRepository.save(user);
     }
+
+    public User getMemberFromAccessToken(String accessToken) {
+        Map<String, Object> payload = authTokenService.payload(accessToken);
+
+        if (payload == null) return null;
+
+        Long id = ((Number) payload.get("id")).longValue();
+
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
+
+    }
+
+    public String genAccessToken(User member) {
+        return authTokenService.genAccessToken(member);
+    }
+
+//    public User join_temp(String name, String email, String provider) {
+//        // 중복 사용자 체크
+//        userRepository.findByName(name).ifPresent(member -> {
+//            throw new RuntimeException("해당 username은 이미 사용중입니다.");
+//        });
+//
+//        // Role 조회
+//        Optional<Role> role = roleRepository.findById(2L);
+//
+//        // User 생성
+//        User member = User.builder()
+//                .name(name)
+//                .password(UUID.randomUUID().toString())
+//                .email(email)
+//                .refreshToken(UUID.randomUUID().toString())
+//                .oauth2Provider(provider)
+//                .roles(role.stream().toList())
+//                .build();
+//
+//        // Blog 생성 및 양방향 관계 설정
+//        Blog blog = Blog.builder()
+//                .name(name + "의 블로그")
+//                .build();
+//
+//        member.setBlog(blog); // 이 한 줄로 양방향 모두 설정됨 (위에서 편의 메서드 작성했다면)
+//
+//        // user 저장 (cascade = ALL이므로 blog도 함께 저장됨)
+//        return userRepository.save(member);
+//    }
+
+    public User join(String name, String email, String provider) {
+        // 중복 사용자 체크
+        userRepository.findByName(name).ifPresent(member -> {
+            throw new RuntimeException("해당 username은 이미 사용중입니다.");
+        });
+
+        // Role 조회
+        Optional<Role> role = roleRepository.findById(2L);
+
+        // User 생성
+        User member = User.builder()
+                .name(name)
+                .password(UUID.randomUUID().toString())
+                .email(email)
+                .refreshToken(UUID.randomUUID().toString())
+                .oauth2Provider(provider)
+                .roles(role.stream().toList())
+                .build();
+
+        // Blog 생성 및 양방향 관계 설정
+        Blog blog = Blog.builder()
+                .name(name + "의 블로그")
+                .build();
+
+        member.setBlog(blog); // 이 한 줄로 양방향 모두 설정됨 (위에서 편의 메서드 작성했다면)
+
+        // user 저장 (cascade = ALL이므로 blog도 함께 저장됨)
+        return userRepository.save(member);
+    }
+
+
+
+
+
+    public void modify(User member, @NotBlank String nickname) {
+        member.setEmail(nickname);
+    }
+
+    public User modifyOrJoin(String username, String nickname, String provider) {
+        Optional<User> opMember = findByName(username);
+
+        if (opMember.isPresent()) {
+            User member = opMember.get();
+            modify(member, nickname);
+            return member;
+        }
+
+        return join(username, nickname, provider);
+    }
+
+
+    public Optional<User> findById(Long id){
+        Optional<User> user = userRepository.findById(id);
+        return user;
+    }
+
 
 
 

@@ -46,8 +46,9 @@ application-secret.yml.default
 db_dev.*
 application-secret.yml
 
-.idea/
-db_dev.*
-.idea/*
 .terraform/
-.idea/*
+
+
+db_dev.mv.db
+
+
