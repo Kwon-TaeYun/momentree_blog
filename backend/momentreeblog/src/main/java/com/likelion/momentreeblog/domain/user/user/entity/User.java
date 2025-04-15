@@ -20,14 +20,15 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @SuperBuilder
 @ToString
-public class User extends BaseEntity{
+public class User extends BaseEntity {
+
     @Column(nullable = false)
-    private String name; //username으로 사용
+    private String name;
 
     @Column(unique = true, nullable = false)
-    private String email; //nickname으로도 사용
+    private String email;
 
-    @Column(nullable = true)
+    @Column
     private String password;
 
     private String oauth2;
@@ -49,10 +50,16 @@ public class User extends BaseEntity{
     )
     private List<Role> roles = new ArrayList<>();
 
-    @OneToOne
-    @JoinColumn(name = "blog_id", nullable = false)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "blog_id")
     private Blog blog;
 
+    public void setBlog(Blog blog) {
+        this.blog = blog;
+        if (blog.getUser() != this) {
+            blog.setUser(this);
+        }
+    }
 
     public User(long id, String username, String nickname) {
         this.setId(id);
@@ -62,10 +69,7 @@ public class User extends BaseEntity{
 
     public List<String> getAuthoritiesAsStringList() {
         List<String> authorities = new ArrayList<>();
-
-        if (isAdmin())
-            authorities.add("ROLE_ADMIN");
-
+        if (isAdmin()) authorities.add("ROLE_ADMIN");
         return authorities;
     }
 
@@ -78,4 +82,4 @@ public class User extends BaseEntity{
     public boolean isAdmin() {
         return "admin".equals(name);
     }
-} //push 할 때 수정 예정
+}

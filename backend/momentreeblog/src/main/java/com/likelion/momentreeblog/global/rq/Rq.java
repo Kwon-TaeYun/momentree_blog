@@ -122,41 +122,20 @@ public class Rq {
     }
 
     public String makeAuthCookies(User user) {
-        // 1. User 객체가 DB에 저장되지 않았다면 먼저 저장해야 합니다.
-        if (user.getId() == null) {
-            userRepository.save(user);  // User 객체를 DB에 먼저 저장
-        }
-
-        // 2. User 객체가 blog를 가지고 있는지 확인
-        if (user.getBlog() == null) {
-            // blog가 없다면 새로운 blog를 생성하거나 기존 blog를 할당
-            Blog newBlog = Blog.builder()
-                    .name(user.getName() + "'s Blog")  // 블로그 제목 설정
-                    .build();
-            user.setBlog(newBlog);  // User에 blog 설정
-            blogRepository.save(newBlog);  // Blog 저장
-        }
-
-        // 3. 이후 DB에서 생성된 ID와 필요한 값들을 사용하여 토큰 생성
-        List<String> roleNames = user.getRoles().stream()
+        List<String> roleNames = user.getRoles()
+                .stream()
                 .map(Role::getName)
                 .collect(Collectors.toList());
+        String accessToken = jwtTokenizer.createAccessToken(user.getId(),user.getEmail(),user.getName(),roleNames);
+        String refreshToken = jwtTokenizer.createRefreshToken(user.getId(),user.getEmail(),user.getName(),roleNames);
 
-        // accessToken 및 refreshToken 생성
-        String accessToken = jwtTokenizer.createAccessToken(user.getId(), user.getEmail(), user.getName(), roleNames);
-        String refreshToken = jwtTokenizer.createRefreshToken(user.getId(), user.getEmail(), user.getName(), roleNames);
-
-        // 4. refreshToken을 User 객체에 설정
         user.setRefreshToken(refreshToken);
+        userRepository.save(user);
 
-        // 5. User 객체를 DB에 반영 (refreshToken 저장)
-        userRepository.save(user);  // DB에 업데이트된 User 객체 저장
-
-        // 6. 쿠키에 토큰 저장
-        setCookie("apiKey", refreshToken);
+        // setCookie("refreshToken", user.getRefreshToken());
         setCookie("accessToken", accessToken);
 
-        return accessToken;  // 생성된 accessToken 반환
+        return accessToken;
     }
 
 
