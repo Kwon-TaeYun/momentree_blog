@@ -37,8 +37,11 @@ out/
 ### VS Code ###
 .vscode/
 
-application-secret.yml
-
 ### Idea ###
 .idea/
 .idea/*
+
+### Custom ###
+application-secret.yml
+application-secret.yml.default
+db_dev.*
