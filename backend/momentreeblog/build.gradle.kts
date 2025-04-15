@@ -35,6 +35,29 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("com.mysql:mysql-connector-j")
+
+	// Swagger를 위한 springdoc-openapi
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+
+	// security
+	implementation("com.auth0:java-jwt:4.4.0")
+
+    //security 사용을 위한 의존성
+	//시큐리티 의존성
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6:3.1.2.RELEASE")
+
+	//jwt 의존성
+	// JWT & JSON
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
+	// Gson - JSON 메시지를 다루기 위한 라이브러리
+	implementation("com.google.code.gson:gson")
+
+	// Oauth2
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 }
 
 tasks.withType<Test> {
