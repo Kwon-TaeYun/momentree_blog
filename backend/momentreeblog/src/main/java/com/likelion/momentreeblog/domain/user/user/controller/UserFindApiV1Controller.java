@@ -19,19 +19,19 @@ public class UserFindApiV1Controller {
     private final UserFindService userFindService;
 
     @GetMapping("/id")
-    public ResponseEntity<UserResponse> getUserById(@RequestParam String id){
-        User user = userFindService.getUserByEmail(id);
+    public ResponseEntity<UserResponse> getUserById(@RequestParam(name = "id") Long id){
+        User user = userFindService.getUserById(id);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @GetMapping("/name")
-    public ResponseEntity<UserResponse> getUserByName(@RequestParam String name){
-        User user = userFindService.getUserByEmail(name);
+    public ResponseEntity<UserResponse> getUserByName(@RequestParam(name = "name") String name){
+        User user = userFindService.getUserByName(name);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @GetMapping("/email")
-    public ResponseEntity<UserResponse> getUserByEmail(@RequestParam String email){
+    public ResponseEntity<UserResponse> getUserByEmail(@RequestParam(name = "email") String email){
         User user = userFindService.getUserByEmail(email);
         return ResponseEntity.ok(UserResponse.from(user));
     }

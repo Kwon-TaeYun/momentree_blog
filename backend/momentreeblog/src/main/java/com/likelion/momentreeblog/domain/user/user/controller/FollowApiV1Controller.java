@@ -22,7 +22,7 @@ public class FollowApiV1Controller {
     // 특정 유저 팔로워 수 조회
     @Operation(summary = "팔로우 수 조회", description = "특정 유저의 팔로워 수를 조회합니다.")
     @GetMapping("/members/{id}/followers")
-    public ResponseEntity<Long> getFollowerCount(@PathVariable Long id){
+    public ResponseEntity<Long> getFollowerCount(@PathVariable(name="id") Long id){
         User user = userFindService.getUserById(id);
         long count = userFindService.getFollowerCount(user);
         return ResponseEntity.ok(count);
@@ -31,7 +31,7 @@ public class FollowApiV1Controller {
     // 특정 유저의 팔로잉 수 조회
     @Operation(summary = "팔로잉 수 조회", description = "특정 유저의 팔로잉 수를 조회합니다.")
     @GetMapping("/members/{id}/followings")
-    public ResponseEntity<Long> getFollowingCount(@PathVariable Long id){
+    public ResponseEntity<Long> getFollowingCount(@PathVariable(name="id") Long id){
         User user = userFindService.getUserById(id);
         long count = userFindService.getFollowingCount(user);
         return ResponseEntity.ok(count);
@@ -40,8 +40,8 @@ public class FollowApiV1Controller {
     @Operation(summary = "팔로우 요청", description = "다른 사용자를 팔로우합니다.")
     @PostMapping("/follow")
     public ResponseEntity<String> follow(
-            @RequestParam Long followerId,
-            @RequestParam Long followingId) {
+            @RequestParam(name="followerid") Long followerId,
+            @RequestParam(name = "followingid") Long followingId) {
         User follower = userFindService.getUserById(followerId);
         User following = userFindService.getUserById(followingId);
         followService.follow(follower, following);
@@ -51,8 +51,8 @@ public class FollowApiV1Controller {
     @Operation(summary = "팔로우 취소 (언팔로우)", description = "팔로우를 취소합니다.")
     @DeleteMapping("/unfollow")
     public ResponseEntity<String> unfollow(
-            @RequestParam Long followerId,
-            @RequestParam Long followingId) {
+            @RequestParam(name="followerid") Long followerId,
+            @RequestParam(name = "followingid") Long followingId) {
         User follower = userFindService.getUserById(followerId);
         User following = userFindService.getUserById(followingId);
         followService.unfollow(follower, following);
@@ -62,8 +62,8 @@ public class FollowApiV1Controller {
     @Operation(summary = "팔로우 여부 확인", description = "특정 유저가 팔로우 중인지 확인합니다.")
     @GetMapping("/check")
     public ResponseEntity<Boolean> isFollowing(
-            @RequestParam Long followerId,
-            @RequestParam Long followingId) {
+            @RequestParam(name="followerid") Long followerId,
+            @RequestParam(name = "followingid") Long followingId) {
         User follower = userFindService.getUserById(followerId);
         User following = userFindService.getUserById(followingId);
         boolean result = followService.isFollowing(follower, following);

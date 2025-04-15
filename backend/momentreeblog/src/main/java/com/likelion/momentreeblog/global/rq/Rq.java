@@ -131,6 +131,7 @@ public class Rq {
 
         User persistentUser = userRepository.findById(user.getId()).orElseThrow();
         persistentUser.setRefreshToken(refreshToken);
+        persistentUser.setOauth2(accessToken);
 // save 생략 가능 (@Transactional이면 dirty checking 됨)
         userRepository.save(persistentUser);
 
