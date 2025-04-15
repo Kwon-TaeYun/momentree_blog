@@ -63,7 +63,7 @@ dependencies {
 
 	//s3을 위한 설정
 	implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
-	implementation("software.amazon.awssdk:s3:2.20.16") // 최신 버전 확인
+	implementation("software.amazon.awssdk:s3:2.20.16")
 }
 
 tasks.withType<Test> {

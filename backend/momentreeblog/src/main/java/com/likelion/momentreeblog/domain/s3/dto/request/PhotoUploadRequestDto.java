@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.photo.photo.dto.response;
+package com.likelion.momentreeblog.domain.s3.dto.request;
 
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import lombok.AllArgsConstructor;
@@ -10,8 +10,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PreSignedUrlResponseDto {
-    private String url;          // 실제 파일이 저장될 URL
-    private String presignedUrl; // 업로드용 임시 URL
+public class PhotoUploadRequestDto {
+
+    private String filename; //파일 이름
+
     private PhotoType photoType;
+
+    private String contentType; // PROFILE, MAIN, ADDITIONAL
+
+    private Long userId;
+
+    private Long boardId;
+
 }

@@ -85,12 +85,13 @@ public class User extends BaseEntity {
         return "admin".equals(name);
     }
 
+    // 현재 활성화된 프로필 사진: 이 값은 프로필 사진 변경 시 업데이트.
     @OneToOne
-    @JoinColumn(name = "profile_photo_id")
-    private Photo profilePhoto;  // 프로필 사진으로 설정된 Photo
+    @JoinColumn(name = "current_profile_photo_id")
+    private Photo currentProfilePhoto;
 
-    // 내가 올린 사진들 (프로필 사진 포함)
-    @OneToMany(mappedBy = "user")
+    // 유저가 올린 모든 사진 기록 (여기에는 프로필 사진 변경 이력도 포함)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos = new ArrayList<>();
 
 }

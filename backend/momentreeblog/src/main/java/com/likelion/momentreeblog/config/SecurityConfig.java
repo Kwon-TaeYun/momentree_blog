@@ -1,9 +1,12 @@
 package com.likelion.momentreeblog.config;
+
 import com.likelion.momentreeblog.config.security.CustomAuthenticationFilter;
 //import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import com.likelion.momentreeblog.global.util.security.CustomAuthorizationRequestResolver;
 import com.likelion.momentreeblog.global.util.security.CustomOAuth2AuthenticationSuccessHandler;
+import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
+import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -81,6 +84,7 @@ public class SecurityConfig {
         config.addAllowedOrigin("*"); //http://example.com
         config.addAllowedHeader("*"); //content-type 같은 헤더 정보
         config.addAllowedMethod("*");
+        config.setAllowedOrigins(List.of("http://localhost:8080"));
         config.addAllowedOrigin("http://localhost:3000");
         config.setAllowedMethods(List.of("GET","POST","DELETE"));
         source.registerCorsConfiguration("/**",config);

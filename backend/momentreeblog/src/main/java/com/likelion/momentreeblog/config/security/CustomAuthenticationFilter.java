@@ -4,6 +4,7 @@ import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.config.security.exception.JwtExceptionCode;
 import com.likelion.momentreeblog.config.security.token.JwtAuthenticationToken;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
+import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -93,7 +94,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         List<GrantedAuthority> grantedAuthorization = getGrantedAuthorization(claims);
         // UserDetails 생성
-        CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization);
+        CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization, userId);
 
         return new JwtAuthenticationToken(grantedAuthorization, customUserDetails, null);
     }

@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.photo.photo.dto.request;
+package com.likelion.momentreeblog.domain.photo.photo.dto;
 
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import lombok.AllArgsConstructor;
@@ -10,9 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PhotoUploadRequestDto {
-    private String filename;
+public class PhotoUploadResponseDto {
+    private Long id;
+    private String url;
     private PhotoType photoType;
     private Long userId;
-    private Long boardId; // 게시물 ID는 선택적 (프로필 사진의 경우 필요 없음)
-}
+    private Long boardId;
+} 
