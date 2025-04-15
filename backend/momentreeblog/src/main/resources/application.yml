@@ -8,7 +8,7 @@ spring:
         registration:
           kakao:
             clientId: ON_SECRET
-            scope: profile_nickname, profile_image
+            scope: profile_nickname
             client-name: Kakao
             authorization-grant-type: authorization_code
             redirect-uri: "${custom.site.backUrl}/{action}/oauth2/code/{registrationId}"
@@ -39,6 +39,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
         default_batch_fetch_size: 100
         format_sql: true
         highlight_sql: true
