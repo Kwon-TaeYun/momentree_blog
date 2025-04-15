@@ -5,6 +5,7 @@ package com.likelion.momentreeblog.domain.user.user.controller;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.FollowService;
 import com.likelion.momentreeblog.domain.user.user.service.UserFindService;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class FollowApiV1Controller {
     private final UserFindService userFindService;
     private final FollowService followService;
+    private final JwtTokenizer jwtTokenizer;
 
     // 특정 유저 팔로워 수 조회
     @Operation(summary = "팔로우 수 조회", description = "특정 유저의 팔로워 수를 조회합니다.")
@@ -41,22 +43,34 @@ public class FollowApiV1Controller {
     @PostMapping("/follow")
     public ResponseEntity<String> follow(
             @RequestParam(name="followerid") Long followerId,
-            @RequestParam(name = "followingid") Long followingId) {
+            @RequestParam(name = "followingid") Long followingId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        Long userId = jwtTokenizer.getUserIdFromToken(authorizationHeader);
         User follower = userFindService.getUserById(followerId);
         User following = userFindService.getUserById(followingId);
-        followService.follow(follower, following);
-        return ResponseEntity.ok("팔로우 성공");
+        if(userId.equals(followerId)) {
+            followService.follow(follower, following);
+            return ResponseEntity.ok("팔로우 성공");
+        }else{
+            return ResponseEntity.status(401).body("회원이 인증이 되지 않아 팔로우 요청을 보낼 수 없습니다.");
+        }
     }
 
     @Operation(summary = "팔로우 취소 (언팔로우)", description = "팔로우를 취소합니다.")
     @DeleteMapping("/unfollow")
     public ResponseEntity<String> unfollow(
             @RequestParam(name="followerid") Long followerId,
-            @RequestParam(name = "followingid") Long followingId) {
+            @RequestParam(name = "followingid") Long followingId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        Long userId = jwtTokenizer.getUserIdFromToken(authorizationHeader);
         User follower = userFindService.getUserById(followerId);
         User following = userFindService.getUserById(followingId);
-        followService.unfollow(follower, following);
-        return ResponseEntity.ok("언팔로우 성공");
+        if(userId.equals(followerId)) {
+            followService.unfollow(follower, following);
+            return ResponseEntity.ok("언팔로우 성공");
+        }else{
+            return ResponseEntity.status(401).body("회원이 인증이 되지 않아 팔로우 취소를 하실 수 없습니다.");
+        }
     }
 
     @Operation(summary = "팔로우 여부 확인", description = "특정 유저가 팔로우 중인지 확인합니다.")
