@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,21 +16,18 @@ public class UserFindServiceImpl implements UserFindService{
     private final FollowRepository followRepository;
 
     @Override
-    public User getUserById(Long id) {
-        return userFindRepository.findById(id)
-                .orElseThrow( () -> new NoSuchElementException("해당 아이디를 가진 유저를 찾을 수 없습니다."));
+    public Optional<User> getUserById(Long id) {
+        return userFindRepository.findById(id);
     }
 
     @Override
-    public User getUserByEmail(String email) {
-        return userFindRepository.findByEmail(email)
-                .orElseThrow( () -> new NoSuchElementException("해당 이메일을 가진 유저를 찾을 수 없습니다."));
+    public Optional<User> getUserByEmail(String email) {
+        return userFindRepository.findByEmail(email);
     }
 
     @Override
-    public User getUserByName(String name) {
-        return userFindRepository.findByName(name)
-                .orElseThrow( () -> new NoSuchElementException("해당 이름을 가진 유저를 찾을 수 없습니다."));
+    public Optional<User> getUserByName(String name) {
+        return userFindRepository.findByName(name);
     }
 
     @Override

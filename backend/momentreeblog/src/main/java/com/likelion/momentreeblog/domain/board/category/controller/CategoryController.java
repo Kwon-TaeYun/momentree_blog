@@ -19,20 +19,28 @@ public class CategoryController {
 
     // 카테고리 생성
     @PostMapping
-    public ResponseEntity<CategoryResponseDto> createCategory(@RequestBody CategoryCreateRequestDto requestDto) {
-        return ResponseEntity.ok(categoryService.createCategory(requestDto));
+    public ResponseEntity<?> createCategory(@RequestBody CategoryCreateRequestDto requestDto) {
+        try {
+            return ResponseEntity.ok(categoryService.createCategory(requestDto));
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.ok(e.getMessage())
+;        }
     }
 
     // 카테고리 단건 조회
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryResponseDto> getCategory(@PathVariable(name = "id") Long id) {
-        return ResponseEntity.ok(categoryService.getCategory(id));
+    public ResponseEntity<?> getCategory(@PathVariable(name = "id") Long id) {
+        try {
+            return ResponseEntity.ok(categoryService.getCategory(id));
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.ok(e.getMessage());
+        }
     }
 
     // 모든 카테고리 조회 (선택)
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDto>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+    public ResponseEntity<?> getAllCategories() {
+            return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
     // 카테고리 수정

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/v1/members")
 @RequiredArgsConstructor
@@ -19,20 +21,32 @@ public class UserFindApiV1Controller {
     private final UserFindService userFindService;
 
     @GetMapping("/id")
-    public ResponseEntity<UserResponse> getUserById(@RequestParam(name = "id") Long id){
-        User user = userFindService.getUserById(id);
-        return ResponseEntity.ok(UserResponse.from(user));
+    public ResponseEntity<?> getUserById(@RequestParam(name = "id") Long id){
+        Optional<User> user = userFindService.getUserById(id);
+        if(user.isEmpty()){
+            return ResponseEntity.ok("해당 아이디를 가진 유저를 찾을 수 없습니다.");
+        }else {
+            return ResponseEntity.ok(UserResponse.from(user.get()));
+        }
     }
 
     @GetMapping("/name")
-    public ResponseEntity<UserResponse> getUserByName(@RequestParam(name = "name") String name){
-        User user = userFindService.getUserByName(name);
-        return ResponseEntity.ok(UserResponse.from(user));
+    public ResponseEntity<?> getUserByName(@RequestParam(name = "name") String name){
+        Optional<User> user = userFindService.getUserByName(name);
+        if(user.isEmpty()){
+            return ResponseEntity.ok("해당 이름을 가진 유저를 찾을 수 없습니다.");
+        }else {
+            return ResponseEntity.ok(UserResponse.from(user.get()));
+        }
     }
 
     @GetMapping("/email")
-    public ResponseEntity<UserResponse> getUserByEmail(@RequestParam(name = "email") String email){
-        User user = userFindService.getUserByEmail(email);
-        return ResponseEntity.ok(UserResponse.from(user));
+    public ResponseEntity<?> getUserByEmail(@RequestParam(name = "email") String email){
+        Optional<User> user = userFindService.getUserByEmail(email);
+        if(user.isEmpty()){
+            return ResponseEntity.ok("해당 이메일을 가진 유저를 찾을 수 없습니다.");
+        }else {
+            return ResponseEntity.ok(UserResponse.from(user.get()));
+        }
     }
 }

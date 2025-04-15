@@ -86,39 +86,76 @@ public class UserApiV1Controller {
 
         return ResponseEntity.ok(userLoginResponseDto);
     }
-
-    //로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader, HttpServletResponse response) {
-        {
-            String accessToken = authorizationHeader;
-            try {
-                Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
-                User user = userService.findUserById(userId);
-                System.out.println(user);
-                user.setRefreshToken(null);
-                userService.editUser(user);
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader,
+                                    HttpServletResponse response) {
+        try {
+            // "Bearer {token}" → token만 추출
+            String accessToken = authorizationHeader.replace("Bearer ", "").trim();
 
-                // 로그아웃 시 쿠키 삭제 추가
-                Cookie cookie = new Cookie("accessToken", null);
-                cookie.setHttpOnly(true);
-                cookie.setPath("/");
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
+            Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
+            User user = userService.findUserById(userId);
 
-                Cookie refreshCookie = new Cookie("refreshToken", null);
-                refreshCookie.setHttpOnly(true);
-                refreshCookie.setPath("/");
-                refreshCookie.setMaxAge(0);
-                response.addCookie(refreshCookie);
-
-                return ResponseEntity.ok("로그아웃 되었습니다 !!");
-            } catch (Exception e) {
-                log.info(e.getMessage());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("존재하지 않는 사용자입니다.");
             }
+
+            user.setRefreshToken(null);
+            userService.editUser(user);
+
+            // 쿠키 삭제
+            Cookie accessCookie = new Cookie("accessToken", null);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setPath("/");
+            accessCookie.setMaxAge(0);
+            response.addCookie(accessCookie);
+
+            Cookie refreshCookie = new Cookie("refreshToken", null);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(0);
+            response.addCookie(refreshCookie);
+
+            return ResponseEntity.ok("로그아웃 되었습니다 !!");
+
+        } catch (Exception e) {
+            log.info("로그아웃 실패: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
     }
+
+    //로그아웃
+//    @PostMapping("/logout")
+//    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader, HttpServletResponse response) {
+//        {
+//            String accessToken = authorizationHeader;
+//            try {
+//                Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
+//                User user = userService.findUserById(userId);
+//                System.out.println(user);
+//                user.setRefreshToken(null);
+//                userService.editUser(user);
+//
+//                // 로그아웃 시 쿠키 삭제 추가
+//                Cookie cookie = new Cookie("accessToken", null);
+//                cookie.setHttpOnly(true);
+//                cookie.setPath("/");
+//                cookie.setMaxAge(0);
+//                response.addCookie(cookie);
+//
+//                Cookie refreshCookie = new Cookie("refreshToken", null);
+//                refreshCookie.setHttpOnly(true);
+//                refreshCookie.setPath("/");
+//                refreshCookie.setMaxAge(0);
+//                response.addCookie(refreshCookie);
+//
+//                return ResponseEntity.ok("로그아웃 되었습니다 !!");
+//            } catch (Exception e) {
+//                log.info(e.getMessage());
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+//            }
+//        }
+//    }
 }
 
 
