@@ -63,10 +63,10 @@ public class UserService {
         Blog blog = Blog.builder()
                 .name(dto.getBlogName())
                 .viewCount(0L)
-//                .user(user)
+                .user(user)
                 .build();
 
-//        user.setBlog(blog);
+        user.setBlog(blog);
         String refreshToken = jwtTokenizer.createRefreshToken(
                 user.getId(), // 아직 id가 없으므로 null (필요하다면 id 없이 생성하는 오버로드 만들 수도 있음)
                 user.getEmail(),
@@ -116,6 +116,36 @@ public class UserService {
     public String genAccessToken(User member) {
         return authTokenService.genAccessToken(member);
     }
+
+//    public User join_temp(String name, String email, String provider) {
+//        // 중복 사용자 체크
+//        userRepository.findByName(name).ifPresent(member -> {
+//            throw new RuntimeException("해당 username은 이미 사용중입니다.");
+//        });
+//
+//        // Role 조회
+//        Optional<Role> role = roleRepository.findById(2L);
+//
+//        // User 생성
+//        User member = User.builder()
+//                .name(name)
+//                .password(UUID.randomUUID().toString())
+//                .email(email)
+//                .refreshToken(UUID.randomUUID().toString())
+//                .oauth2Provider(provider)
+//                .roles(role.stream().toList())
+//                .build();
+//
+//        // Blog 생성 및 양방향 관계 설정
+//        Blog blog = Blog.builder()
+//                .name(name + "의 블로그")
+//                .build();
+//
+//        member.setBlog(blog); // 이 한 줄로 양방향 모두 설정됨 (위에서 편의 메서드 작성했다면)
+//
+//        // user 저장 (cascade = ALL이므로 blog도 함께 저장됨)
+//        return userRepository.save(member);
+//    }
 
     public User join(String name, String email, String provider) {
         // 중복 사용자 체크

@@ -3,6 +3,7 @@ package com.likelion.momentreeblog.global.util.security;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -16,6 +17,7 @@ import java.util.Map;
 //oauth2 추가
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserService userService;
     @Override
@@ -33,6 +35,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = attributesProperties.get("nickname");
         //String profileImgUrl = attributesProperties.get("profile_image");
         String name = providerTypeCode + "__" + oauthId;
+
+        log.info(providerTypeCode);
+
         //modifyOrJoin 추가: 서비스 회원가입
         User user = userService.modifyOrJoin(email, name, providerTypeCode);
         return new SecurityUser(

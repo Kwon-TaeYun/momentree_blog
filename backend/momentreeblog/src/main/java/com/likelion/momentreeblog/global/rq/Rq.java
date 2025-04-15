@@ -129,8 +129,10 @@ public class Rq {
         String accessToken = jwtTokenizer.createAccessToken(user.getId(),user.getEmail(),user.getName(),roleNames);
         String refreshToken = jwtTokenizer.createRefreshToken(user.getId(),user.getEmail(),user.getName(),roleNames);
 
-        user.setRefreshToken(refreshToken);
-        userRepository.save(user);
+        User persistentUser = userRepository.findById(user.getId()).orElseThrow();
+        persistentUser.setRefreshToken(refreshToken);
+// save 생략 가능 (@Transactional이면 dirty checking 됨)
+        userRepository.save(persistentUser);
 
         // setCookie("refreshToken", user.getRefreshToken());
         setCookie("accessToken", accessToken);
