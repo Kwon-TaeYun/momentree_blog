@@ -1,8 +1,14 @@
 export default function Home() {
-  console.log(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const socialLoginForKakaoUrl =
+    "http://localhost:8090/oauth2/authorization/kakao";
+  const redirectUrlAfterSocialLogin = "http://localhost:3000";
   return (
-    <div> 
-      <h1>home💡</h1>
+    <div className="flex-1 flex justify-center items-center">
+      <a
+        href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+      >
+        <span className="font-bold">카카오 로그인</span>
+      </a>
     </div>
   );
 }

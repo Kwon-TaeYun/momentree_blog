@@ -14,11 +14,20 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class Blog extends BaseEntity {
-    @OneToOne
-    @JoinColumn(name = "user_id")
+
+    @OneToOne(mappedBy = "blog")
     private User user;
+
     @Column(nullable = false)
     private String name;
+
     @Column(name = "view_count", columnDefinition = "BIGINT default 0")
     private Long viewCount;
+
+    public void setUser(User user) {
+        this.user = user;
+        if (user.getBlog() != this) {
+            user.setBlog(this);
+        }
+    }
 }
