@@ -41,7 +41,6 @@ public class S3ApiV1Controller {
     }
 
 
-
     //다중 파일 업로드용 프리사인 URL 제공 API
     @PostMapping("/multi-presigned-url")
     public ResponseEntity<?> getMultiPresignedUrl(@Valid @RequestBody PhotoUploadMultiRequestDto multiRequest,
@@ -56,13 +55,12 @@ public class S3ApiV1Controller {
         );
     }
 
-   
 
-// 기본 이미지 GET API
-@GetMapping("/default-image")
-public ResponseEntity<PreSignedUrlResponseDto> getDefaultImage() {
-    PreSignedUrlResponseDto response = s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
-    return ResponseEntity.ok(response);
-}
+    // 기본 이미지 GET API
+    @GetMapping("/default-image")
+    public ResponseEntity<PreSignedUrlResponseDto> getDefaultImage() {
+        PreSignedUrlResponseDto response = s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
+        return ResponseEntity.ok(response);
+    }
 
 }
