@@ -58,36 +58,51 @@ public class BlogApiV1Controller {
      * 블로그 수정
      */
     @PutMapping("/{id}")
-    public ResponseEntity<BlogResponseDto> updateBlog(
+    public ResponseEntity<?> updateBlog(
             @PathVariable(name = "id") Long id,
             @RequestBody BlogUpdateRequestDto requestDto, @RequestHeader(value = "Authorization") String authorization) {
         Long userId = jwtTokenizer.getUserIdFromToken(authorization);
 
-        // 블로그 조회
-        Blog blog = blogService.findById(id)
-                .orElseThrow();
+        Optional<Blog> optionalBlog = blogService.findById(id);
 
-        // 블로그 주인 검증
-        if (!blog.getUser().getId().equals(userId)) {
-            throw new AccessDeniedException("이 블로그를 수정할 권한이 없습니다."); // 403 권한 없음
+        if (optionalBlog.isEmpty()) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "블로그를 찾을 수 없습니다.");
+            return ResponseEntity.ok(body); // 200 OK + 메시지
         }
-        return ResponseEntity.ok(blogService.updateBlog(id, requestDto));
+
+        Blog blog = optionalBlog.get();
+
+        if (!blog.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "이 블로그를 수정할 권한이 없습니다."));
+        }
+
+        BlogResponseDto response = blogService.updateBlog(id, requestDto);
+        return ResponseEntity.ok(response);
     }
 
     /**
      * 블로그 삭제
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBlog(@PathVariable(name = "id") Long id, @RequestHeader(value = "Authorization") String authorization) {
+    public ResponseEntity<?> deleteBlog(@PathVariable(name = "id") Long id, @RequestHeader(value = "Authorization") String authorization) {
         Long userId = jwtTokenizer.getUserIdFromToken(authorization);
 
         // 블로그 조회
-        Blog blog = blogService.findById(id)
-                .orElseThrow(() -> new RuntimeException("해당 블로그를 찾을 수 없습니다."));
+        Optional<Blog> optionalBlog = blogService.findById(id);
 
-        // 블로그 주인 검증
+        if (optionalBlog.isEmpty()) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "블로그를 찾을 수 없습니다.");
+            return ResponseEntity.ok(body); // 200 OK + 메시지
+        }
+
+        Blog blog = optionalBlog.get();
+
         if (!blog.getUser().getId().equals(userId)) {
-            throw new AccessDeniedException("이 블로그를 수정할 권한이 없습니다."); // 403 권한 없음
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "이 블로그를 수정할 권한이 없습니다."));
         }
 
         blogService.deleteBlog(id);

@@ -16,7 +16,7 @@ public class GlobalExceptionError {
 
         // 메시지에 따라 적절한 상태코드 선택도 가능
         if (ex.getMessage().contains("블로그를 찾을 수 없습니다")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body); // 404
+            return ResponseEntity.status(HttpStatus.OK).body(body);
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body); // 기본은 400

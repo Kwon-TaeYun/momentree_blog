@@ -67,11 +67,18 @@ public class BlogService {
      * 블로그 수정
      */
     public BlogResponseDto updateBlog(Long id, BlogUpdateRequestDto requestDto) {
-        Blog blog = blogRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
+        Optional<Blog> optionalBlog = blogRepository.findById(id);
 
+        if (optionalBlog.isEmpty()) {
+            return BlogResponseDto.builder()
+                    .id(null)
+                    .name("블로그를 찾을 수 없습니다.")
+                    .viewCount(0L)
+                    .build();
+        }
+
+        Blog blog = optionalBlog.get();
         blog.setName(requestDto.getName());
-
         Blog updated = blogRepository.save(blog);
 
         return BlogResponseDto.builder()
