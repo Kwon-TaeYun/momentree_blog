@@ -22,32 +22,40 @@ public class BlogService {
     /**
      * 블로그 생성
      */
-    public BlogResponseDto createBlog(BlogCreateRequestDto requestDto) {
-        User user = userRepository.findById(requestDto.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        Blog blog = Blog.builder()
-                .name(requestDto.getName())
-                .user(user)
-                .viewCount(0L)
-                .build();
-
-        Blog saved = blogRepository.save(blog);
-
-        return BlogResponseDto.builder()
-                .id(saved.getId())
-                .name(saved.getName())
-                .viewCount(saved.getViewCount())
-                .build();
-    }
+//    public BlogResponseDto createBlog(BlogCreateRequestDto requestDto) {
+//        User user = userRepository.findById(requestDto.getUserId())
+//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+//
+//        Blog blog = Blog.builder()
+//                .name(requestDto.getName())
+//                .user(user)
+//                .viewCount(0L)
+//                .build();
+//
+//        Blog saved = blogRepository.save(blog);
+//
+//        return BlogResponseDto.builder()
+//                .id(saved.getId())
+//                .name(saved.getName())
+//                .viewCount(saved.getViewCount())
+//                .build();
+//    }
 
     /**
      * 블로그 단건 조회
      */
     public BlogResponseDto getBlog(Long id) {
-        Blog blog = blogRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
+        Optional<Blog> optionalBlog = blogRepository.findById(id);
 
+        if (optionalBlog.isEmpty()) {
+            return BlogResponseDto.builder()
+                    .id(null)
+                    .name("블로그를 찾을 수 없습니다.")
+                    .viewCount(0L)
+                    .build();
+        }
+
+        Blog blog = optionalBlog.get();
         return BlogResponseDto.builder()
                 .id(blog.getId())
                 .name(blog.getName())

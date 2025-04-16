@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/admin/api/v1")
+@RequestMapping("/api/v1/admin")
 @Slf4j
 public class RoleApiV1Controller {
     private final RoleService roleService;

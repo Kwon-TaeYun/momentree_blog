@@ -154,7 +154,7 @@ public class UserService {
         });
 
         // Role 조회
-        Optional<Role> role = roleRepository.findById(2L);
+        Optional<Role> role = roleRepository.findByName("ROLE_USER");
 
         // User 생성
         User member = User.builder()
@@ -166,9 +166,12 @@ public class UserService {
                 .roles(role.stream().toList())
                 .build();
 
+        log.info("user의 role :: " + member.getRoles().toString());
+
         // Blog 생성 및 양방향 관계 설정
         Blog blog = Blog.builder()
                 .name(name + "의 블로그")
+                .viewCount(0L)
                 .build();
 
         member.setBlog(blog); // 이 한 줄로 양방향 모두 설정됨 (위에서 편의 메서드 작성했다면)
