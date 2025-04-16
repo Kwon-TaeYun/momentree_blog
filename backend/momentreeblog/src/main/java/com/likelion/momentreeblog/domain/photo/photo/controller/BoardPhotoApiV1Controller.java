@@ -5,8 +5,8 @@ import com.likelion.momentreeblog.domain.photo.photo.dto.board.AdditionalPhotoSa
 import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
-import com.likelion.momentreeblog.domain.photo.photo.service.BoardPhotoService;
-import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
+import com.likelion.momentreeblog.domain.photo.photo.service.board.BoardPhotoService;
+import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadMultiRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/V3/board/{boardId}/photos")
 @RequiredArgsConstructor
-public class BoardPhotoApiV3Controller {
+public class BoardPhotoApiV1Controller {
 
-    private final PhotoV2Service photoService;
+    private final PhotoV1Service photoService;
     private final BoardPhotoService boardPhotoService;
 
     // 게시글 대표 사진 업로드용 presigned URL 생성

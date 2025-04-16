@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.photo.photo.service;
+package com.likelion.momentreeblog.domain.photo.photo.service.board;
 
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;

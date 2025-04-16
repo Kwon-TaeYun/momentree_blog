@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.photo.photo.service;
+package com.likelion.momentreeblog.domain.photo.photo.service.profile;
 
 import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;

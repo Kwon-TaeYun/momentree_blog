@@ -3,7 +3,7 @@ package com.likelion.momentreeblog.domain.photo.photo.controller;
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
-import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
+import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +16,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/V3/profile/photos")
 @RequiredArgsConstructor
-public class ProfilePhotoApiV3Controller {
+public class ProfilePhotoApiV1Controller {
 
-    private final PhotoV2Service photoService;
+    private final PhotoV1Service photoService;
 
 
     // 프로필 사진 업로드용 presigned URL 생성

@@ -1,6 +1,6 @@
 package com.likelion.momentreeblog.domain.s3.controller;
 
-import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
+import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadMultiRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlMultiResponseDto;
@@ -20,7 +20,7 @@ import java.util.List;
 public class S3ApiV1Controller {
 
     private final S3V1Service s3V1Service;
-    private final PhotoV2Service photoV2Service;
+    private final PhotoV1Service photoV1Service;
 
     private static final String DEFAULT_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
 
