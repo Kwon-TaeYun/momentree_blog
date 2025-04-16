@@ -8,7 +8,7 @@ export default function Home() {
     "http://localhost:8090/oauth2/authorization/kakao";
   const redirectUrlAfterSocialLogin = "http://localhost:3000";
   return (
-    <main className="flex flex-col min-h-screen bg-white">
+    <main className="flex flex-col min-h-screen bg-white text-black">
       {/* 헤더 */}
       <header className="border-b py-3 px-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -19,18 +19,18 @@ export default function Home() {
             height={46}
             className="object-contain"
           />
-          <span className="font-medium">Momentree</span>
+          <span className="font-medium text-black">Momentree</span>
         </div>
         <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">로그인</button>
       </header>
 
       {/* 메인 컨텐츠 */}
       <section className="flex-1 flex flex-col items-center justify-center px-4 text-center max-w-3xl mx-auto py-16">
-        <h1 className="text-3xl font-bold mb-4">
+        <h1 className="text-3xl font-bold mb-4 text-black">
           당신의 순간을<br />
           나무처럼 키워보세요
         </h1>
-        <p className="text-gray-600 mb-8 text-sm">
+        <p className="mb-8 text-sm text-black">
           매일의 순간들을 기록하고 성장하는 나만의 이야기를 만들어보세요. 당신의 소중한 순간이 한 나의 나무가 되어 자라납니다.
         </p>
         <div className="flex gap-4">
@@ -40,7 +40,7 @@ export default function Home() {
           >
             시작하기
           </a>
-          <button className="border border-gray-300 px-6 py-2 rounded-md font-medium">
+          <button className="border border-gray-300 px-6 py-2 rounded-md font-medium text-black">
             더 알아보기
           </button>
         </div>
@@ -53,11 +53,11 @@ export default function Home() {
             <div className="w-8 h-8 bg-white/30 rounded"></div>
           </div>
           <div>
-            <p className="text-sm text-gray-500 mb-1">특별한 기록</p>
-            <h2 className="text-2xl font-bold">당신의 순간을 특별하게 만드는 방법</h2>
+            <p className="text-sm text-black mb-1">특별한 기록</p>
+            <h2 className="text-2xl font-bold text-black">당신의 순간을 특별하게 만드는 방법</h2>
           </div>
         </div>
-        <p className="text-gray-600 mb-12">매일매일의 순간들을 기록하고 성장하는 과정을 시작적으로 확인해보세요.</p>
+        <p className="mb-12 text-black">매일매일의 순간들을 기록하고 성장하는 과정을 시작적으로 확인해보세요.</p>
         
         {/* 4개의 기능 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -68,8 +68,8 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold mb-2">성장하는 나무</h3>
-              <p className="text-sm text-gray-600">기록에 열정있을 창선하여 나무가 자라납니다. 매일의 작은 순간들이 모여 여름에는 나무를 완성시킵니다.</p>
+              <h3 className="font-bold mb-2 text-black">성장하는 나무</h3>
+              <p className="text-sm text-black">기록에 열정있을 창선하여 나무가 자라납니다. 매일의 작은 순간들이 모여 여름에는 나무를 완성시킵니다.</p>
             </div>
           </div>
           
@@ -80,8 +80,8 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold mb-2">시간의 기록</h3>
-              <p className="text-sm text-gray-600">당해시점 만난적 있는 당신의 기록들. 지난 순간들을 쉽게 돌아보고 회상할 수 있습니다.</p>
+              <h3 className="font-bold mb-2 text-black">시간의 기록</h3>
+              <p className="text-sm text-black">당해시점 만난적 있는 당신의 기록들. 지난 순간들을 쉽게 돌아보고 회상할 수 있습니다.</p>
             </div>
           </div>
           
@@ -92,8 +92,8 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold mb-2">함께하는 순간</h3>
-              <p className="text-sm text-gray-600">다른 사람들의 순간을 공유하고 소통하세요. 서로의 이야기로 더욱 풍성해지는 순간들을 경험하세요.</p>
+              <h3 className="font-bold mb-2 text-black">함께하는 순간</h3>
+              <p className="text-sm text-black">다른 사람들의 순간을 공유하고 소통하세요. 서로의 이야기로 더욱 풍성해지는 순간들을 경험하세요.</p>
             </div>
           </div>
           
@@ -104,8 +104,8 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold mb-2">성장의 통계</h3>
-              <p className="text-sm text-gray-600">당신의 기록 패턴과 성장을 한눈에 확인할 수 있는 통계 기능을 제공합니다.</p>
+              <h3 className="font-bold mb-2 text-black">성장의 통계</h3>
+              <p className="text-sm text-black">당신의 기록 패턴과 성장을 한눈에 확인할 수 있는 통계 기능을 제공합니다.</p>
             </div>
           </div>
         </div>
@@ -113,13 +113,13 @@ export default function Home() {
       
       {/* 인기 블로거 섹션 */}
       <section className="py-12 px-4 max-w-6xl mx-auto w-full">
-        <h2 className="text-xl font-bold mb-6">인기 블로거</h2>
+        <h2 className="text-xl font-bold mb-6 text-black">인기 블로거</h2>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {[1, 2, 3, 4].map((item) => (
             <div key={item} className="flex flex-col items-center min-w-[80px]">
               <div className="w-16 h-16 rounded-full bg-gray-300 mb-2"></div>
-              <p className="text-sm font-medium">사용자명</p>
-              <p className="text-xs text-gray-500">팔로워 {Math.floor(Math.random() * 100)}명</p>
+              <p className="text-sm font-medium text-black">사용자명</p>
+              <p className="text-xs text-black">팔로워 {Math.floor(Math.random() * 100)}명</p>
             </div>
           ))}
         </div>
@@ -127,7 +127,7 @@ export default function Home() {
       
       {/* 인기 콘텐츠 섹션 */}
       <section className="py-12 px-4 max-w-6xl mx-auto w-full">
-        <h2 className="text-xl font-bold mb-6">인기 콘텐츠</h2>
+        <h2 className="text-xl font-bold mb-6 text-black">인기 콘텐츠</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {[
             { title: '오늘의 카페 탐방', likes: '2.1k', comments: '324' },
@@ -137,8 +137,8 @@ export default function Home() {
             <div key={idx} className="rounded-lg overflow-hidden border">
               <div className="h-48 bg-gray-200"></div>
               <div className="p-4">
-                <h3 className="font-medium mb-2">{content.title}</h3>
-                <div className="flex text-sm text-gray-500 gap-4">
+                <h3 className="font-medium mb-2 text-black">{content.title}</h3>
+                <div className="flex text-sm text-black gap-4">
                   <span className="flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
@@ -160,7 +160,7 @@ export default function Home() {
       
       {/* 실시간 인기글 섹션 */}
       <section className="py-12 px-4 max-w-6xl mx-auto w-full">
-        <h2 className="text-xl font-bold mb-6">실시간 인기글</h2>
+        <h2 className="text-xl font-bold mb-6 text-black">실시간 인기글</h2>
         <div className="space-y-4">
           {[
             { title: '주말 피크닉 명소 추천', location: '서울 강남', likes: 42, comments: 238 },
@@ -169,9 +169,9 @@ export default function Home() {
             <div key={idx} className="flex gap-4 border-b pb-4">
               <div className="w-16 h-16 bg-gray-200 rounded-md"></div>
               <div className="flex-1">
-                <h3 className="font-medium mb-1">{post.title}</h3>
-                <p className="text-xs text-gray-500 mb-2">{post.location}</p>
-                <div className="flex text-xs text-gray-500 gap-3">
+                <h3 className="font-medium mb-1 text-black">{post.title}</h3>
+                <p className="text-xs text-black mb-2">{post.location}</p>
+                <div className="flex text-xs text-black gap-3">
                   <span className="flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
@@ -195,38 +195,38 @@ export default function Home() {
       <footer className="bg-gray-50 py-12 mt-12">
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-medium mb-4 text-sm">서비스</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <h3 className="font-medium mb-4 text-sm text-black">서비스</h3>
+            <ul className="space-y-2 text-sm text-black">
               <li>기능 소개</li>
               <li>이용 가이드</li>
               <li>요금제</li>
             </ul>
           </div>
           <div>
-            <h3 className="font-medium mb-4 text-sm">고객지원</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <h3 className="font-medium mb-4 text-sm text-black">고객지원</h3>
+            <ul className="space-y-2 text-sm text-black">
               <li>자주 묻는 질문</li>
               <li>문의하기</li>
               <li>피드백</li>
             </ul>
           </div>
           <div>
-            <h3 className="font-medium mb-4 text-sm">정책</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <h3 className="font-medium mb-4 text-sm text-black">정책</h3>
+            <ul className="space-y-2 text-sm text-black">
               <li>소개</li>
               <li>블로그</li>
               <li>채용</li>
             </ul>
           </div>
           <div>
-            <h3 className="font-medium mb-4 text-sm">법적 고지</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <h3 className="font-medium mb-4 text-sm text-black">법적 고지</h3>
+            <ul className="space-y-2 text-sm text-black">
               <li>개인정보처리방침</li>
               <li>이용약관</li>
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto px-4 mt-8 pt-8 border-t text-center text-sm text-gray-500">
+        <div className="max-w-6xl mx-auto px-4 mt-8 pt-8 border-t text-center text-sm text-black">
           © 2024 webMoment. All rights reserved.
         </div>
       </footer>
