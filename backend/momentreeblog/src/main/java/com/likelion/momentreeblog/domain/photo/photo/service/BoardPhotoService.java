@@ -30,7 +30,7 @@ public class BoardPhotoService {
     private final UserRepository userRepository;
 
     private static final int MAX_ADDITIONAL_PHOTOS = 10;
-    private static final String DEFAULT_BOARD_IMAGE_URL = "default/board/default_board.png";
+    private static final String DEFAULT_BOARD_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
 
 
     // 게시글 대표 사진 업로드
@@ -80,7 +80,6 @@ public class BoardPhotoService {
     }
 
 
-
     // 게시글의 모든 사진 조회 (대표 + 추가)
     @Transactional(readOnly = true)
     public BoardPhotoResponseDto getBoardPhotos(Long boardId) {
@@ -89,7 +88,7 @@ public class BoardPhotoService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시물이 존재하지 않습니다"));
 
         Photo mainPhoto = board.getCurrentMainPhoto();
-        
+
         // 메인 사진이 없는 경우 기본 이미지 URL 사용
         PreSignedUrlResponseDto mainPhotoUrl;
         if (mainPhoto == null) {
@@ -126,7 +125,6 @@ public class BoardPhotoService {
     }
 
 
-
     // 게시글의 대표 사진만 조회
     @Transactional(readOnly = true)
     public PreSignedUrlResponseDto getBoardMainPhoto(Long boardId) {
@@ -145,7 +143,6 @@ public class BoardPhotoService {
     }
 
 
-
     // 모든 게시물의 현재 대표 사진 조회
     @Transactional(readOnly = true)
     public List<PreSignedUrlResponseDto> getAllCurrentMainPhotosByUser(Long userId) {
@@ -159,8 +156,10 @@ public class BoardPhotoService {
         for (Board board : userBoards) {
             Photo currentMainPhoto = board.getCurrentMainPhoto();
 
-            // 현재 대표 사진이 있는 경우에만 결과에 추가
-            if (currentMainPhoto != null) {
+            // 현재 대표 사진이 없는 경우 기본 이미지 사용
+            if (currentMainPhoto == null) {
+                result.add(s3V1Service.generateGetPresignedUrl(DEFAULT_BOARD_IMAGE_URL));
+            } else {
                 result.add(s3V1Service.generateGetPresignedUrl(currentMainPhoto.getUrl()));
             }
         }
@@ -191,8 +190,8 @@ public class BoardPhotoService {
 
         Board board = boardRepository.findById(boardId).get();
 
-        if (board.getCurrentMainPhoto() != null && 
-            mainPhotos.stream().anyMatch(photo -> photo.getId().equals(board.getCurrentMainPhoto().getId()))) {
+        if (board.getCurrentMainPhoto() != null &&
+                mainPhotos.stream().anyMatch(photo -> photo.getId().equals(board.getCurrentMainPhoto().getId()))) {
             board.setCurrentMainPhoto(null);
             boardRepository.save(board);
         }
@@ -201,68 +200,65 @@ public class BoardPhotoService {
     }
 
 
-
     // 게시글 대표 사진 기본 이미지로 변경
     @Transactional
     public void changeToDefaultBoardPhoto(Long userId, Long boardId) {
         // 게시글 존재 여부 및 권한 확인
         verifyBoardAndUser(boardId, userId);
-        
+
         Board board = boardRepository.findById(boardId).get();
-        
+
         // 현재 대표 사진 정보 가져오기
         Photo currentMainPhoto = board.getCurrentMainPhoto();
-        
+
         // 현재 대표 사진이 이미 null이라면 아무 작업도 수행하지 않음
         if (currentMainPhoto == null) {
             return;
         }
-        
+
         // 현재 대표 사진 null로 설정 (기본 이미지로 표시됨)
         board.setCurrentMainPhoto(null);
         boardRepository.save(board);
     }
-    
 
-    
+
     // 추가 사진 중 하나를 대표 사진으로 변경
     @Transactional
     public void changeAdditionalToMainPhoto(Long userId, Long boardId, Long photoId) {
         // 게시글 권한 확인
         verifyBoardAndUser(boardId, userId);
-        
+
         Board board = boardRepository.findById(boardId).get();
-        
+
         // 사진 존재 확인
         Photo additionalPhoto = photoRepository.findById(photoId)
                 .orElseThrow(() -> new NoSuchElementException("사진이 존재하지 않습니다. (ID: " + photoId + ")"));
-        
+
         // 해당 사진이 요청한 게시글의 것인지 확인
         if (!additionalPhoto.getBoard().getId().equals(boardId)) {
             throw new IllegalArgumentException("해당 사진은 지정된 게시글에 속하지 않습니다.");
         }
-        
+
         // 추가 사진인지 확인
         if (additionalPhoto.getType() != PhotoType.ADDITIONAL) {
             throw new IllegalArgumentException("추가 사진만 대표 사진으로 변경할 수 있습니다.");
         }
-        
+
         // 해당 사진 타입을 MAIN으로 변경
         additionalPhoto.setType(PhotoType.MAIN);
         photoRepository.save(additionalPhoto);
-        
+
         // 현재 대표 사진을 추가 사진으로 변경 (있는 경우)
         Photo currentMainPhoto = board.getCurrentMainPhoto();
         if (currentMainPhoto != null) {
             currentMainPhoto.setType(PhotoType.ADDITIONAL);
             photoRepository.save(currentMainPhoto);
         }
-        
+
         // 새로운 대표 사진으로 설정
         board.setCurrentMainPhoto(additionalPhoto);
         boardRepository.save(board);
     }
-
 
 
     // 게시글 존재 확인 및 유저가 게시글을 작성했는지 확인하는 메서드
@@ -281,7 +277,7 @@ public class BoardPhotoService {
         // 게시글 조회 및 권한 검증
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new NoSuchElementException("해당 게시물을 찾을 수 없습니다. (ID: " + boardId + ")"));
-        
+
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다."));
 
@@ -314,5 +310,69 @@ public class BoardPhotoService {
                 .boardId(board.getId())
                 .userId(user.getId())
                 .build();
+    }
+
+
+    // S3 키를 이용하여 게시글 추가 사진 여러 장 업데이트
+    @Transactional
+    public List<PhotoUploadResponseDto> updateBoardAdditionalPhotosWithS3Keys(Long boardId, List<String> s3Keys, PhotoUploadRequestDto request) {
+        // 게시글 조회 및 권한 검증
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new NoSuchElementException("해당 게시물을 찾을 수 없습니다. (ID: " + boardId + ")"));
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다."));
+
+        // 게시글과 사용자의 관계 검증
+        verifyBoardAndUser(boardId, user.getId());
+
+        // 결과를 담을 리스트
+        List<Photo> newPhotos = new ArrayList<>();
+        boolean needMainPhoto = board.getCurrentMainPhoto() == null && !s3Keys.isEmpty();
+
+        // 모든 S3 키에 대해 Photo 엔티티 생성
+        for (int i = 0; i < s3Keys.size(); i++) {
+            PhotoType photoType = PhotoType.ADDITIONAL;
+
+            // 첫 번째 사진이고 대표 사진이 필요한 경우에만 MAIN으로 설정
+            if (i == 0 && needMainPhoto) {
+                photoType = PhotoType.MAIN;
+            }
+
+            Photo newPhoto = Photo.builder()
+                    .type(photoType)
+                    .url(s3Keys.get(i))
+                    .user(user)
+                    .board(board)
+                    .build();
+
+            newPhotos.add(newPhoto);
+        }
+
+        // 모든 사진을 한 번에 DB에 저장
+        List<Photo> savedPhotos = photoRepository.saveAll(newPhotos);
+
+        // 대표 사진 설정이 필요한 경우
+        if (needMainPhoto && !savedPhotos.isEmpty()) {
+            Photo mainPhoto = savedPhotos.getFirst(); // 첫 번째 사진이 대표 사진
+            board.setCurrentMainPhoto(mainPhoto);
+            boardRepository.save(board);
+        }
+
+        // 결과 DTO 생성
+        List<PhotoUploadResponseDto> results = new ArrayList<>();
+        for (Photo savedPhoto : savedPhotos) {
+            PreSignedUrlResponseDto urlDto = s3V1Service.generateGetPresignedUrl(savedPhoto.getUrl());
+
+            results.add(PhotoUploadResponseDto.builder()
+                    .id(savedPhoto.getId())
+                    .url(urlDto.getUrl())
+                    .photoType(savedPhoto.getType())
+                    .boardId(board.getId())
+                    .userId(user.getId())
+                    .build());
+        }
+
+        return results;
     }
 } 

@@ -1,9 +1,11 @@
 package com.likelion.momentreeblog.domain.photo.photo.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
+import com.likelion.momentreeblog.domain.photo.photo.dto.board.AdditionalPhotoSaveRequest;
 import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
+import com.likelion.momentreeblog.domain.photo.photo.service.BoardPhotoService;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadMultiRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
@@ -13,8 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/V3/board/{boardId}/photos")
@@ -22,6 +24,7 @@ import java.util.List;
 public class BoardPhotoApiV3Controller {
 
     private final PhotoV2Service photoService;
+    private final BoardPhotoService boardPhotoService;
 
     // 게시글 대표 사진 업로드용 presigned URL 생성
     @PostMapping("/main/upload")
@@ -33,27 +36,27 @@ public class BoardPhotoApiV3Controller {
         if (request.getPhotoType() != PhotoType.MAIN) {
             return ResponseEntity.badRequest().build();
         }
-        
+
         Long userId = userDetails.getUserId();
         return ResponseEntity.ok(photoService.uploadPhoto(request, userId, boardId));
     }
-    
+
     // 게시글 대표 사진 S3 업로드 완료 후 DB 저장
     @PutMapping("/update")
     public ResponseEntity<PhotoUploadResponseDto> updateBoardMainPhoto(
             @PathVariable Long boardId,
             @RequestParam("s3Key") String s3Key,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        
+
         Long userId = userDetails.getUserId();
-        
+
         // Builder 패턴으로 DTO 생성
         PhotoUploadRequestDto request = PhotoUploadRequestDto.builder()
                 .userId(userId)
                 .boardId(boardId)
                 .photoType(PhotoType.MAIN)
                 .build();
-        
+
         return ResponseEntity.ok(photoService.updatePhotoWithS3Key(PhotoType.MAIN, userId, boardId, s3Key, request));
     }
 
@@ -63,36 +66,39 @@ public class BoardPhotoApiV3Controller {
             @PathVariable Long boardId,
             @RequestBody PhotoUploadMultiRequestDto request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        
+
         Long userId = userDetails.getUserId();
         return ResponseEntity.ok(photoService.uploadPhotos(request.getPhotos(), userId, boardId));
     }
 
-    
-    // 게시글 추가 사진 S3 업로드 완료 후 DB 저장 (다중)
+
     @PutMapping("/update/additional")
     public ResponseEntity<List<PhotoUploadResponseDto>> updateBoardAdditionalPhotos(
             @PathVariable Long boardId,
             @RequestBody List<AdditionalPhotoSaveRequest> requests,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        
+
         Long userId = userDetails.getUserId();
-        
-        List<PhotoUploadResponseDto> results = new ArrayList<>();
-        for (AdditionalPhotoSaveRequest request : requests) {
-            // Builder 패턴으로 DTO 생성
-            PhotoUploadRequestDto photoRequest = PhotoUploadRequestDto.builder()
-                    .photoType(PhotoType.ADDITIONAL)
-                    .userId(userId)
-                    .boardId(boardId)
-                    .build();
-            
-            // S3 키를 사용하여 추가 사진 업데이트
-            results.add(photoService.updatePhotoWithS3Key(PhotoType.ADDITIONAL, userId, boardId, request.getS3Key(), photoRequest));
-        }
-        
+
+        // S3 키 목록 추출
+        List<String> s3Keys = requests.stream()
+                .map(AdditionalPhotoSaveRequest::getS3Key)
+                .collect(Collectors.toList());
+
+        // 기본 요청 정보 생성
+        PhotoUploadRequestDto photoRequest = PhotoUploadRequestDto.builder()
+                .photoType(PhotoType.ADDITIONAL)
+                .userId(userId)
+                .boardId(boardId)
+                .build();
+
+        // BoardPhotoService를 사용하여 여러 사진을 한 번에 처리
+        List<PhotoUploadResponseDto> results = boardPhotoService.updateBoardAdditionalPhotosWithS3Keys(
+                boardId, s3Keys, photoRequest);
+
         return ResponseEntity.ok(results);
     }
+
 
     // 게시글의 대표 사진 조회
     @GetMapping("/main")
@@ -109,7 +115,6 @@ public class BoardPhotoApiV3Controller {
         Long userId = userDetails.getUserId();
         return ResponseEntity.ok(photoService.getProfileOrMainPhotos(PhotoType.MAIN, userId));
     }
-
 
 
     // 게시글의 모든 사진 조회 (대표 + 추가)
@@ -162,13 +167,4 @@ public class BoardPhotoApiV3Controller {
     }
 
 
-
-    // 추가 사진 저장 요청 DTO
-    public static class AdditionalPhotoSaveRequest {
-        private String s3Key;
-
-        public String getS3Key() {
-            return s3Key;
-        }
-    }
 } 

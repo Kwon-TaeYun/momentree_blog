@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.s3.contorller;
+package com.likelion.momentreeblog.domain.s3.controller;
 
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadMultiRequestDto;
@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,6 +21,8 @@ public class S3ApiV1Controller {
 
     private final S3V1Service s3V1Service;
     private final PhotoV2Service photoV2Service;
+
+    private static final String DEFAULT_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
 
     //프리사인 URL 요청 엔드포인트
     //클라이언트는 사진 업로드 전 이 API를 호출해 S3에 PUT 요청할 수 있는 URL과 key를 받습니다.
@@ -56,5 +55,14 @@ public class S3ApiV1Controller {
                 PreSignedUrlMultiResponseDto.builder().urls(urls).build()
         );
     }
+
+   
+
+// 기본 이미지 GET API
+@GetMapping("/default-image")
+public ResponseEntity<PreSignedUrlResponseDto> getDefaultImage() {
+    PreSignedUrlResponseDto response = s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
+    return ResponseEntity.ok(response);
+}
 
 }

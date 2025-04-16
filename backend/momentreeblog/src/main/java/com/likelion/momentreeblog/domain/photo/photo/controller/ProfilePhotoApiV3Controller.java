@@ -82,7 +82,7 @@ public class ProfilePhotoApiV3Controller {
 
 
     // 프로필 사진을 기본 이미지로 변경
-    @PutMapping("/change/default-image")
+    @PutMapping("/reset/profile")
     public ResponseEntity<String> changeToDefaultProfilePhoto(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();

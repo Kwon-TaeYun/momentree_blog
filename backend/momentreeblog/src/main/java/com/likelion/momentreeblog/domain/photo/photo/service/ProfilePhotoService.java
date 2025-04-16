@@ -25,7 +25,7 @@ public class ProfilePhotoService {
     private final UserRepository userRepository;
 
     // 기본 프로필 이미지 URL (S3에 미리 업로드된 기본 이미지 URL)
-    private static final String DEFAULT_PROFILE_IMAGE_URL = "default/profile/default_profile.png";
+    private static final String DEFAULT_PROFILE_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
 
     
     // 프로필 사진 업로드
@@ -61,15 +61,22 @@ public class ProfilePhotoService {
 
     // 사용자의 모든 프로필 사진 히스토리 조회
     @Transactional(readOnly = true)
-    public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
-        List<Photo> profilePhotos = photoRepository.findByUser_IdAndType(userId, PhotoType.PROFILE);
-        
-        List<PreSignedUrlResponseDto> result = new ArrayList<>();
+public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
+    List<Photo> profilePhotos = photoRepository.findByUser_IdAndType(userId, PhotoType.PROFILE);
+    
+    List<PreSignedUrlResponseDto> result = new ArrayList<>();
+    
+    // 프로필 사진이 없는 경우 기본 이미지 추가
+    if (profilePhotos.isEmpty()) {
+        result.add(s3V1Service.generateGetPresignedUrl(DEFAULT_PROFILE_IMAGE_URL));
+    } else {
         for (Photo photo : profilePhotos) {
             result.add(s3V1Service.generateGetPresignedUrl(photo.getUrl()));
         }
-        return result;
     }
+    
+    return result;
+}
 
 
     // 프로필 사진 삭제
