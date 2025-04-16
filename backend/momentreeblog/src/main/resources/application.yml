@@ -44,10 +44,18 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
         default_batch_fetch_size: 100
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB  #업로드할 수 있는 개별 파일의 최대 크기. 기본 1MB
+      max-request-size: 10MB #multipart/form-data 요청의 최대 허용 크기. 기본 10MB
+
+
 
 logging:
   level:
@@ -70,4 +78,3 @@ custom:
     cookieDomain: "${custom.dev.cookieDomain}"
     frontUrl: "${custom.dev.frontUrl}"
     backUrl: "${custom.dev.backUrl}"
-
