@@ -1,5 +1,7 @@
 package com.likelion.momentreeblog.global.jpa;
 
+
+public class BaseEntity {
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
