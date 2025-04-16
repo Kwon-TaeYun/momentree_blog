@@ -58,8 +58,8 @@ public class BoardService {
 
         board.setTitle(requestDto.getTitle());
         board.setContent(requestDto.getContent());
-        board.setMainPhotoId(requestDto.getMainPhotoId());
-        board.setPhotoSavedUrl(requestDto.getPhotoSavedUrl());
+        board.setCurrentMainPhoto(requestDto.getCurrentMainPhoto());
+        board.setPhotos(requestDto.getPhotos());
 
         Board updatedBoard = boardRepository.save(board);
         return "게시글 수정 완료 (" + updatedBoard.getTitle() + ")";

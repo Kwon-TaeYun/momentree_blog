@@ -1,13 +1,12 @@
 package com.likelion.momentreeblog.config;
+
 import com.likelion.momentreeblog.config.security.CustomAuthenticationFilter;
-//import com.likelion.momentreeblog.config.security.exception.CustomAuthenticationEntryPoint;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import com.likelion.momentreeblog.global.util.security.CustomAuthorizationRequestResolver;
 import com.likelion.momentreeblog.global.util.security.CustomOAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,7 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,6 +24,7 @@ import java.util.List;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+
     private final JwtTokenizer jwtTokenizer;
     //private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomOAuth2AuthenticationSuccessHandler customOAuth2AuthenticationSuccessHandler;
@@ -81,6 +80,7 @@ public class SecurityConfig {
         config.addAllowedOrigin("*"); //http://example.com
         config.addAllowedHeader("*"); //content-type 같은 헤더 정보
         config.addAllowedMethod("*");
+        config.setAllowedOrigins(List.of("http://localhost:8080"));
         config.addAllowedOrigin("http://localhost:3000");
         config.setAllowedMethods(List.of("GET","POST","DELETE"));
         source.registerCorsConfiguration("/**",config);

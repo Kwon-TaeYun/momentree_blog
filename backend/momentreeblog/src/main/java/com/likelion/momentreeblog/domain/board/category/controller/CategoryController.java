@@ -82,6 +82,7 @@ public class CategoryController {
         }
     }
 
+    //카테고리 삭제
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<?> deleteCategory(@PathVariable(name = "categoryId") Long categoryId,
                                             @RequestHeader("Authorization") String authHeader) {

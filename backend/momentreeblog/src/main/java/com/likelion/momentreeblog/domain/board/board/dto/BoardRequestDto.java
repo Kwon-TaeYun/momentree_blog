@@ -1,10 +1,11 @@
 package com.likelion.momentreeblog.domain.board.board.dto;
 
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+
+import java.util.List;
 
 @Data
 public class BoardRequestDto {
@@ -15,9 +16,9 @@ public class BoardRequestDto {
     private String content;
 
     @NotNull(message = "대표 사진이 없습니다.")
-    private Long mainPhotoId;
+    private Photo currentMainPhoto;
 
-    private String photoSavedUrl;
+    private List<Photo> photos;
 
     private Long categoryId;
 

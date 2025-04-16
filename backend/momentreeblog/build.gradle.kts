@@ -60,6 +60,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
 
+
+	//s3을 위한 설정
+	implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
+	implementation("software.amazon.awssdk:s3:2.20.16")
 }
 
 tasks.withType<Test> {
