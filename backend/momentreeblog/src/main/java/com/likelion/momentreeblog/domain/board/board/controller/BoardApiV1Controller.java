@@ -76,9 +76,13 @@ public class BoardApiV1Controller {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BoardListResponseDto>> getBoards() {
+    public ResponseEntity<?> getBoards() {
         Page<BoardListResponseDto> boards = boardService.getBoardList();
-        return  ResponseEntity.ok(boards);
+        if(boards.isEmpty()){
+            return ResponseEntity.ok("게시판이 없습니다.");
+        }else {
+            return ResponseEntity.ok(boards);
+        }
     }
 
     @GetMapping("/search")
@@ -87,7 +91,7 @@ public class BoardApiV1Controller {
 
         if (result.isEmpty()) {
             return ResponseEntity
-                    .status(404)
+                    .status(200)
                     .body("검색 결과가 없습니다.");
         }
 
@@ -132,7 +136,11 @@ public class BoardApiV1Controller {
     ) {
         try {
             Page<CommentDto> comments = commentService.getCommentsByBoardId(boardId, page);
-            return ResponseEntity.ok(comments);
+            if(comments.isEmpty()){
+                return ResponseEntity.ok("댓글이 없습니다.");
+            }else {
+                return ResponseEntity.ok(comments);
+            }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {

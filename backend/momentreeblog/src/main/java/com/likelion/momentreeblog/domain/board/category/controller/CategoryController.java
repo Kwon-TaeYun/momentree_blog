@@ -4,6 +4,9 @@ import com.likelion.momentreeblog.domain.board.category.dto.CategoryCreateReques
 import com.likelion.momentreeblog.domain.board.category.dto.CategoryUpdateRequestDto;
 import com.likelion.momentreeblog.domain.board.category.dto.CategoryResponseDto;
 import com.likelion.momentreeblog.domain.board.category.service.CategoryService;
+import com.likelion.momentreeblog.domain.user.user.entity.User;
+import com.likelion.momentreeblog.domain.user.user.service.UserService;
+import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,22 +19,37 @@ import java.util.List;
 public class CategoryController {
 
     private final CategoryService categoryService;
+    private final JwtTokenizer jwtTokenizer;
+    private final UserService userService;
+    //여기서 id는 블로그 id
 
     // 카테고리 생성
-    @PostMapping
-    public ResponseEntity<?> createCategory(@RequestBody CategoryCreateRequestDto requestDto) {
+    @PostMapping("/{id}")
+    public ResponseEntity<?> createCategory(@RequestBody CategoryCreateRequestDto requestDto,
+                                            @PathVariable(name = "id") Long id,
+                                            @RequestHeader("Authorization") String authorizationHeader) {
+        Long userId = jwtTokenizer.getUserIdFromToken(authorizationHeader);
+        User user = userService.findUserById(userId);
+        Long userBlogId = user.getBlog().getId();
+
         try {
-            return ResponseEntity.ok(categoryService.createCategory(requestDto));
-        }catch (IllegalArgumentException e){
-            return ResponseEntity.ok(e.getMessage())
-;        }
+            if (userBlogId.equals(id)) {
+                CategoryResponseDto response = categoryService.createCategory(id, requestDto);
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(401).body("권한이 없습니다.");
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
     }
 
+
     // 카테고리 단건 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getCategory(@PathVariable(name = "id") Long id) {
+    @GetMapping("/{id}/{categoryId}")
+    public ResponseEntity<?> getCategory(@PathVariable(name = "id") Long id, @PathVariable(name = "categoryId") Long categoryId) {
         try {
-            return ResponseEntity.ok(categoryService.getCategory(id));
+            return ResponseEntity.ok(categoryService.getCategory(categoryId));
         }catch (IllegalArgumentException e){
             return ResponseEntity.ok(e.getMessage());
         }
@@ -39,22 +57,40 @@ public class CategoryController {
 
     // 모든 카테고리 조회 (선택)
     @GetMapping
-    public ResponseEntity<?> getAllCategories() {
-            return ResponseEntity.ok(categoryService.getAllCategories());
+    public ResponseEntity<?> getAllCategories(@RequestHeader("Authorization") String authHeader) {
+        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+        User user = userService.findUserById(userId);
+        Long userBlogId = user.getBlog().getId();
+
+
+        List<CategoryResponseDto> categories = categoryService.getAllCategoriesByUserId(userId);
+        return ResponseEntity.ok(categories);
     }
+
 
     // 카테고리 수정
-    @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponseDto> updateCategory(
-            @PathVariable(name = "id") Long id,
-            @RequestBody CategoryUpdateRequestDto requestDto) {
-        return ResponseEntity.ok(categoryService.updateCategory(id, requestDto));
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<?> updateCategory(@PathVariable(name = "categoryId") Long categoryId,
+                                            @RequestBody CategoryUpdateRequestDto requestDto,
+                                            @RequestHeader("Authorization") String authHeader) {
+        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+        try {
+            CategoryResponseDto response = categoryService.updateCategory(userId, categoryId, requestDto);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 
-    // 카테고리 삭제
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable(name = "id") Long id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<?> deleteCategory(@PathVariable(name = "categoryId") Long categoryId,
+                                            @RequestHeader("Authorization") String authHeader) {
+        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+        try {
+            categoryService.deleteCategory(userId, categoryId);
+            return ResponseEntity.ok("카테고리 삭제 성공");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 }
