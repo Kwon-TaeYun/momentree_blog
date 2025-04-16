@@ -65,7 +65,7 @@ public class BlogApiV1Controller {
 
         // 블로그 조회
         Blog blog = blogService.findById(id)
-                .orElseThrow(() -> new RuntimeException("해당 블로그를 찾을 수 없습니다."));
+                .orElseThrow();
 
         // 블로그 주인 검증
         if (!blog.getUser().getId().equals(userId)) {
