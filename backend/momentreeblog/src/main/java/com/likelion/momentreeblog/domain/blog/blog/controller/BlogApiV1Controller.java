@@ -73,6 +73,7 @@ public class BlogApiV1Controller {
 
         Blog blog = optionalBlog.get();
 
+        // 블로그 주인 검증
         if (!blog.getUser().getId().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "이 블로그를 수정할 권한이 없습니다."));
@@ -100,6 +101,7 @@ public class BlogApiV1Controller {
 
         Blog blog = optionalBlog.get();
 
+        // 블로그 주인 검증
         if (!blog.getUser().getId().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "이 블로그를 수정할 권한이 없습니다."));

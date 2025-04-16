@@ -7,4 +7,5 @@ import lombok.Setter;
 @Setter
 public class CategoryCreateRequestDto {
     private String name;
+    private Long blogId;
 }
