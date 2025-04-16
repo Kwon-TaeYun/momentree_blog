@@ -24,7 +24,7 @@ public class S3Config {
     @Value("${cloud.aws.region.static}")
     private String region;
 
-
+    //
     // AWS SDK v2 버전을 사용 - S3Client
     // 일반적인 S3 작업을 위한 클라이언트
     // 예: 파일 업로드, 다운로드, 삭제 등
