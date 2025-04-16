@@ -1,7 +1,7 @@
 //package com.likelion.momentreeblog.domain.photo.photo.controller;
 //
 //import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
-//import com.likelion.momentreeblog.domain.photo.photo.dto.BoardPhotoResponseDto;
+//import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
 //import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 //import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
 //import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadMultiRequestDto;

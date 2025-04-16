@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.photo.photo.dto;
+package com.likelion.momentreeblog.domain.photo.photo.dto.photo;
 
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import lombok.AllArgsConstructor;

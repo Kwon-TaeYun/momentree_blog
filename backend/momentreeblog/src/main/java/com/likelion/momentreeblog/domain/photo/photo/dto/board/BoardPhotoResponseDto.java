@@ -1,4 +1,4 @@
-package com.likelion.momentreeblog.domain.photo.photo.dto;
+package com.likelion.momentreeblog.domain.photo.photo.dto.board;
 
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.AllArgsConstructor;

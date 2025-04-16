@@ -2,8 +2,8 @@ package com.likelion.momentreeblog.domain.photo.photo.service;
 
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
-import com.likelion.momentreeblog.domain.photo.photo.dto.BoardPhotoResponseDto;
-import com.likelion.momentreeblog.domain.photo.photo.dto.PhotoUploadResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
@@ -31,6 +31,7 @@ public class BoardPhotoService {
 
     private static final int MAX_ADDITIONAL_PHOTOS = 10;
     private static final String DEFAULT_BOARD_IMAGE_URL = "default/board/default_board.png";
+
 
     // 게시글 대표 사진 업로드
     @Transactional
@@ -80,7 +81,6 @@ public class BoardPhotoService {
 
 
 
-
     // 게시글의 모든 사진 조회 (대표 + 추가)
     @Transactional(readOnly = true)
     public BoardPhotoResponseDto getBoardPhotos(Long boardId) {
@@ -109,6 +109,64 @@ public class BoardPhotoService {
                 .build();
     }
 
+
+    // 게시글의 추가 사진만 조회
+    @Transactional(readOnly = true)
+    public List<PreSignedUrlResponseDto> getBoardAdditionalPhotos(Long boardId) {
+        // 게시글 존재 여부 확인
+        if (!boardRepository.existsById(boardId)) {
+            throw new IllegalArgumentException("해당 게시물이 존재하지 않습니다");
+        }
+
+        List<Photo> additionalPhotos = photoRepository.findByBoard_IdAndType(boardId, PhotoType.ADDITIONAL);
+
+        return additionalPhotos.stream()
+                .map(photo -> s3V1Service.generateGetPresignedUrl(photo.getUrl()))
+                .collect(Collectors.toList());
+    }
+
+
+
+    // 게시글의 대표 사진만 조회
+    @Transactional(readOnly = true)
+    public PreSignedUrlResponseDto getBoardMainPhoto(Long boardId) {
+        // 게시글 존재 여부 확인
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시물이 존재하지 않습니다"));
+
+        Photo mainPhoto = board.getCurrentMainPhoto();
+
+        // 메인 사진이 없는 경우 기본 이미지 URL 반환
+        if (mainPhoto == null) {
+            return s3V1Service.generateGetPresignedUrl(DEFAULT_BOARD_IMAGE_URL);
+        }
+
+        return s3V1Service.generateGetPresignedUrl(mainPhoto.getUrl());
+    }
+
+
+
+    // 모든 게시물의 현재 대표 사진 조회
+    @Transactional(readOnly = true)
+    public List<PreSignedUrlResponseDto> getAllCurrentMainPhotosByUser(Long userId) {
+        // 사용자의 모든 게시물 조회
+        List<Board> userBoards = boardRepository.findByBlog_User_Id(userId);
+
+        // 결과를 담을 리스트
+        List<PreSignedUrlResponseDto> result = new ArrayList<>();
+
+        // 각 게시물의 현재 대표 사진 조회
+        for (Board board : userBoards) {
+            Photo currentMainPhoto = board.getCurrentMainPhoto();
+
+            // 현재 대표 사진이 있는 경우에만 결과에 추가
+            if (currentMainPhoto != null) {
+                result.add(s3V1Service.generateGetPresignedUrl(currentMainPhoto.getUrl()));
+            }
+        }
+
+        return result;
+    }
 
 
     // 게시글 사진 삭제 및 업데이트
@@ -141,7 +199,9 @@ public class BoardPhotoService {
 
         photoRepository.deleteAll(photos);
     }
-    
+
+
+
     // 게시글 대표 사진 기본 이미지로 변경
     @Transactional
     public void changeToDefaultBoardPhoto(Long userId, Long boardId) {
@@ -204,38 +264,6 @@ public class BoardPhotoService {
     }
 
 
-    // 게시글의 추가 사진만 조회
-    @Transactional(readOnly = true)
-    public List<PreSignedUrlResponseDto> getBoardAdditionalPhotos(Long boardId) {
-        // 게시글 존재 여부 확인
-        if (!boardRepository.existsById(boardId)) {
-            throw new IllegalArgumentException("해당 게시물이 존재하지 않습니다");
-        }
-        
-        List<Photo> additionalPhotos = photoRepository.findByBoard_IdAndType(boardId, PhotoType.ADDITIONAL);
-        
-        return additionalPhotos.stream()
-                .map(photo -> s3V1Service.generateGetPresignedUrl(photo.getUrl()))
-                .collect(Collectors.toList());
-    }
-    
-    // 게시글의 대표 사진만 조회
-    @Transactional(readOnly = true)
-    public PreSignedUrlResponseDto getBoardMainPhoto(Long boardId) {
-        // 게시글 존재 여부 확인
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시물이 존재하지 않습니다"));
-        
-        Photo mainPhoto = board.getCurrentMainPhoto();
-        
-        // 메인 사진이 없는 경우 기본 이미지 URL 반환
-        if (mainPhoto == null) {
-            return s3V1Service.generateGetPresignedUrl(DEFAULT_BOARD_IMAGE_URL);
-        }
-        
-        return s3V1Service.generateGetPresignedUrl(mainPhoto.getUrl());
-    }
-
 
     // 게시글 존재 확인 및 유저가 게시글을 작성했는지 확인하는 메서드
     private void verifyBoardAndUser(Long boardId, Long userId) {
@@ -245,6 +273,7 @@ public class BoardPhotoService {
             throw new RuntimeException("해당 게시글에 대한 권한이 없습니다");
         }
     }
+
 
     // S3 키를 이용하여 게시글 대표 사진 업데이트
     @Transactional

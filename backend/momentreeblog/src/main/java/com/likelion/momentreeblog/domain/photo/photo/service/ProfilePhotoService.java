@@ -1,6 +1,6 @@
 package com.likelion.momentreeblog.domain.photo.photo.service;
 
-import com.likelion.momentreeblog.domain.photo.photo.dto.PhotoUploadResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
@@ -42,6 +42,7 @@ public class ProfilePhotoService {
         return s3V1Service.generatePresignedUrl(request.getFilename(), request.getContentType());
     }
 
+
     // 현재 프로필 사진 조회
     @Transactional(readOnly = true)
     public PreSignedUrlResponseDto getProfilePhoto(Long userId) {
@@ -56,6 +57,7 @@ public class ProfilePhotoService {
         
         return s3V1Service.generateGetPresignedUrl(currentProfilePhoto.getUrl());
     }
+
 
     // 사용자의 모든 프로필 사진 히스토리 조회
     @Transactional(readOnly = true)
@@ -98,6 +100,7 @@ public class ProfilePhotoService {
         photoRepository.deleteAll(profilePhotos);
     }
 
+
     // 프로필 사진 기본 사진으로 변경
     @Transactional
     public void changeToDefaultProfilePhoto(Long userId) {
@@ -119,6 +122,8 @@ public class ProfilePhotoService {
         // 기본 이미지로 변경되었음을 로그로 남기거나 이벤트 발행 가능
         // logger.info("User {} changed to default profile image", userId);
     }
+
+
 
     // 사용자의 프로필 사진 변경 (기존 사진 중에서 선택)
     @Transactional
@@ -143,6 +148,7 @@ public class ProfilePhotoService {
         user.setCurrentProfilePhoto(newProfilePhoto);
         userRepository.save(user);
     }
+
 
     // S3 키를 이용하여 프로필 사진 업데이트
     @Transactional

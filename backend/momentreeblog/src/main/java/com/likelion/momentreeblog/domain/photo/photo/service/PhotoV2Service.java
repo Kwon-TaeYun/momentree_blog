@@ -1,14 +1,10 @@
 package com.likelion.momentreeblog.domain.photo.photo.service;
 
-import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
-import com.likelion.momentreeblog.domain.photo.photo.dto.BoardPhotoResponseDto;
-import com.likelion.momentreeblog.domain.photo.photo.dto.PhotoUploadResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
-import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
-import com.likelion.momentreeblog.domain.s3.service.S3V1Service;
-import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +16,7 @@ import java.util.List;
 public class PhotoV2Service {
     private final ProfilePhotoService profilePhotoService;
     private final BoardPhotoService boardPhotoService;
-    private final BoardRepository boardRepository;
-    private final UserRepository userRepository;
-    private final PhotoRepository photoRepository;
-    private final S3V1Service s3V1Service;
+
 
     // 단일 사진 업로드 - 타입에 따라 적절한 서비스로 위임
     // PROFILE 타입은 프로필 사진, MAIN 타입은 게시글 대표 사진
@@ -55,7 +48,7 @@ public class PhotoV2Service {
     }
 
 
-
+    // S3에 업로드 후에 엔티티에 반영하는 메서드
     @Transactional
     public PhotoUploadResponseDto updatePhotoWithS3Key(PhotoType type, Long userId, Long boardId, String s3Key, PhotoUploadRequestDto request) {
         if (type == PhotoType.PROFILE) {
@@ -73,7 +66,8 @@ public class PhotoV2Service {
         }
     }
 
-    //단일 사진 조회 - 타입에 따라 적절한 서비스로 위임
+
+    // 단일 사진 조회 - 타입에 따라 적절한 서비스로 위임
     @Transactional(readOnly = true)
     public PreSignedUrlResponseDto getPhotoUrl(PhotoType type, Long id) {
         if (type == PhotoType.PROFILE) {
@@ -87,23 +81,19 @@ public class PhotoV2Service {
         }
     }
 
-    // 사용자의 모든 프로필 사진 히스토리 조회
+
+    // 사용자의 프로필 사진과 현재 게시물 메인 사진 전체 조회 - 타입에 떄라 적절한 서비스로 위임
     @Transactional(readOnly = true)
-    public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
-        return profilePhotoService.getAllProfilePhotos(userId);
+    public List<PreSignedUrlResponseDto> getProfileOrMainPhotos(PhotoType type, Long userId) {
+        if (type == PhotoType.PROFILE) {
+            return profilePhotoService.getAllProfilePhotos(userId);
+        } else if (type == PhotoType.MAIN) {
+            return boardPhotoService.getAllCurrentMainPhotosByUser(userId);
+        } else {
+            throw new IllegalArgumentException("지원되지 않는 사진 조회 타입입니다.");
+        }
     }
 
-    // 게시글의 모든 사진 조회 (대표 + 추가)
-    @Transactional(readOnly = true)
-    public BoardPhotoResponseDto getBoardPhotos(Long boardId) {
-        return boardPhotoService.getBoardPhotos(boardId);
-    }
-
-    // 게시글의 추가 사진만 조회
-    @Transactional(readOnly = true)
-    public List<PreSignedUrlResponseDto> getBoardAdditionalPhotos(Long boardId) {
-        return boardPhotoService.getBoardAdditionalPhotos(boardId);
-    }
 
     // 사진 삭제 - 타입에 따라 적절한 서비스로 위임
     @Transactional
@@ -117,27 +107,51 @@ public class PhotoV2Service {
         }
     }
 
-    // 프로필 사진을 기본 이미지로 변경
-    @Transactional
-    public void changeToDefaultProfilePhoto(Long userId) {
-        profilePhotoService.changeToDefaultProfilePhoto(userId);
+
+    // 게시글 사진 조회 - 타입에 따라 적절한 서비스로 위임
+    @Transactional(readOnly = true)
+    public BoardPhotoResponseDto getBoardPhotos(PhotoType type, Long boardId) {
+        if (type == PhotoType.MAIN || type == PhotoType.ADDITIONAL) {
+            return boardPhotoService.getBoardPhotos(boardId);
+        } else {
+            throw new IllegalArgumentException("지원되지 않는 사진 조회 타입입니다.");
+        }
     }
 
-    // 게시글 대표 사진을 기본 이미지로 변경
-    @Transactional
-    public void changeToDefaultBoardPhoto(Long userId, Long boardId) {
-        boardPhotoService.changeToDefaultBoardPhoto(userId, boardId);
+
+    // 게시글의 추가 사진 조회 - 타입에 따라 적절한 서비스로 위임
+    @Transactional(readOnly = true)
+    public List<PreSignedUrlResponseDto> getBoardAdditionalPhotos(PhotoType type, Long boardId) {
+        if (type == PhotoType.ADDITIONAL) {
+            return boardPhotoService.getBoardAdditionalPhotos(boardId);
+        } else {
+            throw new IllegalArgumentException("지원되지 않는 사진 조회 타입입니다.");
+        }
     }
 
-    // 사용자의 프로필 사진 변경 (기존 사진 중에서 선택)
+
+    // 사진을 기본 이미지로 변경 - 타입에 따라 적절한 서비스로 위임
     @Transactional
-    public void updateCurrentProfilePhoto(Long userId, Long photoId) {
-        profilePhotoService.updateCurrentProfilePhoto(userId, photoId);
+    public void changeToDefaultPhoto(PhotoType type, Long userId, Long boardId) {
+        if (type == PhotoType.PROFILE) {
+            profilePhotoService.changeToDefaultProfilePhoto(userId);
+        } else if (type == PhotoType.MAIN) {
+            boardPhotoService.changeToDefaultBoardPhoto(userId, boardId);
+        } else {
+            throw new IllegalArgumentException("지원되지 않는 사진 타입입니다.");
+        }
     }
 
-    // 추가 사진을 대표 사진으로 변경
+
+    // 특정 사진으로 현재 사진 변경 - 타입에 따라 적절한 서비스로 위임
     @Transactional
-    public void changeAdditionalToMainPhoto(Long userId, Long boardId, Long photoId) {
-        boardPhotoService.changeAdditionalToMainPhoto(userId, boardId, photoId);
+    public void updateCurrentPhoto(PhotoType type, Long userId, Long boardId, Long photoId) {
+        if (type == PhotoType.PROFILE) {
+            profilePhotoService.updateCurrentProfilePhoto(userId, photoId);
+        } else if (type == PhotoType.ADDITIONAL) {
+            boardPhotoService.changeAdditionalToMainPhoto(userId, boardId, photoId);
+        } else {
+            throw new IllegalArgumentException("지원되지 않는 사진 타입입니다.");
+        }
     }
 }

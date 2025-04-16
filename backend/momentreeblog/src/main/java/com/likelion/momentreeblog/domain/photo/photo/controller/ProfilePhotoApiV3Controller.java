@@ -1,7 +1,7 @@
 package com.likelion.momentreeblog.domain.photo.photo.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
-import com.likelion.momentreeblog.domain.photo.photo.dto.PhotoUploadResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV2Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
@@ -34,7 +34,8 @@ public class ProfilePhotoApiV3Controller {
         Long userId = userDetails.getUserId();
         return ResponseEntity.ok(photoService.uploadPhoto(request, userId, null));
     }
-    
+
+
     // 프로필 사진 S3 업로드 완료 후 DB 저장
     @PutMapping("/update")
     public ResponseEntity<PhotoUploadResponseDto> updateProfilePhoto(
@@ -60,40 +61,44 @@ public class ProfilePhotoApiV3Controller {
         return ResponseEntity.ok(photoService.getPhotoUrl(PhotoType.PROFILE, userId));
     }
 
-    // 프로필 사진 히스토리 조회
-    @GetMapping("/history")
+
+    // 프로필 사진들 조회
+    @GetMapping("/profile-photos")
     public ResponseEntity<List<PreSignedUrlResponseDto>> getProfilePhotoHistory(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        return ResponseEntity.ok(photoService.getAllProfilePhotos(userId));
+        return ResponseEntity.ok(photoService.getProfileOrMainPhotos(PhotoType.PROFILE, userId));
     }
+
 
     // 프로필 사진 삭제
     @DeleteMapping
-    public ResponseEntity<Void> deleteProfilePhoto(
+    public ResponseEntity<String> deleteProfilePhoto(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
         photoService.deletePhoto(PhotoType.PROFILE, userId, null);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body("프로필 사진 삭제 완료했습니다");
     }
-    
+
+
     // 프로필 사진을 기본 이미지로 변경
-    @PutMapping("/default")
-    public ResponseEntity<Void> changeToDefaultProfilePhoto(
+    @PutMapping("/change/default-image")
+    public ResponseEntity<String> changeToDefaultProfilePhoto(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        photoService.changeToDefaultProfilePhoto(userId);
-        return ResponseEntity.ok().build();
+        photoService.changeToDefaultPhoto(PhotoType.PROFILE, userId, null);
+        return ResponseEntity.ok().body("프로필 사진을 기본사진으로 변경했습니다");
     }
-    
+
+
     // 사용자의 프로필 사진 변경 (기존 사진 중에서 선택)
     @PutMapping("/change/{photoId}")
-    public ResponseEntity<Void> updateCurrentProfilePhoto(
+    public ResponseEntity<String> updateCurrentProfilePhoto(
             @PathVariable Long photoId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        photoService.updateCurrentProfilePhoto(userId, photoId);
-        return ResponseEntity.ok().build();
+        photoService.updateCurrentPhoto(PhotoType.PROFILE, userId, null, photoId);
+        return ResponseEntity.ok().body("사진을 프로필 사진으로 변경 완료했습니다");
     }
 
 } 

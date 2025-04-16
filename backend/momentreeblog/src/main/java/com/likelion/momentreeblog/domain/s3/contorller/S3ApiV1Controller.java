@@ -25,13 +25,10 @@ public class S3ApiV1Controller {
     private final S3V1Service s3V1Service;
     private final PhotoV2Service photoV2Service;
 
-    /**
-     * 프리사인 URL 요청 엔드포인트
-     * 클라이언트는 사진 업로드 전 이 API를 호출해 S3에 PUT 요청할 수 있는 URL과 key를 받습니다.
-     *
-     * @param requestDto 업로드 요청 DTO (filename, photoType, userId, boardId)
-     * @return PreSignedUrlResponseDto 프리사인 URL 및 S3 객체 key
-     */
+    //프리사인 URL 요청 엔드포인트
+    //클라이언트는 사진 업로드 전 이 API를 호출해 S3에 PUT 요청할 수 있는 URL과 key를 받습니다.
+    // @param requestDto 업로드 요청 DTO (filename, photoType, userId, boardId)
+    //@return PreSignedUrlResponseDto 프리사인 URL 및 S3 객체 key
     @PostMapping("/presigned-url")
     public ResponseEntity<?> getPresignedUrl(@Valid @RequestBody PhotoUploadRequestDto requestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
