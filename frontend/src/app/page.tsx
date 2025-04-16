@@ -1,5 +1,7 @@
 "use client";
 
+import Image from 'next/image';
+
 // @ts-ignore - JSX element type errors
 export default function Home() {
   const socialLoginForKakaoUrl =
@@ -10,7 +12,13 @@ export default function Home() {
       {/* 헤더 */}
       <header className="border-b py-3 px-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-green-600 rounded-md"></div>
+          <Image 
+            src="/images/logo.png" 
+            alt="Momentree 로고" 
+            width={46}
+            height={46}
+            className="object-contain"
+          />
           <span className="font-medium">Momentree</span>
         </div>
         <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">로그인</button>
