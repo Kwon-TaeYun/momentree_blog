@@ -49,8 +49,14 @@ export default function Home() {
       {/* 특별한 순간 섹션 */}
       <section className="py-16 px-4 max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-md flex items-center justify-center">
-            <div className="w-8 h-8 bg-white/30 rounded"></div>
+          <div className="w-[200px] h-[200px] flex items-center justify-center">
+            <Image 
+              src="/images/logo.png" 
+              alt="Momentree 로고" 
+              width={200}
+              height={200}
+              className="object-contain"
+            />
           </div>
           <div>
             <p className="text-sm text-black mb-1">특별한 기록</p>
