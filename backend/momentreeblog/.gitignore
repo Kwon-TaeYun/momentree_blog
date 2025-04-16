@@ -17,6 +17,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
+### IntelliJ IDEA ###
 .idea/*
 .idea
 *.iws
@@ -26,25 +27,31 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-
+### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-
+### VS Code ###
 .vscode/
 
-### CUSTOM ###
-application-secret.yml
-db_dev.*
-
-
+### Idea ###
 .idea/
-db_dev.*
 .idea/*
+
+### Custom ###
+application-secret.yml
+application-secret.yml.default
+db_dev.*
+db_dev.mv.db
+
 .terraform/
 
-db_dev.mv.db
+
+
+
+
+
 

@@ -79,6 +79,7 @@ public class BlogService {
 
         Blog blog = optionalBlog.get();
         blog.setName(requestDto.getName());
+
         Blog updated = blogRepository.save(blog);
 
         return BlogResponseDto.builder()

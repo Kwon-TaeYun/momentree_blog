@@ -145,17 +145,15 @@ public class BoardPhotoApiV3Controller {
         photoService.changeAdditionalToMainPhoto(userId, boardId, photoId);
         return ResponseEntity.ok().build();
     }
-    
+
+
+
     // 추가 사진 저장 요청 DTO
     public static class AdditionalPhotoSaveRequest {
         private String s3Key;
-        
+
         public String getS3Key() {
             return s3Key;
-        }
-        
-        public void setS3Key(String s3Key) {
-            this.s3Key = s3Key;
         }
     }
 } 

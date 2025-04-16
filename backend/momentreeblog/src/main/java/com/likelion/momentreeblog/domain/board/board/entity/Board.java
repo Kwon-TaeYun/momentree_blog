@@ -14,7 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
@@ -52,8 +53,8 @@ public class Board extends BaseEntity {
     public Board(BoardRequestDto dto, Blog blog) {
         this.title = dto.getTitle();
         this.content = dto.getContent();
-        this.mainPhotoId = dto.getMainPhotoId();
-        this.photoSavedUrl = dto.getPhotoSavedUrl();
+        this.currentMainPhoto = dto.getCurrentMainPhoto();
+        this.photos = dto.getPhotos();
         this.blog = blog;
         this.category = null; // 혹은 dto에서 categoryId 받아서 처리
     }
