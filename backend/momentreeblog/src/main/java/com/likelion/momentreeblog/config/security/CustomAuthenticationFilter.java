@@ -4,7 +4,6 @@ import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.config.security.exception.JwtExceptionCode;
 import com.likelion.momentreeblog.config.security.token.JwtAuthenticationToken;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
-import com.likelion.momentreeblog.util.jwt.JwtTokenizer;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -33,6 +32,7 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtTokenizer jwtTokenizer;
 
     @Override
