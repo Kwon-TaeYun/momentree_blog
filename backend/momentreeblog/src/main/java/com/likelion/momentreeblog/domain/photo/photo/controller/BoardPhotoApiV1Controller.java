@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/V3/board/{boardId}/photos")
+@RequestMapping("/api/V3/boards/{boardId}/photos")
 @RequiredArgsConstructor
 public class BoardPhotoApiV1Controller {
 
