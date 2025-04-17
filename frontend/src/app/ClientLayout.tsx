@@ -9,7 +9,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     "http://localhost:8090/oauth2/authorization/kakao";
    const redirectUrlAfterSocialLogin = "http://localhost:3000";
     useEffect(() => {
-        fetch('/api/members/me')
+      fetch('http://localhost:8090/api/v1/members/me', {
+        credentials: 'include',
+    })
             .then((response) => response.json())
             .then((data) => {
                 console.log(data)
@@ -100,7 +102,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           }}
         />
       </div>
-      <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">로그인</button>
+      <div className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition">
+                            <Link href={"/members/login"}>
+                                <span className="font-bold">로그인</span>
+                            </Link>
+                        </div>
+      <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">회원가입</button>
     </div>
   </div>
 </header>
