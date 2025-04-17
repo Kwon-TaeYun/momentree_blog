@@ -4,52 +4,6 @@ import Image from 'next/image';
 export default function BlogPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center">
-              <div className="w-8 h-8 mr-2">
-                <Image 
-                  src="/logo/logo.png" 
-                  alt="Momentree" 
-                  width={32} 
-                  height={32} 
-                />
-              </div>
-              <span className="text-green-700 font-semibold">Momentree</span>
-            </Link>
-            <nav className="flex gap-4">
-              <Link href="/blog" className="text-gray-700">나의 나무</Link>
-              <Link href="/community" className="text-gray-700">사진첩</Link>
-            </nav>
-          </div>
-          <div className="flex items-center">
-            <div className="relative mr-2">
-              <input
-                type="text"
-                placeholder="검색"
-                className="border border-gray-300 rounded-lg px-4 py-1.5 w-64 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-            <Link href="/write" className="bg-black text-white px-4 py-1.5 rounded-lg text-sm mr-2">글쓰기</Link>
-            <Link href="/profile" className="flex items-center">
-              <Image
-                src="/profile-placeholder.jpg"
-                alt="Profile"
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 py-8">
