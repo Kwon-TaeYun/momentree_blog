@@ -1,11 +1,13 @@
 package com.likelion.momentreeblog.domain.user.user.controller;
 
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.dto.UserDto;
 import com.likelion.momentreeblog.domain.user.user.dto.UserLoginDto;
 import com.likelion.momentreeblog.domain.user.user.dto.UserLoginResponseDto;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
+import com.likelion.momentreeblog.global.rq.Rq;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,6 +29,7 @@ public class UserApiV1Controller {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
+    private final Rq rq;
 
     //회원 가입
     @PostMapping("/signup")
@@ -156,6 +159,12 @@ public class UserApiV1Controller {
 //            }
 //        }
 //    }
+
+    @GetMapping("/me")
+    public UserDto me(){
+        User user = userService.findUserById(rq.getActor().getId());
+        return new UserDto(user);
+    }
 }
 
 
