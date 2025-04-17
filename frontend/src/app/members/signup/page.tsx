@@ -24,7 +24,7 @@ export default function SignUp() {
           <Link href="/">
             <div className="flex items-center mb-1">
               <Image 
-                src="/images/logo.png" 
+                src="/logo/logo.png" 
                 alt="Momentree" 
                 width={48} 
                 height={48} 
