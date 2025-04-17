@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtTokenizer jwtTokenizer;
 
     @Override
@@ -93,7 +94,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         List<GrantedAuthority> grantedAuthorization = getGrantedAuthorization(claims);
         // UserDetails 생성
-        CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization);
+        CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization, userId);
 
         return new JwtAuthenticationToken(grantedAuthorization, customUserDetails, null);
     }
@@ -105,8 +106,12 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
     private String getToken(HttpServletRequest request){
         String authorization = request.getHeader("Authorization");
-        if(StringUtils.hasText(authorization) && authorization.startsWith("Bearer")){
-            return authorization.substring(7); //Bearer ""
+        log.info("Authorization header: {}", authorization);
+        if(StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")){
+            log.info("Extracting token from Authorization header");
+            String token = authorization.substring(7).trim(); // "Bearer " 제거 후 공백도 제거
+            log.info("Extracted token: {}", token);
+            return token;
         }
         Cookie[] cookies = request.getCookies();
         if(cookies != null){

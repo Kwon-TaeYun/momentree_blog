@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.global.jpa;
 
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,8 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @MappedSuperclass
 @NoArgsConstructor
-@Getter @Setter
+@Getter
+@Setter
 @ToString
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {

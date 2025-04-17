@@ -1,6 +1,7 @@
 package com.likelion.momentreeblog.domain.user.user.entity;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
@@ -11,6 +12,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -28,7 +32,7 @@ public class User extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column
+    @Column(nullable = false)
     private String password;
 
     private String oauth2;
@@ -36,11 +40,9 @@ public class User extends BaseEntity {
     @Column(name = "oauth2_provider")
     private String oauth2Provider;
 
-    @Column(name = "refresh_token")
+    @Column(nullable = false, name = "refresh_token")
     private String refreshToken;
 
-    @Column(name = "profile_photo")
-    private String profilePhoto;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -48,7 +50,7 @@ public class User extends BaseEntity {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private List<Role> roles = new ArrayList<>();
+    private List<Role> roles;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
@@ -82,4 +84,14 @@ public class User extends BaseEntity {
     public boolean isAdmin() {
         return "admin".equals(name);
     }
+
+    // 현재 활성화된 프로필 사진: 이 값은 프로필 사진 변경 시 업데이트.
+    @OneToOne
+    @JoinColumn(name = "current_profile_photo_id")
+    private Photo currentProfilePhoto;
+
+    // 유저가 올린 모든 사진 기록 (여기에는 프로필 사진 변경 이력도 포함)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Photo> photos = new ArrayList<>();
+
 }
