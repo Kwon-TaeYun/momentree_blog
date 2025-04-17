@@ -9,41 +9,11 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [agreements, setAgreements] = useState({
-    all: false,
-    service: false,
-    privacy: false,
-    marketing: false
-  });
-
-  const toggleAgreement = (key: keyof typeof agreements) => {
-    if (key === 'all') {
-      const newValue = !agreements.all;
-      setAgreements({
-        all: newValue,
-        service: newValue,
-        privacy: newValue,
-        marketing: newValue
-      });
-    } else {
-      const newAgreements = {
-        ...agreements,
-        [key]: !agreements[key]
-      };
-      
-      // Update the 'all' checkbox based on other checkboxes
-      const allChecked = newAgreements.service && newAgreements.privacy && newAgreements.marketing;
-      setAgreements({
-        ...newAgreements,
-        all: allChecked
-      });
-    }
-  };
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle signup logic here
-    console.log({ email, password, confirmPassword, name, agreements });
+    console.log({ email, password, confirmPassword, name });
   };
 
   return (
@@ -54,7 +24,7 @@ export default function SignUp() {
           <Link href="/">
             <div className="flex items-center mb-1">
               <Image 
-                src="/logo/momentree-logo.svg" 
+                src="/images/logo.png" 
                 alt="Momentree" 
                 width={48} 
                 height={48} 
@@ -136,63 +106,6 @@ export default function SignUp() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
                 required
               />
-            </div>
-
-            {/* Agreements */}
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="agreement-all"
-                  checked={agreements.all}
-                  onChange={() => toggleAgreement('all')}
-                  className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor="agreement-all" className="ml-2 text-sm font-medium">
-                  전체 동의
-                </label>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="agreement-service"
-                  checked={agreements.service}
-                  onChange={() => toggleAgreement('service')}
-                  className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                  required
-                />
-                <label htmlFor="agreement-service" className="ml-2 text-sm">
-                  서비스 이용약관 동의 <span className="text-red-500">(필수)</span>
-                </label>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="agreement-privacy"
-                  checked={agreements.privacy}
-                  onChange={() => toggleAgreement('privacy')}
-                  className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                  required
-                />
-                <label htmlFor="agreement-privacy" className="ml-2 text-sm">
-                  개인정보 수집 및 이용 동의 <span className="text-red-500">(필수)</span>
-                </label>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="agreement-marketing"
-                  checked={agreements.marketing}
-                  onChange={() => toggleAgreement('marketing')}
-                  className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor="agreement-marketing" className="ml-2 text-sm">
-                  마케팅 정보 수신 동의 <span className="text-gray-500">(선택)</span>
-                </label>
-              </div>
             </div>
 
             {/* Submit Button */}
