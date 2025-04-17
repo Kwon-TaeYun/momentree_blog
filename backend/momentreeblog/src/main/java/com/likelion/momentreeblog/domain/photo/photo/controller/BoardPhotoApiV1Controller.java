@@ -26,6 +26,7 @@ public class BoardPhotoApiV1Controller {
     private final PhotoV1Service photoService;
     private final BoardPhotoService boardPhotoService;
 
+
     // 게시글 대표 사진 업로드용 presigned URL 생성
     @PostMapping("/main/upload")
     public ResponseEntity<PreSignedUrlResponseDto> getMainPhotoUploadUrl(
@@ -40,6 +41,7 @@ public class BoardPhotoApiV1Controller {
         Long userId = userDetails.getUserId();
         return ResponseEntity.ok(photoService.uploadPhoto(request, userId, boardId));
     }
+
 
     // 게시글 대표 사진 S3 업로드 완료 후 DB 저장
     @PutMapping("/update")
@@ -72,6 +74,7 @@ public class BoardPhotoApiV1Controller {
     }
 
 
+    //게시글 업로드한 추가 사진들을 db에 추가
     @PutMapping("/update/additional")
     public ResponseEntity<List<PhotoUploadResponseDto>> updateBoardAdditionalPhotos(
             @PathVariable Long boardId,
