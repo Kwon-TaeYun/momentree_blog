@@ -7,6 +7,10 @@ export default function Home() {
   const socialLoginForKakaoUrl =
     "http://localhost:8090/oauth2/authorization/kakao";
   const redirectUrlAfterSocialLogin = "http://localhost:3000";
+  const handleKakaoLogin = () => {
+    document.cookie = `redirectUrl=${redirectUrlAfterSocialLogin}; path=/`;
+    window.location.href = socialLoginForKakaoUrl;
+  };
   return (
     <main className="flex flex-col min-h-screen bg-white text-black">
 
@@ -20,12 +24,7 @@ export default function Home() {
           매일의 순간들을 기록하고 성장하는 나만의 이야기를 만들어보세요. 당신의 소중한 순간이 한 나의 나무가 되어 자라납니다.
         </p>
         <div className="flex gap-4">
-          <a
-            href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-            className="bg-black text-white px-6 py-2 rounded-md font-medium"
-          >
-            시작하기
-          </a>
+        <button onClick={handleKakaoLogin}>시작하기</button>
           <button className="border border-gray-300 px-6 py-2 rounded-md font-medium text-black">
             더 알아보기
           </button>

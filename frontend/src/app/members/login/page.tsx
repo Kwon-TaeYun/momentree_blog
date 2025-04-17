@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import styled from "styled-components";
-const socialLoginForKakaoUrl =
-    "http://localhost:8090/oauth2/authorization/kakao";
+const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`
+const redirectUrlAfterSocialLogin = process.env.NEXT_PUBLIC_FRONT_BASE_URL
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -88,7 +88,9 @@ export default function LoginPage() {
 
         <SocialLoginSection>
   <SocialText>소셜 계정으로 로그인</SocialText>
-  <a href={socialLoginForKakaoUrl}>
+  <Link
+    href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                        >
     <KakaoButton>
       <Image
         src="/kakao_login.png"
@@ -99,7 +101,7 @@ export default function LoginPage() {
         priority
       />
     </KakaoButton>
-  </a>
+  </Link>
 </SocialLoginSection>
 
         <Footer>
