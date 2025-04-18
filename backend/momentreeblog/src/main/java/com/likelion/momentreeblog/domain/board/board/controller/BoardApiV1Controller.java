@@ -3,6 +3,8 @@ package com.likelion.momentreeblog.domain.board.board.controller;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
+import com.likelion.momentreeblog.domain.board.board.entity.Board;
+import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.board.service.BoardService;
 import com.likelion.momentreeblog.domain.board.comment.dto.CommentDto;
 import com.likelion.momentreeblog.domain.board.comment.dto.CommentRequestDto;
@@ -11,12 +13,15 @@ import com.likelion.momentreeblog.domain.board.like.dto.BoardLikeInfoDto;
 import com.likelion.momentreeblog.domain.board.like.service.LikeService;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.hibernate.Hibernate;
 
 @RestController
 @RequestMapping("/api/v1/boards")
@@ -26,6 +31,7 @@ public class BoardApiV1Controller {
     private final LikeService likeService;
     private final JwtTokenizer jwtTokenizer;
     private final CommentService commentService;
+    private final BoardRepository boardRepository;
 
     @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
     @PostMapping
@@ -45,21 +51,26 @@ public class BoardApiV1Controller {
         }
     }
 
-    //게시글 상세보기
-    @Operation(summary = "게시글 상세보기")
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getBoard(@PathVariable Long id) {
         try {
-            BoardDetailResponseDto board = boardService.getBoardDetail(id);
-            return ResponseEntity.ok(board);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body("게시글을 찾을 수 없습니다: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("게시글 조회 실패: " + e.getMessage());
-        }
+            Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+        
+        // 필요한 컬렉션들을 모두 초기화
+        Hibernate.initialize(board.getPhotos());
+        Hibernate.initialize(board.getLikes());
+        
+        BoardDetailResponseDto responseDto = BoardDetailResponseDto.from(board);
+        return ResponseEntity.ok(responseDto);
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("게시글 조회 실패! " + e.getMessage());
     }
+}
 
 
     @PutMapping("/{id}")
