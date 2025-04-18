@@ -1,31 +1,36 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignUp() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isEmailChecked, setIsEmailChecked] = useState(false);
 
   const checkEmail = async () => {
     try {
-      const response = await fetch(`http://localhost:8090/api/v1/members/email?email=${encodeURIComponent(email)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `http://localhost:8090/api/v1/members/email?email=${encodeURIComponent(
+          email
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data = await response.text();
-      
+
       if (data.includes("찾을 수 없습니다")) {
         setIsEmailChecked(true);
         setIsError(false);
@@ -44,7 +49,7 @@ export default function SignUp() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isEmailChecked) {
       setIsError(true);
       setMessage("이메일 중복 확인을 해주세요.");
@@ -58,31 +63,37 @@ export default function SignUp() {
     }
 
     // 비밀번호 유효성 검사
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,20}$/;
+    const passwordRegex =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,20}$/;
     if (!passwordRegex.test(password)) {
       setIsError(true);
-      setMessage("비밀번호는 8~20자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+      setMessage(
+        "비밀번호는 8~20자의 영문, 숫자, 특수문자를 모두 포함해야 합니다."
+      );
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:8090/api/v1/members/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-          blogName: email.split('@')[0] // 기본 블로그 이름으로 이메일 아이디 사용
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:8090/api/v1/members/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+            blogName: email.split("@")[0], // 기본 블로그 이름으로 이메일 아이디 사용
+          }),
+        }
+      );
 
       if (response.ok) {
         setIsError(false);
         setMessage("회원가입이 완료되었습니다.");
-        router.push('/members/login');
+        router.push("/members/login");
       } else {
         const data = await response.text();
         setIsError(true);
@@ -101,21 +112,27 @@ export default function SignUp() {
         <div className="flex flex-col items-center mb-8">
           <Link href="/">
             <div className="flex items-center mb-1">
-              <Image 
-                src="/logo/logo.png" 
-                alt="Momentree" 
-                width={48} 
-                height={48} 
+              <Image
+                src="/logo/logo.png"
+                alt="Momentree"
+                width={48}
+                height={48}
                 className="mr-2"
               />
-              <span className="text-green-700 text-xl font-semibold">Momentree</span>
+              <span className="text-green-700 text-xl font-semibold">
+                Momentree
+              </span>
             </div>
           </Link>
           <h1 className="text-center text-xl font-medium mt-6">회원가입</h1>
         </div>
 
         {message && (
-          <div className={`p-4 mb-4 rounded-md text-center ${isError ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
+          <div
+            className={`p-4 mb-4 rounded-md text-center ${
+              isError ? "bg-red-50 text-red-800" : "bg-blue-50 text-blue-800"
+            }`}
+          >
             <p>{message}</p>
           </div>
         )}
@@ -163,7 +180,9 @@ export default function SignUp() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">8~20자의 영문, 숫자, 특수문자를 조합하여 입력해주세요</p>
+              <p className="text-xs text-gray-500 mt-1">
+                8~20자의 영문, 숫자, 특수문자를 조합하여 입력해주세요
+              </p>
             </div>
 
             {/* Confirm Password */}
@@ -205,7 +224,7 @@ export default function SignUp() {
             </button>
           </form>
         </div>
-        
+
         {/* Footer */}
         <div className="text-center text-sm text-gray-500 mt-8">
           © 2024 Momentree. All rights reserved.
@@ -214,4 +233,3 @@ export default function SignUp() {
     </div>
   );
 }
-

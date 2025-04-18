@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -13,17 +13,22 @@ export default function FindPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsError(false);
-    
+
     try {
-      const response = await fetch(`http://localhost:8090/api/v1/members/search?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `http://localhost:8090/api/v1/members/search?name=${encodeURIComponent(
+          name
+        )}&email=${encodeURIComponent(email)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data = await response.text();
-      
+
       if (response.ok) {
         if (data.includes("찾을 수 없습니다")) {
           setIsError(true);
@@ -46,25 +51,32 @@ export default function FindPassword() {
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center">
-          <Image 
-            src="/logo/logo.png" 
-            alt="Momentree Logo" 
-            width={180} 
-            height={40} 
+          <Image
+            src="/logo/logo.png"
+            alt="Momentree Logo"
+            width={180}
+            height={40}
             priority
           />
           <h2 className="mt-6 text-center text-2xl font-bold">비밀번호 찾기</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            회원정보에 등록한 이메일로 비밀번호 재설정 링크를 받으실 수 있습니다.
+            회원정보에 등록한 이메일로 비밀번호 재설정 링크를 받으실 수
+            있습니다.
           </p>
         </div>
 
         {message && (
-          <div className={`p-4 rounded-md text-center ${isError ? 'bg-red-50' : 'bg-blue-50'}`}>
-            <p className={isError ? 'text-red-800' : 'text-blue-800'}>{message}</p>
+          <div
+            className={`p-4 rounded-md text-center ${
+              isError ? "bg-red-50" : "bg-blue-50"
+            }`}
+          >
+            <p className={isError ? "text-red-800" : "text-blue-800"}>
+              {message}
+            </p>
             {!isError && (
-              <Link 
-                href="/members/login" 
+              <Link
+                href="/members/login"
                 className="mt-4 inline-flex justify-center rounded-md border border-transparent bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none"
               >
                 로그인 페이지로
@@ -76,7 +88,10 @@ export default function FindPassword() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
                 이름
               </label>
               <input
@@ -90,9 +105,12 @@ export default function FindPassword() {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            
+
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 이메일
               </label>
               <input
@@ -109,8 +127,8 @@ export default function FindPassword() {
           </div>
 
           <div className="flex items-center justify-between">
-            <Link 
-              href="/members/login" 
+            <Link
+              href="/members/login"
               className="text-sm text-gray-600 hover:text-gray-900"
             >
               로그인 페이지로 돌아가기
