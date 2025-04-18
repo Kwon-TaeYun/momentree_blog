@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +66,19 @@ public class Rq {
                 .map(securityUser -> new User(securityUser.getId(), securityUser.getUsername(), securityUser.getNickname()))
                 .orElse(null);
     }
+
+//    public User getActor() {
+//        return Optional.ofNullable(
+//                        SecurityContextHolder
+//                                .getContext()
+//                                .getAuthentication()
+//                )
+//                .map(Authentication::getPrincipal)
+//                .filter(principal -> principal instanceof SecurityUser)
+//                .map(principal -> (SecurityUser) principal)
+//                .map(securityUser -> userRepository.findById(securityUser.getId()).orElse(null)) // ← 여기서 DB 조회
+//                .orElse(null);
+//    }
 
 
     public void setCookie(String name, String value) {
@@ -122,12 +136,18 @@ public class Rq {
     }
 
     public String makeAuthCookies(User user) {
+        List<String> authorities = new ArrayList<>();
         List<String> roleNames = user.getRoles()
                 .stream()
                 .map(Role::getName)
                 .collect(Collectors.toList());
-        String accessToken = jwtTokenizer.createAccessToken(user.getId(),user.getEmail(),user.getName(),roleNames);
-        String refreshToken = jwtTokenizer.createRefreshToken(user.getId(),user.getEmail(),user.getName(),roleNames);
+        if (user.getRoles() != null) {
+            authorities = user.getRoles().stream()
+                    .map(Role::getName)  // 여기서는 getAuthority()가 아닌 getName()을 사용
+                    .collect(Collectors.toList());
+        }
+        String accessToken = jwtTokenizer.createAccessToken(user.getId(),user.getEmail(),user.getName(),authorities);
+        String refreshToken = jwtTokenizer.createRefreshToken(user.getId(),user.getEmail(),user.getName(),authorities);
 
         User persistentUser = userRepository.findById(user.getId()).orElseThrow();
         persistentUser.setRefreshToken(refreshToken);
@@ -135,7 +155,7 @@ public class Rq {
 // save 생략 가능 (@Transactional이면 dirty checking 됨)
         userRepository.save(persistentUser);
 
-        // setCookie("refreshToken", user.getRefreshToken());
+         setCookie("refreshToken", refreshToken);
         setCookie("accessToken", accessToken);
 
         return accessToken;

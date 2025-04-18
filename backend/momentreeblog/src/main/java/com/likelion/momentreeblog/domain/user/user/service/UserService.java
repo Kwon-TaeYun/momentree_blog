@@ -3,7 +3,6 @@ package com.likelion.momentreeblog.domain.user.user.service;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
-import com.likelion.momentreeblog.domain.user.role.repository.RoleRepository;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
@@ -23,7 +22,7 @@ import java.util.*;
 public class UserService {
     private final UserRepository userRepository;
     private final BlogRepository blogRepository;
-    private final RoleRepository roleRepository;
+//    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
@@ -49,14 +48,14 @@ public class UserService {
         }
 
         List<Role> roles = new ArrayList<>();
-        roles.add(roleRepository.findById(2L).orElseThrow(() -> new IllegalArgumentException("Role이 존재하지 않습니다.")));
+        roles.add(Role.USER);
 
         // 2. User 객체 생성
         User user = User.builder()
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
-                .roles(roles)
+                .roles(Set.of(Role.USER))
                 .build();
 
         // 3. Blog 객체 생성
@@ -154,7 +153,7 @@ public class UserService {
         });
 
         // Role 조회
-        Optional<Role> role = roleRepository.findByName("ROLE_USER");
+//        Optional<Role> role = roleRepository.findByName("ROLE_USER");
 
         // User 생성
         User member = User.builder()
@@ -163,7 +162,7 @@ public class UserService {
                 .email(email)
                 .refreshToken(UUID.randomUUID().toString())
                 .oauth2Provider(provider)
-                .roles(role.stream().toList())
+                .roles(Set.of(Role.USER))
                 .build();
 
         log.info("user의 role :: " + member.getRoles().toString());
