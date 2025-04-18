@@ -116,6 +116,21 @@ public class BoardApiV1Controller {
         return ResponseEntity.ok(result);
     }
 
+    //사용자별 게시글 조회
+    @Operation(summary = "사용자별 게시글 조회")
+    @GetMapping("search/{userId}")
+    public ResponseEntity<?> searchBoardsByUserId(@PathVariable Long userId) {
+        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+
+        if(result.isEmpty()) {
+            return ResponseEntity
+                    .status(200)
+                    .body("해당 사용자의 게시글이 없습니다.");
+        }
+        return ResponseEntity.ok(result);
+
+    }
+
     @GetMapping("/{boardId}/likes")
     public ResponseEntity<?> likeBoardList(@PathVariable(name = "boardId") Long boardId) {
         try {

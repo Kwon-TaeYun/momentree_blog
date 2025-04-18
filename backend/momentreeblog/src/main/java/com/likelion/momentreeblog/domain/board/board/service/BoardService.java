@@ -116,4 +116,21 @@ public BoardDetailResponseDto getBoardDetail(Long id) {
             .orElseThrow(() -> new IllegalArgumentException("해당 게시물의 블로그 정보가 존재하지 않습니다."));
     return BoardDetailResponseDto.from(board);
 }
+
+    @Transactional(readOnly = true)
+    public Page<BoardListResponseDto> searchBoardsByUserId(Long userId) {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Board> boards = boardRepository.findByBlog_User_Id(userId, pageable);
+
+        return boards.map(board -> new BoardListResponseDto(
+                board.getId(),
+                board.getTitle(),
+                board.getBlog().getId()
+        ));
+    }
+
+
+
+
+
 }
