@@ -1,4 +1,5 @@
 'use client';
+import { LoginMemberContext, useLoginMember } from '@/stores/auth/loginMember'
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect } from 'react'
@@ -8,16 +9,40 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     const socialLoginForKakaoUrl =
     "http://localhost:8090/oauth2/authorization/kakao";
    const redirectUrlAfterSocialLogin = "http://localhost:3000";
+   const { loginMember, setLoginMember, setNoLoginMember, isLoginMemberPending, isLogin, logout, logoutAndHome } =
+        useLoginMember()
+
+    // 전역관리를 위한 Store 등록 - context api 사용
+    const loginMemberContextValue = {
+        loginMember,
+        setLoginMember,
+        isLoginMemberPending,
+        isLogin,
+        logout,
+        logoutAndHome,
+    }
     useEffect(() => {
       fetch('http://localhost:8090/api/v1/members/me', {
         credentials: 'include',
     })
             .then((response) => response.json())
             .then((data) => {
-                console.log(data)
+              setLoginMember(data)
+            })
+            .catch((error) => {
+                setNoLoginMember()
             })
     }, [])
+
+    if (isLoginMemberPending) {
+      return (
+          <div className="flex justify-center items-center h-screen">
+              <div className="text-2xl font-bold">로딩중...</div>
+          </div>
+      )
+  }
   return (
+    <LoginMemberContext value={loginMemberContextValue}>
    <main> 
    <header className="border-b border-gray-100 bg-white shadow-sm">
   <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -89,7 +114,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       </Link>
 
       {/* 프로필 이미지 */}
-      <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden border-2 border-[#2c714c] cursor-pointer">
+      {/* <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden border-2 border-[#2c714c] cursor-pointer">
         <Image
           src="https://images.unsplash.com/photo-1560941001-d4b52ad00ecc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
           alt="Profile"
@@ -101,17 +126,31 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             target.src = "/images/logo.png"; // 프로필 이미지 로드 실패 시 기본 이미지
           }}
         />
-      </div>
-      <>
-      <div className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition">
+      </div> */}
+      {/* 카카오 로그인 (필요한 경우 활성화) */}
+      {isLogin ? (
+                                <div className="flex items-center gap-4">
+                                    <div>{loginMember.name}님 환영합니다!</div>
+                                    <button onClick={logoutAndHome}>로그아웃</button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition">
                                         <Link
                                             href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
                                         >
                                             <span className="font-bold">카카오 로그인</span>
                                         </Link>
                                     </div>
-      <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">회원가입</button>
-      </>
+                                    <button className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition">
+                                    <Link
+                                            href={`/members/signup`}
+                                        >
+                                        회원가입
+                                        </Link>
+                                    </button>
+                                </>
+                            )}
     </div>
   </div>
 </header>
@@ -158,6 +197,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
    </main>
+   </LoginMemberContext>
   );
 }
 
