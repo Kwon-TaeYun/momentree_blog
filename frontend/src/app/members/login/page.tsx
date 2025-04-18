@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import styled from "styled-components";
 const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`
-const redirectUrlAfterSocialLogin = process.env.NEXT_PUBLIC_FRONT_BASE_URL
+const redirectUrlAfterSocialLogin = `http://localhost:3000/success`
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
