@@ -8,7 +8,8 @@ import React from 'react';
 export function ClientLayout({ children }: { children: React.ReactNode }) {
     const socialLoginForKakaoUrl =
     "http://localhost:8090/oauth2/authorization/kakao";
-   const redirectUrlAfterSocialLogin = "http://localhost:3000";
+  //  const redirectUrlAfterSocialLogin = "http://localhost:3000";
+  const redirectUrlAfterSocialLogin = "http://localhost:3000/success";
    const { loginMember, setLoginMember, setNoLoginMember, isLoginMemberPending, isLogin, logout, logoutAndHome } =
         useLoginMember()
 
