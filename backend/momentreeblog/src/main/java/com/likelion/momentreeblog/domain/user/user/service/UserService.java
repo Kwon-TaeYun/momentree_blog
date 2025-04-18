@@ -3,9 +3,11 @@ package com.likelion.momentreeblog.domain.user.user.service;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,6 @@ public class UserService {
     private final AuthTokenService authTokenService;
 
     @Transactional
-
     public String saveUser(UserSignupDto dto){
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             return "이미 존재하는 이메일입니다!";
@@ -56,6 +57,7 @@ public class UserService {
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .roles(Set.of(Role.USER))
+                .status(UserStatus.ACTIVE)
                 .build();
 
         // 3. Blog 객체 생성
@@ -99,6 +101,21 @@ public class UserService {
     public User editUser(User user){
         return userRepository.save(user);
     }
+
+
+    @Transactional
+    public void changeUserStatusDeleted(Long id, UserDeleteRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
+
+        if (!request.getEmail().equals(user.getEmail())) {
+            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이매일을 다시 입력해주세요");
+        }
+
+        user.setStatus(UserStatus.DELETED);
+        userRepository.save(user);
+    }
+
 
     public User getMemberFromAccessToken(String accessToken) {
         Map<String, Object> payload = authTokenService.payload(accessToken);
@@ -163,6 +180,7 @@ public class UserService {
                 .refreshToken(UUID.randomUUID().toString())
                 .oauth2Provider(provider)
                 .roles(Set.of(Role.USER))
+                .status(UserStatus.ACTIVE)
                 .build();
 
         log.info("user의 role :: " + member.getRoles().toString());

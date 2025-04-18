@@ -1,21 +1,19 @@
 package com.likelion.momentreeblog.domain.user.user.controller;
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
-import com.likelion.momentreeblog.domain.user.user.dto.UserDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserLoginDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserLoginResponseDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
+import com.likelion.momentreeblog.domain.user.user.dto.*;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.global.rq.Rq;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -174,6 +172,19 @@ public class UserApiV1Controller {
         User user = userService.findUserById((Long) userId);
         return new UserDto(user);
     }
+
+    //회원 탈퇴로 상태 변경하기
+    @PostMapping("/delete")
+    public ResponseEntity<String> changeStatusDeleted(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody UserDeleteRequest request
+    ) {
+        Long userId = customUserDetails.getUserId();
+        userService.changeUserStatusDeleted(userId, request);
+
+        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+    }
+
 }
 
 

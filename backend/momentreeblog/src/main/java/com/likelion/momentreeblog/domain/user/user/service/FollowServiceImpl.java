@@ -1,14 +1,18 @@
 package com.likelion.momentreeblog.domain.user.user.service;
 
 import com.likelion.momentreeblog.domain.user.follower.entity.FollowManagement;
+import com.likelion.momentreeblog.domain.user.user.dto.UserFollowDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.FollowRepository;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +55,47 @@ public class FollowServiceImpl implements FollowService{
     @Transactional
     public boolean isFollowing(User follower, User following) {
         return followRepository.findByFollowerAndFollowing(follower, following).isPresent();
+    }
+
+
+    @Override
+    public List<UserFollowDto> getFollowings(Long myUserId) {
+
+        // 내 팔로잉 목록 가져오기
+        List<FollowManagement> following =
+                followRepository.findAllByFollowerId(myUserId);
+
+        // 삭제 필터를 거쳐서 팔로윙 가져오기
+        return following.stream()
+                .map(FollowManagement::getFollowing)         // User 객체
+                .filter(u -> u.getStatus() != UserStatus.DELETED)
+                .map(u -> new UserFollowDto(
+                        u.getId(),
+                        u.getName(),
+                        u.getStatus(),
+                        u.getCurrentProfilePhoto()
+
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserFollowDto> getFollowers(Long myUserId) {
+
+        // 나를 팔로우 한 사람들의 목록 가져오기
+        List<FollowManagement> followers =
+                followRepository.findAllByFollowingId(myUserId);
+
+        // 삭제 필터를 거쳐서 나를 팔로우한 사람들 가져오기
+        return followers.stream()
+                .map(FollowManagement::getFollower)
+                .filter(u -> u.getStatus() != UserStatus.DELETED)
+                .map(u -> new UserFollowDto(
+                        u.getId(),
+                        u.getName(),
+                        u.getStatus(),
+                        u.getCurrentProfilePhoto()
+                ))
+                .collect(Collectors.toList());
     }
 }
