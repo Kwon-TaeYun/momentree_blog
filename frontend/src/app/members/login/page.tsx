@@ -79,11 +79,11 @@ export default function LoginPage() {
         </LoginForm>
 
         <LinkContainer>
-          <Link href="/find-id">아이디 찾기</Link>
+          <Link href="/members/find/id">아이디 찾기</Link>
           <Separator>|</Separator>
-          <Link href="/find-password">비밀번호 찾기</Link>
+          <Link href="/members/find/password">비밀번호 찾기</Link>
           <Separator>|</Separator>
-          <Link href="/signup">회원가입</Link>
+          <Link href="/members/signup">회원가입</Link>
         </LinkContainer>
 
         <SocialLoginSection>
