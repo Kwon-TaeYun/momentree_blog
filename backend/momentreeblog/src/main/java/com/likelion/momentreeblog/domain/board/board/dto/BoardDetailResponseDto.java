@@ -3,7 +3,6 @@ package com.likelion.momentreeblog.domain.board.board.dto;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
-import com.likelion.momentreeblog.domain.board.like.dto.LikeResponseDto;
 import com.likelion.momentreeblog.domain.board.like.entity.Like;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import java.time.LocalDateTime;
@@ -30,7 +29,8 @@ public class BoardDetailResponseDto {
     private Category category;
     private Photo currentMainPhoto;
     private List<Photo> photos;
-    private List<LikeResponseDto> likes;
+    private List<Like> likes;
+    private String blog;
 
     public static BoardDetailResponseDto from(Board board) {
         return BoardDetailResponseDto.builder()
@@ -40,11 +40,10 @@ public class BoardDetailResponseDto {
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
                 .category(board.getCategory())
-//                .currentMainPhoto(board.getCurrentMainPhoto())
-//                .photos(board.getPhotos())
-                .likes(board.getLikes().stream()
-                        .map(LikeResponseDto::from)
-                        .collect(Collectors.toList()))
+                .currentMainPhoto(board.getCurrentMainPhoto())
+                .blog(board.getBlog().getName())
+                .photos(board.getPhotos())
+                .likes(board.getLikes())
                 .build();
     }
 }
