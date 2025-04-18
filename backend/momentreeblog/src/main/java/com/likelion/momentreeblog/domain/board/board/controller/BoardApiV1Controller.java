@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.board.board.controller;
 
+import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.board.service.BoardService;
@@ -43,6 +44,23 @@ public class BoardApiV1Controller {
             return ResponseEntity.status(500).body("게시글 작성 실패! " + e.getMessage());
         }
     }
+
+    //게시글 상세보기
+    @Operation(summary = "게시글 상세보기")
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBoard(@PathVariable Long id) {
+        try {
+            BoardDetailResponseDto board = boardService.getBoardDetail(id);
+            return ResponseEntity.ok(board);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("게시글을 찾을 수 없습니다: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 조회 실패: " + e.getMessage());
+        }
+    }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<String> updateBoard(
