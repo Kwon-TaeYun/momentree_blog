@@ -9,6 +9,7 @@ public interface UserFindService {
     Optional<User> getUserById(Long id);
     Optional<User> getUserByEmail(String email);
     Optional<User> getUserByName(String name);
+    Optional<User> getUserByNameAndEmail(String name, String email);
 
     Long getFollowingCount(User user);
     Long getFollowerCount(User user);
