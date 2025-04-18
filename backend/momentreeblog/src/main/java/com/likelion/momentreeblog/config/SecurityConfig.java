@@ -1,6 +1,7 @@
 package com.likelion.momentreeblog.config;
 
 import com.likelion.momentreeblog.config.security.CustomAuthenticationFilter;
+import com.likelion.momentreeblog.global.AppConfig;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import com.likelion.momentreeblog.global.util.security.CustomAuthorizationRequestResolver;
 import com.likelion.momentreeblog.global.util.security.CustomOAuth2AuthenticationSuccessHandler;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -74,18 +76,28 @@ public class SecurityConfig {
     }
 
 
-    public CorsConfigurationSource configurationSource(){
+    @Bean
+    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 허용할 오리진 설정
+        configuration.setAllowedOrigins(Arrays.asList("https://cdpn.io", AppConfig.getSiteFrontUrl()));
+
+        // 허용할 HTTP 메서드 설정
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+
+        // 자격 증명 허용 설정
+        configuration.setAllowCredentials(true);
+
+        // 허용할 헤더 설정
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        // CORS 설정을 소스에 등록
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("*"); //http://example.com
-        config.addAllowedHeader("*"); //content-type 같은 헤더 정보
-        config.addAllowedMethod("*");
-        config.setAllowedOrigins(List.of("http://localhost:8080"));
-        config.addAllowedOrigin("http://localhost:3000");
-        config.setAllowedMethods(List.of("GET","POST","DELETE"));
-        source.registerCorsConfiguration("/**",config);
+        source.registerCorsConfiguration("/api/**", configuration);
+
         return source;
-    }//허용하는 부분 설정
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

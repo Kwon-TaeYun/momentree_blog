@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import styled from "styled-components";
-
+const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`
+const redirectUrlAfterSocialLogin = `http://localhost:3000/success`
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -86,18 +87,22 @@ export default function LoginPage() {
         </LinkContainer>
 
         <SocialLoginSection>
-          <SocialText>소셜 계정으로 로그인</SocialText>
-          <KakaoButton>
-            <Image
-              src="/kakao_login.png"
-              alt="카카오 로그인"
-              width={300}
-              height={45}
-              quality={100}
-              priority
-            />
-          </KakaoButton>
-        </SocialLoginSection>
+  <SocialText>소셜 계정으로 로그인</SocialText>
+  <Link
+    href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                        >
+    <KakaoButton>
+      <Image
+        src="/kakao_login.png"
+        alt="카카오 로그인"
+        width={300}
+        height={45}
+        quality={100}
+        priority
+      />
+    </KakaoButton>
+  </Link>
+</SocialLoginSection>
 
         <Footer>
           <FooterText>개인정보처리방침</FooterText>
