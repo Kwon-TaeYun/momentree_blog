@@ -12,10 +12,13 @@ import java.util.Map;
 
 @Component
 public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
+
     private final DefaultOAuth2AuthorizationRequestResolver defaultResolver;
+
     public CustomAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository) {
         this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
     }
+
 
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
@@ -34,9 +37,10 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
             return null;
         }
 
-        String redirectUrl = request.getParameter("redirectUrl");
-
         Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
+
+
+        String redirectUrl = request.getParameter("redirectUrl");
         if (redirectUrl != null && !redirectUrl.isEmpty()) {
             additionalParameters.put("state", redirectUrl);
         }

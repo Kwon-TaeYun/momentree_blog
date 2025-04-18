@@ -1,6 +1,8 @@
 package com.likelion.momentreeblog.domain.user.user.controller;
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
 import com.likelion.momentreeblog.domain.user.user.dto.UserLoginDto;
 import com.likelion.momentreeblog.domain.user.user.dto.UserLoginResponseDto;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -122,6 +125,18 @@ public class UserApiV1Controller {
             log.info("로그아웃 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
         }
+    }
+
+    //회원 탈퇴로 상태 변경하기
+    @PostMapping("/delete")
+    public ResponseEntity<String> changeStatusDeleted(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody UserDeleteRequest request
+    ) {
+        Long userId = customUserDetails.getUserId();
+        userService.changeUserStatusDeleted(userId, request);
+
+        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
     }
 
     //로그아웃

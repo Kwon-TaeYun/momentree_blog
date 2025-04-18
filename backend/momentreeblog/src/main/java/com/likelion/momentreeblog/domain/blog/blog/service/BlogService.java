@@ -1,12 +1,12 @@
 package com.likelion.momentreeblog.domain.blog.blog.service;
 
-import com.likelion.momentreeblog.domain.blog.blog.dto.BlogCreateRequestDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogUpdateRequestDto;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -54,13 +54,21 @@ public class BlogService {
                     .viewCount(0L)
                     .build();
         }
-
         Blog blog = optionalBlog.get();
-        return BlogResponseDto.builder()
+
+        User user = blog.getUser();
+
+        BlogResponseDto blogResponseDto = BlogResponseDto.builder()
                 .id(blog.getId())
                 .name(blog.getName())
                 .viewCount(blog.getViewCount())
                 .build();
+
+        if (user.getStatus() == UserStatus.DELETED) {
+            blogResponseDto.setName("탈퇴한 회원입니다");
+        }
+
+        return blogResponseDto;
     }
 
     /**

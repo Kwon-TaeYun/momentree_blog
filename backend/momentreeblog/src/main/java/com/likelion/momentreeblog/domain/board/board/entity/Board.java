@@ -9,6 +9,8 @@ import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +30,9 @@ public class Board extends BaseEntity {
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content; // 내용
 
-
     @ManyToOne
     @JoinColumn(name = "blog_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Blog blog; // 블로그 테이블
 
     @ManyToOne

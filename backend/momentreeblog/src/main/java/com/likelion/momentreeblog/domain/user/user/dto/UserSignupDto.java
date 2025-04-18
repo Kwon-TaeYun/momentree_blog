@@ -1,6 +1,6 @@
 package com.likelion.momentreeblog.domain.user.user.dto;
 
-import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,4 +20,5 @@ public class UserSignupDto {
     private String password;
     private String blogName;
     private String refreshToken;
+    private UserStatus status;
 }
