@@ -114,7 +114,6 @@ public BoardDetailResponseDto getBoardDetail(Long id) {
             
     blogRepository.findById(board.getBlog().getId())
             .orElseThrow(() -> new IllegalArgumentException("해당 게시물의 블로그 정보가 존재하지 않습니다."));
-
     return BoardDetailResponseDto.from(board);
 }
 }
