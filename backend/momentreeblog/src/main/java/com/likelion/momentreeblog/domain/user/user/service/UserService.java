@@ -58,7 +58,6 @@ public class UserService {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .status(UserStatus.ACTIVE)
                 .roles(Set.of(Role.USER))
-                .status(UserStatus.ACTIVE)
                 .build();
 
         // 3. Blog 객체 생성
