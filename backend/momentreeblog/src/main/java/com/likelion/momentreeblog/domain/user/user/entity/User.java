@@ -3,6 +3,7 @@ package com.likelion.momentreeblog.domain.user.user.entity;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -43,7 +44,6 @@ public class User extends BaseEntity {
     @Column(nullable = false, name = "refresh_token")
     private String refreshToken;
 
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
@@ -52,6 +52,10 @@ public class User extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
     private Blog blog;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
 
     public void setBlog(Blog blog) {
         this.blog = blog;

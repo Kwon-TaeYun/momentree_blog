@@ -12,4 +12,7 @@ public interface BoardRepository extends JpaRepository<Board, Long>{
 
     // 사용자 ID로 게시물 조회
     List<Board> findByBlog_User_Id(Long userId);
+
+    // 페이징 처리용 사용자 ID로 게시글 조회
+    Page<Board> findByBlog_User_Id(Long userId, Pageable pageable);
 }
