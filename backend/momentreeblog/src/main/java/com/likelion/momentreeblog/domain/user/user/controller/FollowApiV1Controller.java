@@ -2,6 +2,7 @@ package com.likelion.momentreeblog.domain.user.user.controller;
 
 // 팔로우/언팔로우/팔로우 수 확인
 
+import com.likelion.momentreeblog.domain.user.user.dto.UserFollowDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.FollowService;
 import com.likelion.momentreeblog.domain.user.user.service.UserFindService;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @Tag(name = "Follow", description = "팔로우 관련 API")
@@ -25,7 +27,7 @@ public class FollowApiV1Controller {
 
     // 특정 유저 팔로워 수 조회
     @Operation(summary = "팔로잉 수 조회", description = "특정 유저의 팔로워 수를 조회합니다.")
-    @GetMapping("/members/{id}/followings")
+    @GetMapping("/members/{id}/followings/counts")
     public ResponseEntity<?> getFollowerCount(@PathVariable(name="id") Long id){
         Optional<User> user = userFindService.getUserById(id);
         if(user.isEmpty()) {
@@ -38,7 +40,7 @@ public class FollowApiV1Controller {
 
     // 특정 유저의 팔로잉 수 조회
     @Operation(summary = "팔로워 수 조회", description = "특정 유저의 팔로잉 수를 조회합니다.")
-    @GetMapping("/members/{id}/followers")
+    @GetMapping("/members/{id}/followers/counts")
     public ResponseEntity<?> getFollowingCount(@PathVariable(name="id") Long id){
         Optional<User> user = userFindService.getUserById(id);
         if(user.isEmpty()) {
@@ -123,4 +125,17 @@ public class FollowApiV1Controller {
         boolean result = followService.isFollowing(follower, following);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/members/{id}/followers")
+    public ResponseEntity<List<UserFollowDto>> listFollowers(@PathVariable Long userId) {
+        List<UserFollowDto> list = followService.getFollowers(userId);
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/members/{id}/followings")
+    public ResponseEntity<List<UserFollowDto>> listFollowings(@PathVariable Long userId) {
+        List<UserFollowDto> list = followService.getFollowings(userId);
+        return ResponseEntity.ok(list);
+    }
+
 }
