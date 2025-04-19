@@ -178,6 +178,7 @@ public class UserService {
                 .refreshToken(UUID.randomUUID().toString())
                 .oauth2Provider(provider)
                 .roles(Set.of(Role.USER))
+                .status(UserStatus.ACTIVE)
                 .build();
 
         log.info("user의 role :: " + member.getRoles().toString());
