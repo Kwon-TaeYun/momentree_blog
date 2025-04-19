@@ -74,7 +74,7 @@ export default function Header() {
                 </li>
                 <li>
                   <Link
-                    href="/my-tree"
+                    href="/members/login/myblog"
                     className="text-gray-600 hover:text-gray-900 py-4"
                   >
                     나의 나무

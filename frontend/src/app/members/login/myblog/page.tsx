@@ -48,36 +48,6 @@ export default function MyBlogPage() {
 
   return (
     <div className="min-h-screen bg-white text-black">
-      {/* 헤더 */}
-      <header className="border-b border-gray-100 py-4 px-6">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center">
-              <Image 
-                src="/images/logo.png" 
-                alt="Momentree 로고" 
-                width={46} 
-                height={46}
-              />
-              <span className="font-medium text-black ml-1">Momentree</span>
-            </Link>
-            <nav>
-              <ul className="flex space-x-8">
-                <li className="font-medium border-b-2 border-black pb-1">
-                  <Link href="/members/login/myblog">나의 나무</Link>
-                </li>
-                <li className="text-gray-500 hover:text-black">
-                  <Link href="/social">사진첩</Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="bg-green-100 text-green-800 px-4 py-2 rounded-md">글쓰기</button>
-            <button className="text-gray-700 px-4 py-2 rounded-md">김지민님</button>
-          </div>
-        </div>
-      </header>
 
       <main className="max-w-7xl mx-auto py-8 px-6">
         <div className="flex flex-col md:flex-row gap-8">
