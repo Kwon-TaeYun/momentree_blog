@@ -2,6 +2,7 @@ package com.likelion.momentreeblog.domain.board.board.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
@@ -106,12 +107,13 @@ public class BoardService {
                 board.getBlog().getId()
         ));
     }
-
-
-
-
-
-
-
-
+    
+public BoardDetailResponseDto getBoardDetail(Long id) {
+    Board board = boardRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+            
+    blogRepository.findById(board.getBlog().getId())
+            .orElseThrow(() -> new IllegalArgumentException("해당 게시물의 블로그 정보가 존재하지 않습니다."));
+    return BoardDetailResponseDto.from(board);
+}
 }

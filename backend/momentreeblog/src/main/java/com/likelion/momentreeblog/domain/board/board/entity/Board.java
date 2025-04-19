@@ -49,7 +49,7 @@ public class Board extends BaseEntity {
 
     // 게시글에 첨부된 모든 사진 기록 (대표 사진 히스토리 포함 가능)
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Photo> photos = new ArrayList<>();
+    private List<Photo> photos;
 
 
     public Board(BoardRequestDto dto, Blog blog) {

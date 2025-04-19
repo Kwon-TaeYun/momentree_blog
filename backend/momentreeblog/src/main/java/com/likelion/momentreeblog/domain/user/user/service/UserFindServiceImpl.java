@@ -3,10 +3,10 @@ package com.likelion.momentreeblog.domain.user.user.service;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.FollowRepository;
 import com.likelion.momentreeblog.domain.user.user.repository.UserFindRepository;
+import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -14,6 +14,7 @@ import java.util.Optional;
 public class UserFindServiceImpl implements UserFindService{
     private final UserFindRepository userFindRepository;
     private final FollowRepository followRepository;
+    private final UserRepository userRepository;
 
     @Override
     public Optional<User> getUserById(Long id) {
@@ -31,6 +32,11 @@ public class UserFindServiceImpl implements UserFindService{
     }
 
     @Override
+    public Optional<User> getUserByNameAndEmail(String name, String email) {
+        return userRepository.findByNameAndEmail(name, email);
+    }
+
+    @Override
     public Long getFollowingCount(User user) {
         return followRepository.countByFollowing(user);
     }
@@ -39,4 +45,5 @@ public class UserFindServiceImpl implements UserFindService{
     public Long getFollowerCount(User user) {
         return followRepository.countByFollower(user);
     }
+
 }

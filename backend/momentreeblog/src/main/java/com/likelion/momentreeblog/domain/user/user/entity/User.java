@@ -44,19 +44,10 @@ public class User extends BaseEntity {
     @Column(nullable = false, name = "refresh_token")
     private String refreshToken;
 
-
-    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    private UserStatus status = UserStatus.ACTIVE;
-
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private List<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
@@ -83,6 +74,9 @@ public class User extends BaseEntity {
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (roles == null) {
+            return new ArrayList<>();
+        }
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());

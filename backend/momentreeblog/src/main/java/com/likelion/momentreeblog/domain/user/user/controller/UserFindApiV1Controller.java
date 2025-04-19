@@ -49,4 +49,16 @@ public class UserFindApiV1Controller {
             return ResponseEntity.ok(UserResponse.from(user.get()));
         }
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> getUserByNameAndEmail(
+            @RequestParam(name = "name") String name,
+            @RequestParam(name = "email") String email) {
+        Optional<User> user = userFindService.getUserByNameAndEmail(name, email);
+        if(user.isEmpty()) {
+            return ResponseEntity.ok("해당하는 유저를 찾을 수 없습니다.");
+        } else {
+            return ResponseEntity.ok(UserResponse.from(user.get()));
+        }
+    }
 }

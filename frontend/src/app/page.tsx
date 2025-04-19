@@ -9,20 +9,6 @@ export default function Home() {
   const redirectUrlAfterSocialLogin = "http://localhost:3000";
   return (
     <main className="flex flex-col min-h-screen bg-white text-black">
-      {/* 헤더 */}
-      <header className="border-b py-3 px-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Image 
-            src="/images/logo.png" 
-            alt="Momentree 로고" 
-            width={46}
-            height={46}
-            className="object-contain"
-          />
-          <span className="font-medium text-black">Momentree</span>
-        </div>
-        <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">로그인</button>
-      </header>
 
       {/* 메인 컨텐츠 */}
       <section className="flex-1 flex flex-col items-center justify-center px-4 text-center max-w-3xl mx-auto py-16">
@@ -34,12 +20,6 @@ export default function Home() {
           매일의 순간들을 기록하고 성장하는 나만의 이야기를 만들어보세요. 당신의 소중한 순간이 한 나의 나무가 되어 자라납니다.
         </p>
         <div className="flex gap-4">
-          <a
-            href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-            className="bg-black text-white px-6 py-2 rounded-md font-medium"
-          >
-            시작하기
-          </a>
           <button className="border border-gray-300 px-6 py-2 rounded-md font-medium text-black">
             더 알아보기
           </button>
@@ -196,46 +176,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-      
-      {/* 푸터 */}
-      <footer className="bg-gray-50 py-12 mt-12">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="font-medium mb-4 text-sm text-black">서비스</h3>
-            <ul className="space-y-2 text-sm text-black">
-              <li>기능 소개</li>
-              <li>이용 가이드</li>
-              <li>요금제</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium mb-4 text-sm text-black">고객지원</h3>
-            <ul className="space-y-2 text-sm text-black">
-              <li>자주 묻는 질문</li>
-              <li>문의하기</li>
-              <li>피드백</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium mb-4 text-sm text-black">정책</h3>
-            <ul className="space-y-2 text-sm text-black">
-              <li>소개</li>
-              <li>블로그</li>
-              <li>채용</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium mb-4 text-sm text-black">법적 고지</h3>
-            <ul className="space-y-2 text-sm text-black">
-              <li>개인정보처리방침</li>
-              <li>이용약관</li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto px-4 mt-8 pt-8 border-t text-center text-sm text-black">
-          © 2024 webMoment. All rights reserved.
-        </div>
-      </footer>
     </main>
   );
 }
