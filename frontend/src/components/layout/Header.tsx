@@ -3,16 +3,45 @@ import Image from 'next/image';
 import { useEffect } from 'react'
 import { BiSearch } from 'react-icons/bi'; // BiSearch 아이콘도 필요함
 import React from 'react';
-import { useGlobalLoginMember, LoginMemberContext, useLoginMember } from '@/stores/auth/loginMember';
+import { LoginMemberContext, useLoginMember } from '@/stores/auth/loginMember';
 
 export default function Header() {
     const socialLoginForKakaoUrl =
     "http://localhost:8090/oauth2/authorization/kakao";
   //  const redirectUrlAfterSocialLogin = "http://localhost:3000";
   const redirectUrlAfterSocialLogin = "http://localhost:3000/success";
-    const { isLogin, loginMember, logoutAndHome } = useGlobalLoginMember();
+   const { loginMember, setLoginMember, setNoLoginMember, isLoginMemberPending, isLogin, logout, logoutAndHome } =
+        useLoginMember()
 
     // 전역관리를 위한 Store 등록 - context api 사용
+    const loginMemberContextValue = {
+        loginMember,
+        setLoginMember,
+        isLoginMemberPending,
+        isLogin,
+        logout,
+        logoutAndHome,
+    }
+    useEffect(() => {
+      fetch('http://localhost:8090/api/v1/members/me', {
+        credentials: 'include',
+    })
+            .then((response) => response.json())
+            .then((data) => {
+              setLoginMember(data)
+            })
+            .catch((error) => {
+                setNoLoginMember()
+            })
+    }, [])
+
+    if (isLoginMemberPending) {
+      return (
+          <div className="flex justify-center items-center h-screen">
+              <div className="text-2xl font-bold">로딩중...</div>
+          </div>
+      )
+  }
     return (
         <header className="border-b border-gray-100 bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -45,7 +74,7 @@ export default function Header() {
                 </li>
                 <li>
                   <Link
-                    href="/my-tree"
+                    href="/members/login/myblog"
                     className="text-gray-600 hover:text-gray-900 py-4"
                   >
                     나의 나무
