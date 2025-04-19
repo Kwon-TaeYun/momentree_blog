@@ -3,10 +3,15 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import UserFollower from "@/components/user_follower";
 
 export default function MyBlogPage() {
+  const [isFollowerModalOpen, setIsFollowerModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+
   // 사용자 정보 상태
   const [userInfo, setUserInfo] = useState({
+    id: "1", // 사용자 ID 추가
     name: "김지민의 나무",
     username: "@jimin_kim",
     posts: 128,
@@ -108,11 +113,21 @@ export default function MyBlogPage() {
                   </div>
                   <div className="flex justify-between">
                     <p className="text-black">팔로워</p>
-                    <p className="font-bold">{userInfo.followers}</p>
+                    <p 
+                      className="font-bold cursor-pointer hover:text-green-600 transition-colors"
+                      onClick={() => setIsFollowerModalOpen(true)}
+                    >
+                      {userInfo.followers}
+                    </p>
                   </div>
                   <div className="flex justify-between">
                     <p className="text-black">팔로잉</p>
-                    <p className="font-bold">{userInfo.following}</p>
+                    <p 
+                      className="font-bold cursor-pointer hover:text-green-600 transition-colors"
+                      onClick={() => setIsFollowingModalOpen(true)}
+                    >
+                      {userInfo.following}
+                    </p>
                   </div>
                 </div>
                 
@@ -172,6 +187,20 @@ export default function MyBlogPage() {
           </div>
         </div>
       </main>
+
+      {/* 팔로워 모달 */}
+      <UserFollower 
+        isOpen={isFollowerModalOpen} 
+        onClose={() => setIsFollowerModalOpen(false)}
+        userId={userInfo.id}
+      />
+
+      {/* 팔로잉 모달 */}
+      <UserFollower 
+        isOpen={isFollowingModalOpen} 
+        onClose={() => setIsFollowingModalOpen(false)}
+        userId={userInfo.id}
+      />
     </div>
   );
 }
