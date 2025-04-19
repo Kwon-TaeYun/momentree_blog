@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.board.board.controller;
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
@@ -16,14 +17,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.hibernate.Hibernate;
 
+import java.util.Collections;
+
 @RestController
+@Slf4j
 @RequestMapping("/api/v1/boards")
 @RequiredArgsConstructor
 public class BoardApiV1Controller {
@@ -129,18 +135,45 @@ public class BoardApiV1Controller {
 
     //사용자별 게시글 조회
     @Operation(summary = "사용자별 게시글 조회")
-    @GetMapping("search/{userId}")
-    public ResponseEntity<?> searchBoardsByUserId(@PathVariable Long userId) {
-        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+//    @GetMapping("/searchById")
+//    public ResponseEntity<?> searchBoardsByUserId(@CookieValue("accessToken") String token) {
+//        Long userId = jwtTokenizer.getUserIdFromToken(token);
+//        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+//
+//        if(result.isEmpty()) {
+//            return ResponseEntity.status(200).body("해당 사용자의 게시글이 없습니다.");
+//        }
+//        return ResponseEntity.ok(result);
+//    }
 
-        if(result.isEmpty()) {
-            return ResponseEntity
-                    .status(200)
-                    .body("해당 사용자의 게시글이 없습니다.");
+    @GetMapping("/searchById")
+    public ResponseEntity<?> searchBoardsByUserId(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
         }
-        return ResponseEntity.ok(result);
 
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getUserId();
+            Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+
+            if (result.isEmpty()) {
+                return ResponseEntity.ok(Collections.singletonMap("message", "해당 사용자의 게시글이 없습니다."));
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (ClassCastException e) {
+            log.info("오류: " + e.getMessage());
+            return ResponseEntity.status(500).body("인증 객체 형식 오류");
+        } catch (Exception e) {
+            log.info("오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다.");
+        }
     }
+
+
+
 
     @GetMapping("/{boardId}/likes")
     public ResponseEntity<?> likeBoardList(@PathVariable(name = "boardId") Long boardId) {
