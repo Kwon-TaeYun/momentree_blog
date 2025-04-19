@@ -56,6 +56,7 @@ public class UserService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
+                .status(UserStatus.ACTIVE)
                 .roles(Set.of(Role.USER))
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -128,6 +129,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
 
     }
+
 
     public String genAccessToken(User member) {
         return authTokenService.genAccessToken(member);

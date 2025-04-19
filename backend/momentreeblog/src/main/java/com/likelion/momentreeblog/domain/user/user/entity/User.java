@@ -14,6 +14,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -56,6 +59,8 @@ public class User extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
     private Blog blog;
+
+
 
     public void setBlog(Blog blog) {
         this.blog = blog;

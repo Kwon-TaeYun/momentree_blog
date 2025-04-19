@@ -137,4 +137,5 @@ public class FollowApiV1Controller {
         List<UserFollowDto> list = followService.getFollowings(userId);
         return ResponseEntity.ok(list);
     }
+
 }

@@ -126,6 +126,18 @@ public class UserApiV1Controller {
 //        }
 //    }
 
+    //회원 탈퇴로 상태 변경하기
+    @PostMapping("/delete")
+    public ResponseEntity<String> changeStatusDeleted(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody UserDeleteRequest request
+    ) {
+        Long userId = customUserDetails.getUserId();
+        userService.changeUserStatusDeleted(userId, request);
+
+        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+    }
+
     //로그아웃
 //    @DeleteMapping("/logout")
 //    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader, HttpServletResponse response) {
@@ -172,19 +184,6 @@ public class UserApiV1Controller {
         User user = userService.findUserById((Long) userId);
         return new UserDto(user);
     }
-
-    //회원 탈퇴로 상태 변경하기
-    @PostMapping("/delete")
-    public ResponseEntity<String> changeStatusDeleted(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody UserDeleteRequest request
-    ) {
-        Long userId = customUserDetails.getUserId();
-        userService.changeUserStatusDeleted(userId, request);
-
-        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
-    }
-
 }
 
 

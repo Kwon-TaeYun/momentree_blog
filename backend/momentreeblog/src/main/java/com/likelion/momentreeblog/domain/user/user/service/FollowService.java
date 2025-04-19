@@ -16,4 +16,5 @@ public interface FollowService {
 
     // 내 팔로워 목록 - 나를 follow 한 사람들의 목록
     List<UserFollowDto> getFollowers(Long myUserId);
+
 }
