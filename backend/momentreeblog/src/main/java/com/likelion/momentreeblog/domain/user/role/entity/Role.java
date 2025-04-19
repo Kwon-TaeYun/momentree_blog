@@ -1,23 +1,9 @@
 package com.likelion.momentreeblog.domain.user.role.entity;
 
+public enum Role {
+    USER, ADMIN;
 
-import com.likelion.momentreeblog.global.jpa.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-
-@Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "roles")
-@SuperBuilder
-@ToString
-public class Role extends BaseEntity {
-
-    @Column(nullable = false)
-    private String name;
+    public String getName() {
+        return "ROLE_" + this.name();
+    }
 }
