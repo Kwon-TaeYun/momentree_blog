@@ -190,7 +190,8 @@ public class BoardService {
                 .map(board -> new BoardListResponseDto(
                         board.getId(),
                         board.getTitle(),
-                        board.getBlog().getId()
+                        board.getBlog().getId(),
+                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
                 ));
     }
 
@@ -202,7 +203,8 @@ public class BoardService {
         return findBoard.map(board -> new BoardListResponseDto(
                 board.getId(),
                 board.getTitle(),
-                board.getBlog().getId()
+                board.getBlog().getId(),
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
         ));
     }
 
@@ -222,7 +224,8 @@ public class BoardService {
         return boards.map(board -> new BoardListResponseDto(
                 board.getId(),
                 board.getTitle(),
-                board.getBlog().getId()
+                board.getBlog().getId(),
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
         ));
     }
 

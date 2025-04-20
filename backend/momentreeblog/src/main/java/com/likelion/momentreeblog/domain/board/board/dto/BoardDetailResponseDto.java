@@ -34,6 +34,7 @@ public class BoardDetailResponseDto {
     private String blog;
     private String authorName;
     private String[] likeUsers;
+    private Long authorId;
     public static BoardDetailResponseDto from(Board board) {
         String[] likeUsersArray = board.getLikes() != null ?
                 board.getLikes().stream()
@@ -52,6 +53,7 @@ public class BoardDetailResponseDto {
                 .blog(board.getBlog().getName())
                 .authorName(board.getBlog().getUser().getName())
                 .likeUsers(likeUsersArray)
+                .authorId(board.getBlog().getUser().getId())
                 .build();
     }
 }
