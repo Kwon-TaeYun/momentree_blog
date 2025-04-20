@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,6 @@ import org.hibernate.Hibernate;
 import java.util.Collections;
 
 @RestController
-@Slf4j
 @RequestMapping("/api/v1/boards")
 @RequiredArgsConstructor
 @Slf4j
@@ -214,10 +214,10 @@ public class BoardApiV1Controller {
 
     @PostMapping("/{boardId}/likes")
     public ResponseEntity<String> likeBoard(
-            @RequestHeader(value = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable(name = "boardId") Long boardId) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
 
             String result = likeService.likeBoard(userId, boardId);
 
@@ -228,6 +228,25 @@ public class BoardApiV1Controller {
             return ResponseEntity.status(500).body("좋아요 실패! " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{boardId}/likes")
+    public ResponseEntity<String> unlikeBoard(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable(name = "boardId") Long boardId) {
+        try {
+            Long userId = customUserDetails.getUserId();
+
+            // 좋아요 취소하는 서비스 메소드 호출
+            String result = likeService.unlikeBoard(userId, boardId);
+
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body("인증 정보가 잘못되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("좋아요 취소 실패! " + e.getMessage());
+        }
+    }
+
     // 댓글 조회
     @GetMapping("/{boardId}/comments")
     public ResponseEntity<?> getComments(
