@@ -2,11 +2,7 @@ package com.likelion.momentreeblog.domain.user.user.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
-import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
-import com.likelion.momentreeblog.domain.user.user.dto.UserDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserLoginDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserLoginResponseDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
+import com.likelion.momentreeblog.domain.user.user.dto.*;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.global.rq.Rq;
@@ -174,6 +170,25 @@ public class UserApiV1Controller {
 //                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
 //            }
 //        }
+//    }
+
+//    @PutMapping("/edit")
+//    public ResponseEntity<?> editUser(
+//            @RequestHeader(name = "Authentication") String authentication,
+//            @RequestBody UserUpdateDto updateDto) {
+//
+//        Long tokenUserId = jwtTokenizer.getUserIdFromToken(authentication);
+//
+//        // 예: updateDto 내부에 userId가 있는 경우
+//        if (!tokenUserId.equals(updateDto.getId())) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body("본인만 수정할 수 있습니다.");
+//        }
+//
+//        // 이후 userService 등을 통해 수정 로직 수행
+//        userService.updateUser(updateDto.getId(), updateDto);
+//
+//        return ResponseEntity.ok("회원정보가 수정되었습니다.");
 //    }
 
     @DeleteMapping("/logout")
