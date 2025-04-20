@@ -106,17 +106,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User getMemberFromAccessToken(String accessToken) {
-        Map<String, Object> payload = authTokenService.payload(accessToken);
-
-        if (payload == null) return null;
-
-        Long id = ((Number) payload.get("id")).longValue();
-
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
-
-    }
 
     @Transactional
     public void updateUser(Long userId, UserUpdateDto dto) {
@@ -154,6 +143,20 @@ public class UserService {
         }
 
         user.setStatus(UserStatus.DELETED);
+        userRepository.save(user);
+    }
+
+
+    public User getMemberFromAccessToken(String accessToken) {
+        Map<String, Object> payload = authTokenService.payload(accessToken);
+
+        if (payload == null) return null;
+
+        Long id = ((Number) payload.get("id")).longValue();
+
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
+
     }
 
 

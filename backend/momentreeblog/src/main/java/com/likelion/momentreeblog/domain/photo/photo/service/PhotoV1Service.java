@@ -8,6 +8,7 @@ import com.likelion.momentreeblog.domain.photo.photo.service.profile.ProfilePhot
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PhotoV1Service {
     private final ProfilePhotoService profilePhotoService;
     private final BoardPhotoService boardPhotoService;
@@ -24,6 +26,7 @@ public class PhotoV1Service {
     // PROFILE 타입은 프로필 사진, MAIN 타입은 게시글 대표 사진
     @Transactional
     public PreSignedUrlResponseDto uploadPhoto(PhotoUploadRequestDto request, Long userId, Long boardId) {
+        log.info("단일 사진 업로드 메서드 들어옴");
         if (request.getPhotoType() == PhotoType.ADDITIONAL) {
             throw new IllegalArgumentException("추가 사진은 uploadPhotos API를 사용해주세요.");
         } else if (request.getPhotoType() == PhotoType.PROFILE) {
@@ -156,4 +159,6 @@ public class PhotoV1Service {
             throw new IllegalArgumentException("지원되지 않는 사진 타입입니다.");
         }
     }
+
+
 }

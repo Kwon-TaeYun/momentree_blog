@@ -11,4 +11,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Blog> findByName(String name);
     boolean existsByBlogAndName(Blog blog, String name);
     List<Category> findAllByBlog(Blog blog);
+
+    Optional<Category> findByBlogAndIsDefaultTrue(Blog blog);
 }

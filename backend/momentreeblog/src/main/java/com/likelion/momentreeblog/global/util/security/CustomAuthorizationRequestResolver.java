@@ -42,12 +42,13 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
         String redirectUrl = request.getParameter("redirectUrl");
         if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            additionalParameters.put("state", redirectUrl);
+            additionalParameters.put("redirectUrl", redirectUrl);
         }
+
 
         return OAuth2AuthorizationRequest.from(authorizationRequest)
                 .additionalParameters(additionalParameters)
-                .state(redirectUrl)
+                .state(redirectUrl) // ← redirectUrl 이 없으면 state 가 빈 문자열(null) 로 바뀌어 버립니다
                 .build();
     }
 }

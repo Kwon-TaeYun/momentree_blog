@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.board.board.controller;
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
@@ -13,19 +14,21 @@ import com.likelion.momentreeblog.domain.board.like.dto.BoardLikeInfoDto;
 import com.likelion.momentreeblog.domain.board.like.service.LikeService;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.hibernate.Hibernate;
 
 @RestController
 @RequestMapping("/api/v1/boards")
 @RequiredArgsConstructor
+@Slf4j
 public class BoardApiV1Controller {
     private final BoardService boardService;
     private final LikeService likeService;
@@ -33,13 +36,18 @@ public class BoardApiV1Controller {
     private final CommentService commentService;
     private final BoardRepository boardRepository;
 
+
     @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
     @PostMapping
     public ResponseEntity<String> createBoard(
-            @RequestHeader(value = "Authorization") String authorization,
-            @Valid @RequestBody BoardRequestDto requestDto) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody BoardRequestDto requestDto)
+    {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
+            log.info("▶️ createBoard 에 진입! userId = {}", customUserDetails.getUserId());
+
+//            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
 
             String message = boardService.createBoard(requestDto, userId);
             return ResponseEntity.ok(message);
