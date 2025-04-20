@@ -107,4 +107,9 @@ public class BlogService {
     public Optional<Blog> findById(Long id) {
         return blogRepository.findById(id);
     }
+
+
+    public Blog findByUserId(Long userId) {
+        return blogRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("해당 유저의 블로그가 없습니다"));
+    }
 }

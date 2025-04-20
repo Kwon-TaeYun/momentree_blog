@@ -21,8 +21,8 @@ import lombok.experimental.SuperBuilder;
 public class Photo extends BaseEntity {
 
     @Enumerated(EnumType.STRING) //DB에 문자열 값으로 저장.
-    @Column(name = "photo_type", nullable = false)
-    private PhotoType type; //HOTO_TYPE: PROFILE, MAIN, ADDITIONAL
+    @Column(name = "photo_type", nullable = false, length = 100)
+    private PhotoType type; //PHOTO_TYPE: PROFILE, MAIN, ADDITIONAL
 
     @Column(nullable = false)
     private String url; // 사진주소
