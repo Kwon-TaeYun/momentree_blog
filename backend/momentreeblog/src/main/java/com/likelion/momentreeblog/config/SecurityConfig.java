@@ -37,7 +37,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/api/v1/members/**").permitAll()
+                                .requestMatchers("/api/v1/members/**", "/api/v1/boards/**").permitAll()
                                 .requestMatchers("/h2-console/**")
                                 .permitAll()
                                 .requestMatchers("/api/*/**")
