@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.likelion.momentreeblog.domain.user.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,24 +27,31 @@ public class BoardDetailResponseDto {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Category category;
-    private Photo currentMainPhoto;
-    private List<Photo> photos;
-    private List<Like> likes;
+    private String category;
+    private String currentMainPhotoUrl;
+    private List<String> photoUrls;
+    private int likeCount;
     private String blog;
-
+    private String authorName;
+    private String[] likeUsers;
     public static BoardDetailResponseDto from(Board board) {
+        String[] likeUsersArray = board.getLikes() != null ?
+                board.getLikes().stream()
+                        .map(like -> like.getUser().getName()) // 좋아요 누른 사용자들의 이름
+                        .toArray(String[]::new) : new String[0];
         return BoardDetailResponseDto.builder()
                 .id(board.getId())
                 .title(board.getTitle())
                 .content(board.getContent())
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
-                .category(board.getCategory())
-                .currentMainPhoto(board.getCurrentMainPhoto())
+                .category(board.getCategory() != null ? board.getCategory().getName() : null)
+                .currentMainPhotoUrl(board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null)
+                .photoUrls(board.getPhotos().stream().map(Photo::getUrl).collect(Collectors.toList()))
+                .likeCount(board.getLikes() != null ? board.getLikes().size() : 0)
                 .blog(board.getBlog().getName())
-                .photos(board.getPhotos())
-                .likes(board.getLikes())
+                .authorName(board.getBlog().getUser().getName())
+                .likeUsers(likeUsersArray)
                 .build();
     }
 }

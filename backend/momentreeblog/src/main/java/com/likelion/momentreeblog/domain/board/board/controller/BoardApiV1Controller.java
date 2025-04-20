@@ -26,7 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.hibernate.Hibernate;
 
+import java.util.Collections;
+
 @RestController
+@Slf4j
 @RequestMapping("/api/v1/boards")
 @RequiredArgsConstructor
 @Slf4j
@@ -155,18 +158,45 @@ public class BoardApiV1Controller {
 
     //사용자별 게시글 조회
     @Operation(summary = "사용자별 게시글 조회")
-    @GetMapping("search/{userId}")
-    public ResponseEntity<?> searchBoardsByUserId(@PathVariable Long userId) {
-        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+//    @GetMapping("/searchById")
+//    public ResponseEntity<?> searchBoardsByUserId(@CookieValue("accessToken") String token) {
+//        Long userId = jwtTokenizer.getUserIdFromToken(token);
+//        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+//
+//        if(result.isEmpty()) {
+//            return ResponseEntity.status(200).body("해당 사용자의 게시글이 없습니다.");
+//        }
+//        return ResponseEntity.ok(result);
+//    }
 
-        if(result.isEmpty()) {
-            return ResponseEntity
-                    .status(200)
-                    .body("해당 사용자의 게시글이 없습니다.");
+    @GetMapping("/searchById")
+    public ResponseEntity<?> searchBoardsByUserId(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
         }
-        return ResponseEntity.ok(result);
 
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getUserId();
+            Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+
+            if (result.isEmpty()) {
+                return ResponseEntity.ok(Collections.singletonMap("message", "해당 사용자의 게시글이 없습니다."));
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (ClassCastException e) {
+            log.info("오류: " + e.getMessage());
+            return ResponseEntity.status(500).body("인증 객체 형식 오류");
+        } catch (Exception e) {
+            log.info("오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다.");
+        }
     }
+
+
+
 
     @GetMapping("/{boardId}/likes")
     public ResponseEntity<?> likeBoardList(@PathVariable(name = "boardId") Long boardId) {
