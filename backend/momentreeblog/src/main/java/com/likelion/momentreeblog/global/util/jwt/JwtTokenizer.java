@@ -72,9 +72,6 @@ public class JwtTokenizer {
     }
 
     public Claims parseAccessToken(String accessToken){
-        if (accessToken.startsWith("Bearer ")) {
-            accessToken = accessToken.substring(7).trim();
-        } //추가
         return parseToken(accessToken, accessSecret);
     }
 

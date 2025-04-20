@@ -172,24 +172,46 @@ public class UserApiV1Controller {
 //        }
 //    }
 
-//    @PutMapping("/edit")
-//    public ResponseEntity<?> editUser(
-//            @RequestHeader(name = "Authentication") String authentication,
-//            @RequestBody UserUpdateDto updateDto) {
-//
-//        Long tokenUserId = jwtTokenizer.getUserIdFromToken(authentication);
-//
-//        // 예: updateDto 내부에 userId가 있는 경우
+    @PutMapping("/edit")
+    public ResponseEntity<?> editUser(
+            @RequestHeader(name = "Authorization") String authorization,
+            @RequestBody UserUpdateDto updateDto) {
+
+        Long tokenUserId = jwtTokenizer.getUserIdFromToken(authorization);
+
 //        if (!tokenUserId.equals(updateDto.getId())) {
 //            return ResponseEntity.status(HttpStatus.FORBIDDEN)
 //                    .body("본인만 수정할 수 있습니다.");
 //        }
-//
-//        // 이후 userService 등을 통해 수정 로직 수행
-//        userService.updateUser(updateDto.getId(), updateDto);
-//
-//        return ResponseEntity.ok("회원정보가 수정되었습니다.");
-//    }
+
+        User user = userService.findUserById(jwtTokenizer.getUserIdFromToken(authorization));
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 사용자를 찾을 수 없습니다.");
+        }
+        user.setId(user.getId());
+
+        // 값이 존재할 때만 업데이트
+        if (updateDto.getName() != null) {
+            user.setName(updateDto.getName());
+        }
+        if (updateDto.getEmail() != null) {
+            user.setEmail(updateDto.getEmail());
+        }
+        if (updateDto.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(updateDto.getPassword()));  // 비밀번호는 반드시 암호화
+        }
+        if (updateDto.getBlogName() != null) {
+            user.getBlog().setName(updateDto.getBlogName());
+        }
+        if (updateDto.getCurrentProfilePhoto() != null) {
+            user.setCurrentProfilePhoto(updateDto.getCurrentProfilePhoto());
+        }
+
+        userService.editUser(user);
+
+        return ResponseEntity.ok("회원정보가 수정되었습니다.");
+    }
+
 
     @DeleteMapping("/logout")
     public void logout() {
