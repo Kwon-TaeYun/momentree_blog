@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.hibernate.Hibernate;
@@ -32,6 +32,7 @@ import java.util.Collections;
 @Slf4j
 @RequestMapping("/api/v1/boards")
 @RequiredArgsConstructor
+@Slf4j
 public class BoardApiV1Controller {
     private final BoardService boardService;
     private final LikeService likeService;
@@ -39,13 +40,35 @@ public class BoardApiV1Controller {
     private final CommentService commentService;
     private final BoardRepository boardRepository;
 
+//    @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
+//    @PostMapping
+//    public ResponseEntity<String> createBoard(
+//            @RequestHeader(value = "Authorization") String authorization,
+//            @Valid @RequestBody BoardRequestDto requestDto) {
+//        try {
+//            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+//
+//            String message = boardService.createBoard(requestDto, userId);
+//            return ResponseEntity.ok(message);
+//
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.status(401).body("인증 정보가 잘못되었습니다.");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body("게시글 작성 실패! " + e.getMessage());
+//        }
+//    }
+
     @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
     @PostMapping
     public ResponseEntity<String> createBoard(
-            @RequestHeader(value = "Authorization") String authorization,
-            @Valid @RequestBody BoardRequestDto requestDto) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody BoardRequestDto requestDto)
+    {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
+            log.info("▶️ createBoard 에 진입! userId = {}", customUserDetails.getUserId());
+
+//            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
 
             String message = boardService.createBoard(requestDto, userId);
             return ResponseEntity.ok(message);

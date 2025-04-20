@@ -7,6 +7,13 @@ import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
+import com.likelion.momentreeblog.domain.board.category.entity.Category;
+import com.likelion.momentreeblog.domain.board.category.repository.CategoryRepository;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
+import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
+import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
+import com.likelion.momentreeblog.domain.photo.photo.service.board.BoardPhotoService;
+import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +23,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +32,9 @@ import java.util.stream.Collectors;
 public class BoardService {
     private final BoardRepository boardRepository;
     private final BlogRepository blogRepository;
+    private final CategoryRepository categoryRepository;
+    private final PhotoV1Service photoV1Service;
+    private final BoardPhotoService boardPhotoService;
 //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
@@ -31,15 +42,77 @@ public class BoardService {
 //        return blog.getUser().getId().equals(userId);
 //    }
     //게시글 작성
+//    @Transactional
+//    public String createBoard(BoardRequestDto requestDto, Long userId) {
+//        Blog blog = blogRepository.findByUserId(userId)
+//                .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
+//
+//        Board board = new Board(requestDto, blog); // 생성자 수정 필요
+//        Board savedBoard = boardRepository.save(board);
+//
+//        return "게시글 작성 완료(" + savedBoard.getTitle() + ")";
+//    }
+
     @Transactional
     public String createBoard(BoardRequestDto requestDto, Long userId) {
         Blog blog = blogRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
 
-        Board board = new Board(requestDto, blog); // 생성자 수정 필요
-        Board savedBoard = boardRepository.save(board);
 
-        return "게시글 작성 완료(" + savedBoard.getTitle() + ")";
+        Category category;
+        Long categoryId = requestDto.getCategoryId();
+
+        if (categoryId == null) {
+            category = categoryRepository.findByBlogAndIsDefaultTrue(blog)
+                    .orElseGet(() -> {
+                        Category defaultCategory = Category.builder()
+                                .name("기본")
+                                .blog(blog)
+                                .isDefault(true)
+                                .build();
+                        return categoryRepository.save(defaultCategory);
+                    });
+        } else {
+            category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("해당 카테고리가 없습니다. id=" + categoryId));
+        }
+
+        Board board = Board.builder()
+                .blog(blog)
+                .category(category)
+                .title(requestDto.getTitle())
+                .content(requestDto.getContent())
+                .currentMainPhoto(null)
+                .photos(new ArrayList<>())
+                .build();
+        boardRepository.save(board);
+
+
+        // 대표 사진(Photo) 먼저 저장
+        // dto.getCurrentMainPhotoUrl() 에는 프론트에서 보낸 S3 key 가 담겨있다.
+        Photo mainPhoto = Photo.builder()
+                .type(PhotoType.MAIN)
+                .url(requestDto.getCurrentMainPhotoUrl())  // DTO에서 URL(=S3 key) 꺼내서
+                .user(blog.getUser())
+                .board(board)
+                .build();
+        board.setCurrentMainPhoto(mainPhoto);
+
+
+        //추가 이미지가 있다면, 같은 순서로 추가 Photo도 저장
+        for (String additionalUrl : requestDto.getPhotoUrls()) {
+            board.getPhotos().add(
+                    Photo.builder()
+                            .type(PhotoType.ADDITIONAL)
+                            .url(additionalUrl)
+                            .user(blog.getUser())
+                            .board(board)
+                            .build()
+            );
+        }
+
+        return "게시글 작성 완료(" + board.getTitle() + ")";
     }
 
 
@@ -57,10 +130,35 @@ public class BoardService {
             throw new SecurityException("게시글 수정 권한이 없습니다.");
         }
 
+        // 3) 대표 사진 S3 → DB
+        photoV1Service.updatePhotoWithS3Key(
+                PhotoType.MAIN,
+                userId,
+                board.getId(),
+                requestDto.getCurrentMainPhotoUrl(),
+                PhotoUploadRequestDto.builder()
+                        .photoType(PhotoType.MAIN)
+                        .filename(null)
+                        .contentType(null)
+                        .build()
+        );
+
+        boardPhotoService.updateBoardAdditionalPhotosWithS3Keys(
+                id,
+                requestDto.getPhotoUrls(),
+                PhotoUploadRequestDto.builder()
+                        .photoType(PhotoType.ADDITIONAL)
+                        .boardId(board.getId())
+                        .contentType(null)
+                        .filename(null)
+                        .userId(blog.getUser().getId())
+                        .build()
+        );
+
+
         board.setTitle(requestDto.getTitle());
         board.setContent(requestDto.getContent());
-        board.setCurrentMainPhoto(requestDto.getCurrentMainPhoto());
-        board.setPhotos(requestDto.getPhotos());
+
 
         Board updatedBoard = boardRepository.save(board);
         return "게시글 수정 완료 (" + updatedBoard.getTitle() + ")";
