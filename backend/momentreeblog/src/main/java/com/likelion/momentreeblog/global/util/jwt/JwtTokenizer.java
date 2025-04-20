@@ -3,6 +3,7 @@ package com.likelion.momentreeblog.global.util.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Component
 public class JwtTokenizer {
     private final byte[] accessSecret;
@@ -86,6 +88,8 @@ public class JwtTokenizer {
         if(token == null || token.isBlank()){
             throw new IllegalArgumentException("Jwt 토큰이 없습니다.");
         }
+        log.info("현재 엑세스 토큰: " + token);
+
         if(token.startsWith("Bearer ")) {
             token = token.substring(7).trim(); // 공백 제거도 같이
         } else {

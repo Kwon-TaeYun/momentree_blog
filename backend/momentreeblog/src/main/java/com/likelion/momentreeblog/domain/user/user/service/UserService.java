@@ -2,9 +2,12 @@ package com.likelion.momentreeblog.domain.user.user.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
+import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
+import com.likelion.momentreeblog.domain.user.user.dto.UserUpdateDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
@@ -28,6 +31,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
+    private final PhotoRepository photoRepository;
 
     @Transactional
     public String saveUser(UserSignupDto dto){
@@ -100,6 +104,32 @@ public class UserService {
     @Transactional
     public User editUser(User user){
         return userRepository.save(user);
+    }
+
+
+    @Transactional
+    public void updateUser(Long userId, UserUpdateDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+        // blogName → Blog 조회해서 설정
+        if (dto.getBlogName() != null) {
+            Blog blog = blogRepository.findByName(dto.getBlogName())
+                    .orElseThrow(() -> new RuntimeException("해당 이름의 블로그를 찾을 수 없습니다."));
+            user.setBlog(blog);
+        }
+
+        // 프로필 사진
+        if (dto.getCurrentProfilePhoto() != null) {
+            Long photoId = dto.getCurrentProfilePhoto().getId();
+            Photo profilePhoto = photoRepository.findById(photoId)
+                    .orElseThrow(() -> new RuntimeException("프로필 사진을 찾을 수 없습니다."));
+            user.setCurrentProfilePhoto(profilePhoto);
+        }
     }
 
 
