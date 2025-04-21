@@ -44,20 +44,6 @@ export default function Mypage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-black">
-      {/* 헤더 */}
-      <header className="bg-white py-3 px-6 border-gray-100 border-b flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Image 
-            src="/images/logo.png" 
-            alt="Momentree 로고" 
-            width={46} 
-            height={46} 
-            className="object-contain"
-          />
-          <span className="font-medium text-black">Momentree</span>
-        </Link>
-        <button className="bg-black text-white px-3 py-1 rounded-md text-sm font-medium">로그아웃</button>
-      </header>
 
       <div className="flex">
         {/* 좌측 네비게이션 */}
