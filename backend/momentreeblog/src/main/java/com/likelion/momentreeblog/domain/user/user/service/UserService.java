@@ -6,6 +6,7 @@ import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
+import com.likelion.momentreeblog.domain.user.user.dto.UserResponse;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.dto.UserUpdateDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
@@ -15,6 +16,8 @@ import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -116,6 +119,13 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
 
+    }
+
+    public List<UserResponse> getTop5Bloggers() {
+        List<User> topUsers = userRepository.findTop5ByOrderByViewCountDescCreatedAtDesc((Pageable) PageRequest.of(0, 5));
+        return topUsers.stream()
+                .map(UserResponse::from)
+                .toList();
     }
 
     @Transactional

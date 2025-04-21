@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -226,6 +227,13 @@ public class UserApiV1Controller {
         User user = userService.findUserById((Long) userId);
         return new UserDto(user);
     }
+
+    @GetMapping("/top5")
+    public ResponseEntity<List<UserResponse>> getTop5Users() {
+        List<UserResponse> top5Users = userService.getTop5Bloggers();
+        return ResponseEntity.ok(top5Users);
+    }
+
 }
 
 
