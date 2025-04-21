@@ -36,10 +36,10 @@ export default function MyBlogPage() {
           method: "GET",
           credentials: "include",
         });
-
+  
         const data = await res.json();
         console.log("응답 데이터:", data);  // 데이터 확인
-
+  
         if (!res.ok) {
           setErrorMsg(data.message || "게시글을 불러오는 데 실패했습니다.");
         } else if (Array.isArray(data.content)) {
@@ -58,10 +58,10 @@ export default function MyBlogPage() {
         setLoading(false);  // 로딩 종료
       }
     };
-
+  
     fetchMyPosts();
   }, []);
-
+  
   // 게시글 클릭 핸들러
   const handlePostClick = (postId: number) => {
     router.push(`/boards/${postId}`);
@@ -74,7 +74,7 @@ export default function MyBlogPage() {
       return undefined;
     }
     return match[2];
-  };
+  }; 
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -85,8 +85,8 @@ export default function MyBlogPage() {
             <div className="bg-white border border-gray-100 rounded-lg p-6 mb-6">
               <div className="flex flex-col items-center">
                 <div className="w-32 h-32 relative rounded-full overflow-hidden mb-4">
-                  <Image
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=774&q=80"
+                  <Image 
+                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=774&q=80" 
                     alt="프로필 이미지"
                     width={128}
                     height={128}
@@ -95,7 +95,7 @@ export default function MyBlogPage() {
                 </div>
                 <h2 className="text-xl font-bold mb-1">{userInfo.name}</h2>
                 <p className="text-gray-500 mb-4">{userInfo.username}</p>
-
+                
                 <div className="w-full flex flex-col space-y-3 mb-4">
                   <InfoRow label="게시글" value={userInfo.posts} />
                   <InfoRow label="방문자" value={userInfo.visitors.toLocaleString()} />
@@ -124,14 +124,14 @@ export default function MyBlogPage() {
 
             <div className="space-y-8">
               {posts.map((post) => (
-                <div
-                  key={post.id}
+                <div 
+                  key={post.id} 
                   className="border border-gray-100 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200"
                   onClick={() => handlePostClick(post.id)}
                 >
                   {/* 게시글 이미지 */}
                   <div className="w-full h-80 bg-gray-100 relative">
-                    <img
+                    <img 
                       src={post.image || "https://via.placeholder.com/800x600?text=No+Image"}
                       alt={post.title}
                       className="w-full h-full object-cover"
