@@ -207,9 +207,6 @@ public class BoardService {
 
 
 
-
-
-
     @Transactional
     public String deleteBoard(Long id, Long userId) {
         Board board = boardRepository.findById(id)
