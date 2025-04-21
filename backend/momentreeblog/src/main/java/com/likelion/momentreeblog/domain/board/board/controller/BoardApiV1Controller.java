@@ -120,10 +120,10 @@ public class BoardApiV1Controller {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBoard(
-            @RequestHeader(value = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable(name = "id") Long id) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
             String message = boardService.deleteBoard(id, userId);
             return ResponseEntity.ok(message);
         } catch (SecurityException e) {
