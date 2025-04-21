@@ -201,7 +201,11 @@ public class BoardApiV1Controller {
         return boardService.getLatestPosts();
     }
 
-
+    @GetMapping("/popular")
+    public ResponseEntity<List<BoardListResponseDto>> getPopularBoards() {
+        List<BoardListResponseDto> popularBoards = boardService.getPopularPosts();
+        return ResponseEntity.ok(popularBoards);
+    }
 
     @GetMapping("/{boardId}/likes")
     public ResponseEntity<?> likeBoardList(@PathVariable(name = "boardId") Long boardId) {

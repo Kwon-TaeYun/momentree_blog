@@ -23,4 +23,13 @@ public interface BoardRepository extends JpaRepository<Board, Long>{
     @Query("SELECT b FROM Board b LEFT JOIN FETCH b.likes ORDER BY b.createdAt DESC")
     List<Board> findTop3ByOrderByCreatedAtDesc();
 
+    @Query("""
+    SELECT b FROM Board b
+    LEFT JOIN b.likes l
+    GROUP BY b.id
+    ORDER BY COUNT(l) DESC, MAX(b.createdAt) DESC
+""")
+    List<Board> findTop5ByLikeCount(Pageable pageable);
+
+
 }

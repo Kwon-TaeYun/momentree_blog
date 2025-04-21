@@ -5,6 +5,7 @@ import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardResponseDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
@@ -231,7 +232,7 @@ public class BoardService {
                 board.getLikes().stream().count()
         ));
     }
-
+    @Transactional(readOnly = true)
     public List<BoardListResponseDto> getLatestPosts() {
         List<Board> boards = boardRepository.findTop3ByOrderByCreatedAtDesc();
 
@@ -245,6 +246,23 @@ public class BoardService {
                 ))
                 .collect(Collectors.toList());
     }
+    @Transactional(readOnly = true)
+    public List<BoardListResponseDto> getPopularPosts() {
+        Pageable pageable = PageRequest.of(0, 5);
+
+        List<Board> boards = boardRepository.findTop5ByLikeCount(pageable);
+
+        return boards.stream()
+                .map(board -> new BoardListResponseDto(
+                        board.getId(),
+                        board.getTitle(),
+                        board.getBlog().getId(),
+                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                        board.getLikes().stream().count()
+                ))
+                .collect(Collectors.toList());
+    }
+
 
 
 
