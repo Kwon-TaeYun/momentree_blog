@@ -1,14 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect } from "react";
-import { BiSearch } from "react-icons/bi"; // BiSearch 아이콘도 필요함
+import { useEffect, useState } from "react";
+import { BiSearch } from "react-icons/bi";
 import React from "react";
 import { LoginMemberContext, useLoginMember } from "@/stores/auth/loginMember";
 
 export default function Header() {
   const socialLoginForKakaoUrl =
     "http://localhost:8090/oauth2/authorization/kakao";
-  //  const redirectUrlAfterSocialLogin = "http://localhost:3000";
   const redirectUrlAfterSocialLogin = "http://localhost:3000/success";
   const {
     loginMember,
@@ -20,26 +19,53 @@ export default function Header() {
     logoutAndHome,
   } = useLoginMember();
 
-  // 전역관리를 위한 Store 등록 - context api 사용
-  const loginMemberContextValue = {
-    loginMember,
-    setLoginMember,
-    isLoginMemberPending,
-    isLogin,
-    logout,
-    logoutAndHome,
-  };
-  useEffect(() => {
-    fetch("http://localhost:8090/api/v1/members/me", {
+  // Add a local state to track login status
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+
+  // Improved logout function
+  const handleLogout = () => {
+    fetch("http://localhost:8090/api/v1/members/logout", {
+      method: "DELETE",
       credentials: "include",
     })
-      .then((response) => response.json())
-      .then((data) => {
-        setLoginMember(data);
+      .then((response) => {
+        if (response.ok) {
+          // Clear login state
+          setNoLoginMember();
+          setIsUserLoggedIn(false);
+
+          // Force page refresh to clear any cached state
+          window.location.href = "/";
+        }
       })
       .catch((error) => {
-        setNoLoginMember();
+        console.error("Logout failed:", error);
       });
+  };
+
+  // Check login status on component mount and whenever isLogin changes
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      fetch("http://localhost:8090/api/v1/members/me", {
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Not logged in");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setLoginMember(data);
+          setIsUserLoggedIn(true);
+        })
+        .catch((error) => {
+          setNoLoginMember();
+          setIsUserLoggedIn(false);
+        });
+    };
+
+    checkLoginStatus();
   }, []);
 
   if (isLoginMemberPending) {
@@ -49,6 +75,7 @@ export default function Header() {
       </div>
     );
   }
+
   return (
     <header className="border-b border-gray-100 bg-white shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -112,7 +139,7 @@ export default function Header() {
           </div>
 
           {/* 글쓰기 버튼 - 로그인한 사용자에게만 표시 */}
-          {isLogin && (
+          {isUserLoggedIn && (
             <Link
               href="/boards/new"
               className="bg-[#2c714c] text-white px-4 py-2 rounded-full font-medium shadow-sm hover:bg-[#225c3d] transition-colors"
@@ -121,25 +148,15 @@ export default function Header() {
             </Link>
           )}
 
-          {/* 프로필 이미지 */}
-          {/* <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden border-2 border-[#2c714c] cursor-pointer">
-              <Image
-                src="https://images.unsplash.com/photo-1560941001-d4b52ad00ecc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
-                alt="Profile"
-                width={36}
-                height={36}
-                className="object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/images/logo.png"; // 프로필 이미지 로드 실패 시 기본 이미지
-                }}
-              />
-            </div> */}
-          {/* 카카오 로그인 (필요한 경우 활성화) */}
-          {isLogin ? (
+          {isUserLoggedIn ? (
             <div className="flex items-center gap-4">
               <div>{loginMember.name}님 환영합니다!</div>
-              <button onClick={logoutAndHome}>로그아웃</button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition"
+              >
+                로그아웃
+              </button>
             </div>
           ) : (
             <>

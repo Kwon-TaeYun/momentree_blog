@@ -32,8 +32,7 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
     private final BoardPhotoService boardPhotoService;
-
-    //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
+//    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
 //
@@ -177,7 +176,8 @@ public class BoardService {
                 .map(board -> new BoardListResponseDto(
                         board.getId(),
                         board.getTitle(),
-                        board.getBlog().getId()
+                        board.getBlog().getId(),
+                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
                 ));
     }
 
@@ -189,7 +189,8 @@ public class BoardService {
         return findBoard.map(board -> new BoardListResponseDto(
                 board.getId(),
                 board.getTitle(),
-                board.getBlog().getId()
+                board.getBlog().getId(),
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
         ));
     }
 
@@ -209,7 +210,8 @@ public class BoardService {
         return boards.map(board -> new BoardListResponseDto(
                 board.getId(),
                 board.getTitle(),
-                board.getBlog().getId()
+                board.getBlog().getId(),
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
         ));
     }
 

@@ -96,7 +96,7 @@ export default function CreatePostPage() {
   }, [router]);
 
   // 에디터에 이미지 삽입 핸들러 - S3 업로드 구현
-  const handleEditorImageUpload = async (
+  const handleEditorImageUpload = (
     blob: File,
     callback: (url: string, alt: string) => void
   ) => {
@@ -106,7 +106,7 @@ export default function CreatePostPage() {
       const contentType = blob.type;
 
       // S3 프리사인드 URL 요청
-      const presignedUrlResponse = await fetch(
+      fetch(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
         }/api/s3/presigned-url`,
@@ -123,33 +123,38 @@ export default function CreatePostPage() {
             userId: userId,
           }),
         }
-      );
+      )
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("프리사인드 URL 생성에 실패했습니다.");
+          }
+          return response.json();
+        })
+        .then(({ url, key }) => {
+          // S3에 직접 파일 업로드
+          return fetch(url, {
+            method: "PUT",
+            headers: {
+              "Content-Type": contentType,
+            },
+            body: blob,
+          }).then(uploadResponse => {
+            if (!uploadResponse.ok) {
+              throw new Error("이미지 업로드에 실패했습니다.");
+            }
 
-      if (!presignedUrlResponse.ok) {
-        throw new Error("프리사인드 URL 생성에 실패했습니다.");
-      }
+            // 에디터에 이미지 URL 삽입 (실제 서비스 URL로 교체)
+            const imageUrl = url.split("?")[0]; // 쿼리 파라미터 제거
+            callback(imageUrl, blob.name);
 
-      const { url, key } = await presignedUrlResponse.json();
-
-      // S3에 직접 파일 업로드
-      const uploadResponse = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": contentType,
-        },
-        body: blob,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("이미지 업로드에 실패했습니다.");
-      }
-
-      // 에디터에 이미지 URL 삽입 (실제 서비스 URL로 교체)
-      const imageUrl = url.split("?")[0]; // 쿼리 파라미터 제거
-      callback(imageUrl, blob.name);
-
-      // 업로드된 이미지 목록에 추가
-      setUploadedImages((prev) => [...prev, key]);
+            // 업로드된 이미지 목록에 추가
+            setUploadedImages((prev) => [...prev, key]);
+          });
+        })
+        .catch(error => {
+          console.error("에디터 이미지 업로드 오류:", error);
+          alert("이미지 업로드에 실패했습니다.");
+        });
     } catch (error) {
       console.error("에디터 이미지 업로드 오류:", error);
       alert("이미지 업로드에 실패했습니다.");

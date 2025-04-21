@@ -128,7 +128,7 @@ export default function SignUp() {
             {/* Name */}
             <div>
               <label className="block text-sm font-medium mb-1">
-                이름 <span className="text-red-500">*</span>
+                이름(별명) <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"

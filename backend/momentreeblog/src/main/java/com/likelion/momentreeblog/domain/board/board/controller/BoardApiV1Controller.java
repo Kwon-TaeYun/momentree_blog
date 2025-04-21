@@ -14,16 +14,20 @@ import com.likelion.momentreeblog.domain.board.like.dto.BoardLikeInfoDto;
 import com.likelion.momentreeblog.domain.board.like.service.LikeService;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.hibernate.Hibernate;
+
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/v1/boards")
@@ -35,7 +39,6 @@ public class BoardApiV1Controller {
     private final JwtTokenizer jwtTokenizer;
     private final CommentService commentService;
     private final BoardRepository boardRepository;
-
 
     @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
     @PostMapping
@@ -137,18 +140,45 @@ public class BoardApiV1Controller {
 
     //사용자별 게시글 조회
     @Operation(summary = "사용자별 게시글 조회")
-    @GetMapping("search/{userId}")
-    public ResponseEntity<?> searchBoardsByUserId(@PathVariable Long userId) {
-        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+//    @GetMapping("/searchById")
+//    public ResponseEntity<?> searchBoardsByUserId(@CookieValue("accessToken") String token) {
+//        Long userId = jwtTokenizer.getUserIdFromToken(token);
+//        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+//
+//        if(result.isEmpty()) {
+//            return ResponseEntity.status(200).body("해당 사용자의 게시글이 없습니다.");
+//        }
+//        return ResponseEntity.ok(result);
+//    }
 
-        if(result.isEmpty()) {
-            return ResponseEntity
-                    .status(200)
-                    .body("해당 사용자의 게시글이 없습니다.");
+    @GetMapping("/searchById")
+    public ResponseEntity<?> searchBoardsByUserId(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
         }
-        return ResponseEntity.ok(result);
 
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getUserId();
+            Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+
+            if (result.isEmpty()) {
+                return ResponseEntity.ok(Collections.singletonMap("message", "해당 사용자의 게시글이 없습니다."));
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (ClassCastException e) {
+            log.info("오류: " + e.getMessage());
+            return ResponseEntity.status(500).body("인증 객체 형식 오류");
+        } catch (Exception e) {
+            log.info("오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다.");
+        }
     }
+
+
+
 
     @GetMapping("/{boardId}/likes")
     public ResponseEntity<?> likeBoardList(@PathVariable(name = "boardId") Long boardId) {
@@ -166,10 +196,10 @@ public class BoardApiV1Controller {
 
     @PostMapping("/{boardId}/likes")
     public ResponseEntity<String> likeBoard(
-            @RequestHeader(value = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable(name = "boardId") Long boardId) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
 
             String result = likeService.likeBoard(userId, boardId);
 
@@ -180,6 +210,25 @@ public class BoardApiV1Controller {
             return ResponseEntity.status(500).body("좋아요 실패! " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{boardId}/likes")
+    public ResponseEntity<String> unlikeBoard(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable(name = "boardId") Long boardId) {
+        try {
+            Long userId = customUserDetails.getUserId();
+
+            // 좋아요 취소하는 서비스 메소드 호출
+            String result = likeService.unlikeBoard(userId, boardId);
+
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body("인증 정보가 잘못되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("좋아요 취소 실패! " + e.getMessage());
+        }
+    }
+
     // 댓글 조회
     @GetMapping("/{boardId}/comments")
     public ResponseEntity<?> getComments(

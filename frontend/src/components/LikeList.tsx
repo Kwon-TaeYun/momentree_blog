@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import Image from 'next/image';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 interface LikeListProps {
   isOpen: boolean;
@@ -9,38 +11,48 @@ interface LikeListProps {
 
 interface LikeUser {
   id: string;
-  name: string;
-  username: string;
-  imageUrl: string;
-  isFollowing: boolean;
+  email: string;
 }
 
 const LikeList: React.FC<LikeListProps> = ({ isOpen, onClose, postId }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [likeUsers, setLikeUsers] = useState<LikeUser[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  // 좋아요 누른 사용자 목록 샘플 데이터
-  const [likeUsers, setLikeUsers] = useState<LikeUser[]>([
-    { id: '1', name: '권태윤', username: 'taeyun_gwon1118', imageUrl: '/images/user1.jpg', isFollowing: false },
-    { id: '2', name: '김기한', username: 'until__01', imageUrl: '/images/user2.jpg', isFollowing: false },
-    { id: '3', name: '조현성', username: 'hyeon.sg', imageUrl: '/images/user3.jpg', isFollowing: false },
-    { id: '4', name: '이도진', username: 'soonsoo0_0', imageUrl: '/images/user4.jpg', isFollowing: false },
-  ]);
+  // 좋아요 누른 사용자 데이터 가져오기
+  useEffect(() => {
+    const fetchLikeUsers = async () => {
+      setLoading(true);
+      setError(null);
+    
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/boards/${postId}/likes`, {
+          withCredentials: true
+        });
+    
+        const users = response.data.users;
+        if (Array.isArray(users)) {
+          setLikeUsers(users);
+        } else {
+          console.error('서버에서 users 배열이 누락되었습니다:', response.data);
+          setLikeUsers([]);
+        }
+      } catch (err) {
+        console.error('좋아요 목록 로딩 오류:', err);
+        setError('좋아요 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
 
-  // 팔로우/언팔로우 토글
-  const handleFollowToggle = (userId: string) => {
-    setLikeUsers(
-      likeUsers.map(user =>
-        user.id === userId
-          ? { ...user, isFollowing: !user.isFollowing }
-          : user
-      )
-    );
-  };
+    fetchLikeUsers();
+  }, [postId]); // postId가 변경될 때마다 호출
 
   // 검색어로 사용자 필터링
   const filteredUsers = likeUsers.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchQuery.toLowerCase())
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!isOpen) return null;
@@ -62,13 +74,13 @@ const LikeList: React.FC<LikeListProps> = ({ isOpen, onClose, postId }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="flex-1 text-center font-semibold">게시물</div>
+          <div className="flex-1 text-center font-semibold">좋아요</div>
           <div className="w-14"></div>
         </div>
 
         <div className="text-center py-4 border-b">
-          <h2 className="text-base font-semibold">좋아요</h2>
-          <p className="text-sm text-gray-500">이 게시물의 총 좋아요 수는 15명입니다.</p>
+          <h2 className="text-base font-semibold">좋아요 목록</h2>
+          <p className="text-sm text-gray-500">이 게시물에 좋아요를 누른 사람들입니다.</p>
         </div>
         
         {/* 검색창 */}
@@ -81,7 +93,7 @@ const LikeList: React.FC<LikeListProps> = ({ isOpen, onClose, postId }) => {
             </div>
             <input
               type="text"
-              placeholder="검색"
+              placeholder="이메일로 검색"
               className="w-full pl-10 pr-4 py-2 bg-transparent text-sm focus:outline-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -89,51 +101,47 @@ const LikeList: React.FC<LikeListProps> = ({ isOpen, onClose, postId }) => {
           </div>
         </div>
         
+        {/* 로딩 상태 */}
+        {loading && (
+          <div className="text-center py-8 text-gray-500">
+            <p>좋아요 목록을 불러오는 중...</p>
+          </div>
+        )}
+        
+        {/* 에러 상태 */}
+        {error && (
+          <div className="text-center py-8 text-red-500">
+            <p>{error}</p>
+          </div>
+        )}
+        
         {/* 좋아요 누른 사용자 목록 */}
-        <div className="overflow-y-auto max-h-[400px]">
-          {filteredUsers.length === 0 ? (
-            <div className="text-center py-6 text-gray-500 text-sm">
-              {searchQuery ? '검색 결과가 없습니다' : '좋아요가 없습니다'}
-            </div>
-          ) : (
-            filteredUsers.map((user) => (
-              <div key={user.id} className="flex items-center justify-between px-4 py-2">
-                <div className="flex items-center flex-1 min-w-0">
-                  <div className="relative h-11 w-11 rounded-full overflow-hidden border">
-                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                      {user.imageUrl ? (
-                        <Image
-                          src={user.imageUrl}
-                          alt={user.name}
-                          fill
-                          className="object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : null}
-                      <span className="text-sm font-medium text-gray-600">
-                        {user.name.charAt(0)}
-                      </span>
+        {!loading && !error && (
+          <div className="overflow-y-auto max-h-[400px]">
+            {filteredUsers.length === 0 ? (
+              <div className="text-center py-6 text-gray-500 text-sm">
+                {searchQuery ? '검색 결과가 없습니다' : '좋아요가 없습니다'}
+              </div>
+            ) : (
+              filteredUsers.map((user) => (
+                <div key={user.id} className="flex items-center px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden border">
+                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-600">
+                          {user.email.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="ml-3 min-w-0">
+                      <p className="text-sm font-semibold truncate">{user.email}</p>
                     </div>
                   </div>
-                  <div className="ml-3 min-w-0">
-                    <p className="text-sm font-semibold truncate">{user.username}</p>
-                    <p className="text-sm text-gray-500 truncate">{user.name}</p>
-                  </div>
                 </div>
-                <button
-                  onClick={() => handleFollowToggle(user.id)}
-                  className="ml-2"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                  </svg>
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
