@@ -191,7 +191,8 @@ public class BoardService {
                         board.getId(),
                         board.getTitle(),
                         board.getBlog().getId(),
-                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
+                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                        board.getLikes().stream().count()
                 ));
     }
 
@@ -204,7 +205,8 @@ public class BoardService {
                 board.getId(),
                 board.getTitle(),
                 board.getBlog().getId(),
-                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                board.getLikes().stream().count()
         ));
     }
 
@@ -225,8 +227,23 @@ public class BoardService {
                 board.getId(),
                 board.getTitle(),
                 board.getBlog().getId(),
-                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                board.getLikes().stream().count()
         ));
+    }
+
+    public List<BoardListResponseDto> getLatestPosts() {
+        List<Board> boards = boardRepository.findTop3ByOrderByCreatedAtDesc();
+
+        return boards.stream()
+                .map(board -> new BoardListResponseDto(
+                        board.getId(),
+                        board.getTitle(),
+                        board.getBlog().getId(),
+                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                        board.getLikes().stream().count()
+                ))
+                .collect(Collectors.toList());
     }
 
 
