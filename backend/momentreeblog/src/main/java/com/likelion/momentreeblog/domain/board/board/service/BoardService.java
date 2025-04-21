@@ -3,6 +3,7 @@ package com.likelion.momentreeblog.domain.board.board.service;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardEditResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
@@ -14,6 +15,7 @@ import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
 import com.likelion.momentreeblog.domain.photo.photo.service.board.BoardPhotoService;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
+import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
     private final BoardPhotoService boardPhotoService;
+    private static final String DEFAULT_BOARD_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
 //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
@@ -75,11 +80,19 @@ public class BoardService {
         boardRepository.save(board);
 
 
+
         // 대표 사진(Photo) 먼저 저장
+
+        // 대표 사진 업로드 안했을때와 했을때 구별
+        String mainPhotoKey = (requestDto.getCurrentMainPhotoUrl() == null
+                || requestDto.getCurrentMainPhotoUrl().isBlank())
+                ? DEFAULT_BOARD_IMAGE_URL
+                : requestDto.getCurrentMainPhotoUrl();
+
         // dto.getCurrentMainPhotoUrl() 에는 프론트에서 보낸 S3 key 가 담겨있다.
         Photo mainPhoto = Photo.builder()
                 .type(PhotoType.MAIN)
-                .url(requestDto.getCurrentMainPhotoUrl())  // DTO에서 URL(=S3 key) 꺼내서
+                .url(mainPhotoKey)  // DTO에서 URL(=S3 key) 꺼내서
                 .user(blog.getUser())
                 .board(board)
                 .build();
@@ -126,6 +139,8 @@ public class BoardService {
                         .photoType(PhotoType.MAIN)
                         .filename(null)
                         .contentType(null)
+                        .boardId(id)
+                        .userId(userId)
                         .build()
         );
 
@@ -137,7 +152,8 @@ public class BoardService {
                         .boardId(board.getId())
                         .contentType(null)
                         .filename(null)
-                        .userId(blog.getUser().getId())
+                        .boardId(id)
+                        .userId(userId)
                         .build()
         );
 
@@ -149,6 +165,50 @@ public class BoardService {
         Board updatedBoard = boardRepository.save(board);
         return "게시글 수정 완료 (" + updatedBoard.getTitle() + ")";
     }
+
+
+
+    //게시글 수정할때 게시글의 정보 받아오기
+    @Transactional(readOnly = true)
+    public BoardEditResponseDto getBoardEdit(Long boardId, Long userId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 id의 게시물이 없습니다"));
+
+        if (!userId.equals(board.getBlog().getUser().getId())) {
+            throw new SecurityException("수정할 권한이 없습니다");
+        }
+
+        // 2) 메인 사진 URL (GET presigned URL)
+        PreSignedUrlResponseDto mainPhotoDto =
+                photoV1Service.getPhotoUrl(PhotoType.MAIN, boardId);
+
+        List<PreSignedUrlResponseDto> additionalDtos =
+                photoV1Service.getBoardAdditionalPhotos(PhotoType.ADDITIONAL, boardId);
+
+
+
+        // 4) BoardEditResponseDto 빌드
+        BoardEditResponseDto dto = new BoardEditResponseDto();
+        dto.setId(board.getId());
+        dto.setTitle(board.getTitle());
+        dto.setContent(board.getContent());
+        dto.setCurrentMainPhotoUrl(mainPhotoDto.getUrl());
+        dto.setCurrentMainPhotoKey(mainPhotoDto.getKey());
+        dto.setAdditionalPhotoUrls(
+                additionalDtos.stream()
+                        .map(PreSignedUrlResponseDto::getUrl)
+                        .collect(Collectors.toList()));
+        dto.setAdditionalPhotoKeys(
+                additionalDtos.stream()
+                        .map(PreSignedUrlResponseDto::getKey)
+                        .collect(Collectors.toList()));
+        return dto;
+    }
+
+
+
+
+
 
     @Transactional
     public String deleteBoard(Long id, Long userId) {

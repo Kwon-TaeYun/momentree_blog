@@ -1,20 +1,12 @@
 package com.likelion.momentreeblog.domain.board.board.dto;
 
-import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
-import com.likelion.momentreeblog.domain.board.category.entity.Category;
-import com.likelion.momentreeblog.domain.board.like.entity.Like;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.likelion.momentreeblog.domain.user.user.entity.User;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -30,7 +22,7 @@ public class BoardDetailResponseDto {
     private String category;
     private String currentMainPhotoUrl;
     private List<String> photoUrls;
-    private int likeCount;
+    private Long likeCount;
     private String blog;
     private String authorName;
     private String[] likeUsers;
@@ -49,7 +41,7 @@ public class BoardDetailResponseDto {
                 .category(board.getCategory() != null ? board.getCategory().getName() : null)
                 .currentMainPhotoUrl(board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null)
                 .photoUrls(board.getPhotos().stream().map(Photo::getUrl).collect(Collectors.toList()))
-                .likeCount(board.getLikes() != null ? board.getLikes().size() : 0)
+                .likeCount((long) (board.getLikes() != null ? board.getLikes().size() : 0))
                 .blog(board.getBlog().getName())
                 .authorName(board.getBlog().getUser().getName())
                 .likeUsers(likeUsersArray)

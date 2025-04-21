@@ -56,6 +56,10 @@ export default function CreatePostPage() {
   const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
 
+  // 이미지 키를 관리하기 위한 상태 추가
+  const [mainPhotoKey, setMainPhotoKey] = useState<string>("");
+  const [additionalKeys, setAdditionalKeys] = useState<string[]>([]);
+
   // Editor 참조
   const editorRef = useRef<EditorInstance>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -95,15 +99,33 @@ export default function CreatePostPage() {
     checkLoginStatus();
   }, [router]);
 
-  // 에디터에 이미지 삽입 핸들러 - S3 업로드 구현
+  // 에디터에 이미지 삽입 핸들러 - 하이브리드 방식
   const handleEditorImageUpload = (
     blob: File,
     callback: (url: string, alt: string) => void
   ) => {
+    // 1. 먼저 즉시 화면에 보여주기 위해 FileReader로 미리보기 이미지 생성
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const previewImageUrl = e.target?.result as string;
+
+      // 2. 에디터에 미리보기 이미지 표시 (사용자에게 보이는 부분)
+      callback(previewImageUrl, blob.name);
+
+      // 3. 동시에 백엔드에 실제 업로드 처리 시작
+      uploadToS3(blob, previewImageUrl);
+    };
+
+    reader.readAsDataURL(blob);
+    return false; // 기본 업로드 동작 방지
+  };
+
+  // S3 업로드 처리 함수 (별도 함수로 분리)
+  const uploadToS3 = (file: File, previewUrl: string) => {
     try {
       // 파일 정보 추출
-      const filename = blob.name;
-      const contentType = blob.type;
+      const filename = file.name;
+      const contentType = file.type;
 
       // S3 프리사인드 URL 요청
       fetch(
@@ -124,7 +146,7 @@ export default function CreatePostPage() {
           }),
         }
       )
-        .then(response => {
+        .then((response) => {
           if (!response.ok) {
             throw new Error("프리사인드 URL 생성에 실패했습니다.");
           }
@@ -137,30 +159,32 @@ export default function CreatePostPage() {
             headers: {
               "Content-Type": contentType,
             },
-            body: blob,
-          }).then(uploadResponse => {
+            body: file,
+          }).then((uploadResponse) => {
             if (!uploadResponse.ok) {
               throw new Error("이미지 업로드에 실패했습니다.");
             }
 
-            // 에디터에 이미지 URL 삽입 (실제 서비스 URL로 교체)
-            const imageUrl = url.split("?")[0]; // 쿼리 파라미터 제거
-            callback(imageUrl, blob.name);
+            // 프리뷰 URL과 실제 S3 키 저장
+            // 화면에 보여줄 URL과 백엔드에 전송할 키를 별도로 관리
+            setUploadedImages((prev) => {
+              if (prev.includes(previewUrl)) return prev;
+              return [...prev, previewUrl];
+            });
 
-            // 업로드된 이미지 목록에 추가
-            setUploadedImages((prev) => [...prev, key]);
+            // 키값 저장 (백엔드 전송용)
+            setAdditionalKeys((prev) => {
+              if (prev.includes(key)) return prev;
+              return [...prev, key];
+            });
           });
         })
-        .catch(error => {
-          console.error("에디터 이미지 업로드 오류:", error);
-          alert("이미지 업로드에 실패했습니다.");
+        .catch((error) => {
+          console.error("S3 이미지 업로드 오류:", error);
         });
     } catch (error) {
-      console.error("에디터 이미지 업로드 오류:", error);
-      alert("이미지 업로드에 실패했습니다.");
+      console.error("S3 이미지 업로드 오류:", error);
     }
-
-    return false; // 기본 업로드 동작 방지
   };
 
   // 에디터 내용 변경 핸들러
@@ -207,43 +231,33 @@ export default function CreatePostPage() {
       return;
     }
 
-    if (!mainPhotoData) {
-      alert("대표 이미지를 업로드해주세요.");
-      return;
-    }
-
     try {
       setSubmitting(true);
 
-      // S3에 업로드된 이미지의 key(URL)만 전송
-      const mainPhotoUrl = mainPhotoData.url;
+      console.log("제출 데이터:");
+      console.log("- 제목:", formData.title);
+      console.log("- 내용:", formData.content.substring(0, 100) + "...");
+      console.log("- 대표 이미지 키:", mainPhotoKey);
+      console.log("- 추가 이미지 키들:", additionalKeys);
 
-      // 추가 이미지 URL 목록
-      const photoUrls = uploadedImages;
-
-      // 요청 데이터 생성 - Photo 객체 대신 URL 문자열만 전송
+      // 요청 데이터 생성 - BoardRequestDto와 일치하는 형식
       const requestData = {
         title: formData.title,
         content: formData.content,
-        currentMainPhotoUrl: mainPhotoUrl, // Photo 객체 대신 URL 문자열만 전송
-        photoUrls: photoUrls, // 배열 형태로 URL 문자열만 전송
+        currentMainPhotoUrl: mainPhotoKey, // 백엔드에서는 url 필드명을 사용하지만 실제로는 키 전송
+        photoUrls: additionalKeys, // 배열 형태로 키 전송
         categoryId: null, // 카테고리 기능 구현 시 추가
       };
 
       // 백엔드 API 호출
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/v1/boards`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // 쿠키 포함
-          body: JSON.stringify(requestData),
-        }
-      );
+      const response = await fetch(`http://localhost:8090/api/v1/boards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // 쿠키 포함
+        body: JSON.stringify(requestData),
+      });
 
       if (!response.ok) {
         throw new Error("게시글 작성에 실패했습니다.");
@@ -325,7 +339,8 @@ export default function CreatePostPage() {
           }
 
           // 업로드된 이미지 목록에 추가
-          setUploadedImages((prev) => [...prev, key]);
+          setUploadedImages((prev) => [...prev, url]); // URL은 프리뷰용
+          setAdditionalKeys((prev) => [...prev, key]); // 키는 백엔드 전송용
         } catch (error) {
           console.error("추가 이미지 업로드 오류:", error);
         }
@@ -395,7 +410,10 @@ export default function CreatePostPage() {
         throw new Error("대표 이미지 업로드에 실패했습니다.");
       }
 
-      // 업로드 성공한 이미지 정보 저장
+      // 업로드 성공한 이미지 정보 저장 (키 값 저장)
+      setMainPhotoKey(key);
+
+      // mainPhotoData는 호환성을 위해 유지
       setMainPhotoData({
         url: key,
         type: PhotoType.MAIN,
@@ -405,6 +423,7 @@ export default function CreatePostPage() {
       alert("대표 이미지 업로드에 실패했습니다.");
       setRepresentativeImage(null);
       setMainImageFile(null);
+      setMainPhotoKey("");
     }
   };
 
@@ -413,6 +432,7 @@ export default function CreatePostPage() {
     setRepresentativeImage(null);
     setMainImageFile(null);
     setMainPhotoData(null);
+    setMainPhotoKey("");
   };
 
   // 로딩 중이면 로딩 상태 표시
@@ -425,20 +445,19 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-        <div className="flex gap-6 py-8">
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* 메인 콘텐츠 */}
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex gap-6 py-4">
           <div className="flex-1">
             <div className="bg-white rounded-lg p-6">
-              <h1 className="text-xl font-normal text-black mb-6">
-                새 글 작성
-              </h1>
+              <h1 className="text-4xl font-bold mb-6">새 글 작성</h1>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* 제목 입력 */}
                 <div>
                   <label
                     htmlFor="title"
-                    className="block text-sm font-medium text-black mb-2"
+                    className="block text-lg font-medium text-black mb-2"
                   >
                     제목
                   </label>
@@ -457,7 +476,7 @@ export default function CreatePostPage() {
 
                 {/* 대표 이미지 업로드 */}
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">
+                  <label className="block text-lg font-medium text-black mb-2">
                     대표 이미지
                   </label>
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -526,16 +545,15 @@ export default function CreatePostPage() {
                 <div>
                   <label
                     htmlFor="content"
-                    className="block text-sm font-medium text-black mb-2"
+                    className="block text-lg font-medium text-black mb-2"
                   >
                     내용
                   </label>
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
                     <div className="toast-ui-editor-container">
                       <Editor
-                        initialValue=""
-                        previewStyle="tab"
-                        height="400px"
+                        initialValue=" "
+                        height="900px"
                         initialEditType="wysiwyg"
                         useCommandShortcut={true}
                         usageStatistics={false}
@@ -552,7 +570,7 @@ export default function CreatePostPage() {
                           addImageBlobHook: handleEditorImageUpload,
                         }}
                         language="ko-KR"
-                        placeholder="내용을 입력하세요..."
+                        placeholder=""
                         hideModeSwitch={true}
                       />
                     </div>
@@ -560,53 +578,6 @@ export default function CreatePostPage() {
                   <p className="text-xs text-gray-500 mt-2">
                     * 이미지를 삽입하려면 툴바의 이미지 아이콘을 클릭하세요.
                   </p>
-                </div>
-
-                {/* 추가 이미지 업로드 */}
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">
-                    추가 이미지
-                  </label>
-                  <div className="bg-white border border-dashed border-gray-300 rounded-lg p-8">
-                    <div className="text-center">
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        <div className="flex flex-col items-center">
-                          <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <p className="mt-1 text-sm text-gray-600">
-                            사진 업로드 또는 드래그 앤 드롭
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500">
-                            PNG, JPG, GIF up to 10MB
-                          </p>
-                        </div>
-                      </label>
-                      <input
-                        id="file-upload"
-                        type="file"
-                        multiple
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="image/png,image/jpeg,image/gif"
-                      />
-                    </div>
-                  </div>
-                  {files.length > 0 && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      {files.length}개의 파일이 선택됨
-                    </div>
-                  )}
                 </div>
               </form>
             </div>
@@ -734,50 +705,72 @@ export default function CreatePostPage() {
 
       {/* Toast UI Editor 스타일 */}
       <style jsx global>{`
-        /* 에디터 컨테이너 스타일링 */
-        .toast-ui-editor-container .toastui-editor-defaultUI {
-          border: none;
+        /* 에디터 기본 텍스트 숨기기 */
+        .toastui-editor-defaultUI-toolbar {
+          background: white !important;
         }
 
-        /* 에디터 툴바 스타일링 */
-        .toast-ui-editor-container .toastui-editor-toolbar {
-          background-color: #f9fafb;
-          border-bottom: 1px solid #e5e7eb;
+        .toastui-editor-mode-switch {
+          display: none !important;
         }
 
-        /* 에디터 내용 영역 스타일링 */
-        .toast-ui-editor-container .toastui-editor-main {
-          background-color: white;
+        .toastui-editor-tabs {
+          display: none !important;
         }
 
-        /* 한글 입력 관련 스타일 */
-        .toast-ui-editor-container .toastui-editor-ww-container {
+        .toastui-editor-main .ProseMirror {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-            "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-          font-size: 1.15em;
+            "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+          font-size: 1.3em !important; /* 글씨 크기 30% 증가 */
+          line-height: 1.6 !important;
+          text-align: left !important; /* 텍스트 왼쪽 정렬 강제 */
+          padding-top: 16px !important; /* 상단 패딩 추가 */
         }
 
-        /* 에디터 버튼 하이라이트 */
-        .toast-ui-editor-container .toastui-editor-toolbar-icons.active {
-          color: #2c714c !important;
-          background-color: #edf7f2 !important;
+        /* Write/Preview 텍스트 제거 - 첫번째 줄 숨김 제거 */
+        /* .toastui-editor-main .ProseMirror p:first-child {
+          display: none !important;
+        } */
+
+        /* 불필요한 여백 제거 */
+        .toastui-editor-defaultUI {
+          border: none !important;
         }
 
-        /* 에디터 버튼 호버 */
-        .toast-ui-editor-container .toastui-editor-toolbar-icons:hover {
-          background-color: #edf7f2 !important;
+        .toastui-editor-main {
+          background-color: white !important;
+          padding-top: 16px !important; /* 상단 패딩 추가 */
         }
 
-        /* 이미지 중앙 정렬 */
-        .toast-ui-editor-container .toastui-editor-contents img {
-          display: block;
-          margin: 0 auto;
+        /* 텍스트 왼쪽 정렬 */
+        .toastui-editor-contents p,
+        .toastui-editor-contents h1,
+        .toastui-editor-contents h2,
+        .toastui-editor-contents h3,
+        .toastui-editor-contents h4,
+        .toastui-editor-contents h5,
+        .toastui-editor-contents h6,
+        .toastui-editor-contents ul,
+        .toastui-editor-contents ol,
+        .toastui-editor-contents blockquote {
+          text-align: left !important;
         }
 
-        /* 에디터 내용 글씨 크기 */
-        .toast-ui-editor-container .toastui-editor-contents {
-          font-size: 1.15em;
+        /* 이미지만 중앙 정렬 */
+        .toastui-editor-contents img {
+          max-width: 70% !important; /* 이미지 최대 너비를 70%로 제한 */
+          height: auto !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          display: block !important;
         }
+
+        /* 에디터 내용 전체 스타일링 */
+        .toastui-editor-contents {
+          font-size: 1.3em !important; /* 글씨 크기 30% 증가 */
+        }
+
+        /* 코드블록 등 다른 요소들도 동일하게 중앙 정렬 필요시 추가 */
       `}</style>
     </div>
   );

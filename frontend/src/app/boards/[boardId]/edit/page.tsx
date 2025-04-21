@@ -1,26 +1,26 @@
 "use client";
 
-import {useState, useEffect, useRef} from "react";
-import {useParams, useRouter} from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {BiSearch, BiArrowBack, BiX} from "react-icons/bi";
-import {BsImage, BsTag} from "react-icons/bs";
+import { BiSearch, BiArrowBack, BiX } from "react-icons/bi";
+import { BsImage, BsTag } from "react-icons/bs";
 import dynamic from "next/dynamic";
-import {FaImage, FaTimes} from "react-icons/fa";
-import type {EditorInstance} from "@toast-ui/react-editor";
+import { FaImage, FaTimes } from "react-icons/fa";
+import type { EditorInstance } from "@toast-ui/react-editor";
 
 // Toast UI Editor를 클라이언트 사이드에서만 로드 (SSR 없이)
 const Editor = dynamic(
-    () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
-    {
-      ssr: false,
-      loading: () => (
-          <div className="h-96 w-full flex items-center justify-center">
-            에디터 로딩 중...
-          </div>
-      ),
-    }
+  () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-96 w-full flex items-center justify-center">
+        에디터 로딩 중...
+      </div>
+    ),
+  }
 );
 
 // Toast UI Editor CSS 파일들
@@ -46,8 +46,12 @@ export default function EditPostPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [representativeImage, setRepresentativeImage] = useState<string | null>(
-      null
+    null
   );
+  // 키 관리를 위한 상태 추가
+  const [mainPhotoKey, setMainPhotoKey] = useState<string>("");
+  const [additionalKeys, setAdditionalKeys] = useState<string[]>([]);
+
   // 에디터에 삽입된 이미지 목록 추적
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
@@ -57,39 +61,112 @@ export default function EditPostPage() {
 
   // 인증 및 작성자 확인
   useEffect(() => {
-    // 실제로는 API 호출로 대체
-    setIsAuthenticated(true);
-    setIsAuthor(true);
-    setIsLoading(false);
-
-    // 게시글 데이터 불러오기 (실제로는 API 호출)
+    // 백엔드에서 게시글 데이터를 실제로 불러오기
     const fetchPostData = async () => {
-      // API 호출 대신 임시 데이터
-      const post = {
-        title: "2024년 상반기 신제품 출시 안내",
-        content:
-            "안녕하세요, **2024년 상반기** 신제품 출시 일정을 안내드립니다.\n\n이번 신제품은 고객님들의 의견을 적극 반영하여 개발되었으며, 향상된 성능과 디자인으로 여러분을 찾아뵙게 되었습니다.",
-        image:
-            "https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-        tags: ["신제품", "2024", "기술"],
-      };
+      setIsLoading(true);
+      try {
+        // 백엔드에서 게시글 데이터 불러오기 - 경로 변경
+        const response = await fetch(
+          `http://localhost:8090/api/v1/boards/${boardId}/edit`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
 
-      setTitle(post.title);
-      setContent(post.content);
-      setImage(post.image);
-      setTags(post.tags || []);
-      setIsLoading(false);
-
-      // 에디터가 로드된 후 내용 설정
-      setTimeout(() => {
-        if (editorRef.current) {
-          editorRef.current.getInstance().setMarkdown(post.content);
+        if (!response.ok) {
+          throw new Error("게시글을 불러오는데 실패했습니다.");
         }
-      }, 500);
+
+        const data = await response.json();
+        console.log("게시글 수정 데이터:", data);
+
+        // 게시글 데이터 설정
+        setTitle(data.title);
+
+        // 내용 설정 - 에디터에는 별도로 설정
+        setContent(data.content);
+
+        // 이미지 키와 URL을 별도로 관리
+        if (data.currentMainPhotoKey) {
+          console.log("대표 이미지 키:", data.currentMainPhotoKey);
+          console.log("대표 이미지 URL:", data.currentMainPhotoUrl);
+
+          // S3 키는 별도 상태로 저장 (백엔드로 다시 전송될 때 사용)
+          setMainPhotoKey(data.currentMainPhotoKey);
+
+          // URL은 화면에 표시할 때만 사용
+          setRepresentativeImage(data.currentMainPhotoUrl);
+        }
+
+        // 업로드된 이미지 목록 설정 (추가 이미지들)
+        if (data.additionalPhotoKeys && data.additionalPhotoKeys.length > 0) {
+          console.log("추가 이미지 키:", data.additionalPhotoKeys);
+          console.log("추가 이미지 URL:", data.additionalPhotoUrls);
+
+          // S3 키는 별도 상태로 저장 (백엔드로 다시 전송될 때 사용)
+          setAdditionalKeys(data.additionalPhotoKeys);
+
+          // URL은 화면에 표시할 때만 사용
+          setUploadedImages(data.additionalPhotoUrls);
+        }
+
+        // 작성자 확인
+        if (data.id) {
+          // 현재 로그인한 사용자 정보 가져오기
+          const userResponse = await fetch(
+            `http://localhost:8090/api/v1/members/me`,
+            {
+              credentials: "include",
+            }
+          );
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            setIsAuthenticated(true);
+
+            // 백엔드에서 이미 권한 확인을 했으므로, 여기에서는 바로 작성자로 처리
+            setIsAuthor(true);
+          } else {
+            setIsAuthenticated(false);
+            alert("로그인이 필요합니다.");
+            router.push("/members/login");
+          }
+        }
+
+        // 에디터가 로드된 후 내용만 설정 (이미지는 별도로 추가하지 않음)
+        setTimeout(() => {
+          if (editorRef.current) {
+            try {
+              const editor = editorRef.current.getInstance();
+
+              // 내용 설정 방법 변경 - 특별한 처리 없이 단순하게 설정
+              if (data.content && data.content.trim() !== "") {
+                // 원본 내용 그대로 설정
+                editor.setMarkdown(data.content.trim());
+
+                // 에디터 포커스
+                editor.focus();
+
+                console.log("에디터 내용 설정 완료");
+              }
+            } catch (error) {
+              console.error("에디터 내용 설정 오류:", error);
+            }
+          }
+        }, 1500); // 시간을 조금 더 여유있게
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("게시글 불러오기 오류:", error);
+        setIsLoading(false);
+        alert("게시글을 불러오는데 실패했습니다.");
+        router.push("/boards");
+      }
     };
 
     fetchPostData();
-  }, [boardId]);
+  }, [boardId, router]);
 
   // 메인 이미지 업로드 처리
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,21 +186,78 @@ export default function EditPostPage() {
   };
 
   // 에디터에 이미지 삽입 핸들러
-  const handleEditorImageUpload = (
-      blob: File,
-      callback: (url: string, alt: string) => void
+  const handleEditorImageUpload = async (
+    blob: File,
+    callback: (url: string, alt: string) => void
   ) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target?.result as string;
+    try {
+      // 1. 먼저 즉시 화면에 보여주기 위해 FileReader로 미리보기 이미지 생성
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const previewImageUrl = e.target?.result as string;
+        // 2. 에디터에 미리보기 이미지 표시 (사용자에게 보이는 부분)
+        callback(previewImageUrl, blob.name);
 
-      // HTML 태그와 스타일을 포함하여 중앙 정렬된 이미지로 삽입
-      callback(imageUrl, blob.name);
+        try {
+          // 3. S3에 이미지 업로드
+          // 파일 정보 추출
+          const filename = blob.name;
+          const contentType = blob.type;
 
-      // 업로드된 이미지 목록에 추가
-      setUploadedImages((prev) => [...prev, imageUrl]);
-    };
-    reader.readAsDataURL(blob);
+          // S3 프리사인드 URL 요청
+          const presignedUrlResponse = await fetch(
+            `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            }/api/s3/presigned-url`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                filename,
+                contentType,
+                photoType: "ADDITIONAL",
+                boardId: boardId,
+              }),
+            }
+          );
+
+          if (!presignedUrlResponse.ok) {
+            throw new Error("프리사인드 URL 생성에 실패했습니다.");
+          }
+
+          const { url, key } = await presignedUrlResponse.json();
+
+          // S3에 직접 파일 업로드
+          const uploadResponse = await fetch(url, {
+            method: "PUT",
+            headers: {
+              "Content-Type": contentType,
+            },
+            body: blob,
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error("이미지 업로드에 실패했습니다.");
+          }
+
+          // 업로드된 이미지의 키를 additionalKeys 상태에 추가
+          console.log("S3에 업로드된 이미지 키:", key);
+          setAdditionalKeys((prev) => [...prev, key]);
+
+          // 미리보기용 URL도 uploadedImages에 추가
+          setUploadedImages((prev) => [...prev, url]);
+        } catch (error) {
+          console.error("이미지 업로드 오류:", error);
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error("에디터 이미지 업로드 오류:", error);
+      callback("", "");
+    }
     return false; // 기본 업로드 동작 방지
   };
 
@@ -157,13 +291,63 @@ export default function EditPostPage() {
 
   // 대표 이미지 업로드 핸들러
   const handleRepresentativeImageUpload = (
-      e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (file) {
+      // 로컬 미리보기용 URL 생성
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
+        // 화면에 보여줄 URL 설정
         setRepresentativeImage(event.target?.result as string);
+
+        try {
+          // S3 업로드를 위한 프리사인드 URL 요청
+          const presignedUrlResponse = await fetch(
+            `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            }/api/s3/presigned-url`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                filename: file.name,
+                contentType: file.type,
+                photoType: "MAIN",
+                boardId: boardId,
+              }),
+            }
+          );
+
+          if (!presignedUrlResponse.ok) {
+            throw new Error("프리사인드 URL 생성에 실패했습니다.");
+          }
+
+          const { url, key } = await presignedUrlResponse.json();
+
+          // S3에 직접 파일 업로드
+          const uploadResponse = await fetch(url, {
+            method: "PUT",
+            headers: {
+              "Content-Type": file.type,
+            },
+            body: file,
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error("대표 이미지 업로드에 실패했습니다.");
+          }
+
+          // 업로드 성공 후 키 저장
+          console.log("대표 이미지 키:", key);
+          setMainPhotoKey(key);
+        } catch (error) {
+          console.error("대표 이미지 업로드 오류:", error);
+          alert("대표 이미지 업로드에 실패했습니다.");
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -172,6 +356,7 @@ export default function EditPostPage() {
   // 대표 이미지 삭제 핸들러
   const handleRemoveRepresentativeImage = () => {
     setRepresentativeImage(null);
+    setMainPhotoKey("");
   };
 
   // 이미지 드래그 앤 드롭 핸들러
@@ -199,353 +384,219 @@ export default function EditPostPage() {
 
     try {
       // 폼 제출 전 최종 내용 가져오기
+      let markdownContent = "";
       if (editorRef.current) {
-        const markdownContent = editorRef.current.getInstance().getMarkdown();
+        // 마크다운 콘텐츠 가져오기
+        markdownContent = editorRef.current.getInstance().getMarkdown();
+
+        // 불필요한 엔터 제거 - 연속된 3개 이상의 줄바꿈을 2개로 제한
+        markdownContent = markdownContent.replace(/\n{3,}/g, "\n\n");
+
         setContent(markdownContent);
       }
 
       // 유효성 검사
-      if (!title.trim() || !content.trim()) {
+      if (!title.trim() || !markdownContent.trim()) {
         alert("제목과 내용을 모두 입력해주세요.");
+        setIsLoading(false);
         return;
       }
 
-      // 실제로는 API 호출로 서버에 데이터 전송
-      console.log("수정 데이터:", {
-        boardId,
+      console.log("제출할 데이터:");
+      console.log("- 제목:", title);
+      console.log("- 내용 길이:", markdownContent.length);
+      console.log("- 대표 이미지 키:", mainPhotoKey);
+      console.log("- 업로드된 이미지 키들:", additionalKeys);
+
+      // 요청 데이터 생성 - BoardRequestDto와 일치하는 형식
+      const requestData = {
         title,
-        content,
-        imageFile,
-        tags,
-        representativeImage,
-      });
+        content: markdownContent,
+        currentMainPhotoUrl: mainPhotoKey, // 백엔드에서는 여전히 url이란 이름을 사용하지만 실제로는 key 값을 전송
+        photoUrls: additionalKeys, // 배열 형태로 S3 키값만 전송
+        categoryId: null, // 카테고리 기능 구현 시 추가
+      };
+
+      // 백엔드 API 호출 - PUT 요청으로 게시글 수정
+      const response = await fetch(
+        `http://localhost:8090/api/v1/boards/${boardId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 쿠키 포함
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          `게시글 수정에 실패했습니다. ${errorData?.message || ""}`
+        );
+      }
+
+      alert("게시글이 성공적으로 수정되었습니다.");
 
       // 수정 완료 후 상세 페이지로 이동
       router.push(`/boards/${boardId}`);
     } catch (error) {
       console.error("게시글 수정 오류:", error);
-      alert("게시글 수정 중 오류가 발생했습니다.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "게시글 수정 중 오류가 발생했습니다."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 로딩 중이거나 인증되지 않은 경우
+  // 로딩 중이면 로딩 상태 표시
   if (isLoading) {
     return (
-        <div className="min-h-screen flex items-center justify-center">
-          로딩 중...
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-xl text-gray-600">로딩 중...</p>
+      </div>
     );
   }
 
   // 인증되지 않았거나 작성자가 아닌 경우
   if (!isAuthenticated || !isAuthor) {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center">
-          <h1 className="text-2xl font-bold mb-4">접근 권한이 없습니다.</h1>
-          <p className="mb-6">게시글을 수정할 권한이 없습니다.</p>
-          <Link
-              href={`/boards/${boardId}`}
-              className="bg-[#2c714c] text-white px-4 py-2 rounded-md"
-          >
-            돌아가기
-          </Link>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold mb-4">접근 권한이 없습니다.</h1>
+        <p className="mb-6">게시글을 수정할 권한이 없습니다.</p>
+        <Link
+          href={`/boards/${boardId}`}
+          className="bg-[#2c714c] text-white px-4 py-2 rounded-md"
+        >
+          돌아가기
+        </Link>
+      </div>
     );
   }
 
   return (
-      <div className="min-h-screen flex flex-col bg-white">
-        {/* 헤더/네비게이션 */}
-        <header className="border-b border-gray-100 bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center">
-              {/* 로고 */}
-              <Link href="/" className="flex items-center">
-                <div className="relative w-[46px] h-[46px]">
-                  <Image
-                      src="/images/logo.png"
-                      alt="Momentree"
-                      width={46}
-                      height={46}
-                      className="object-contain"
-                  />
-                </div>
-                <span className="text-[#2c714c] text-2xl font-medium ml-2">
-                Momentree
-              </span>
-              </Link>
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* 메인 콘텐츠 */}
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* 뒤로가기 링크 유지 */}
+        <Link
+          href={`/boards/${boardId}`}
+          className="flex items-center text-gray-600 mt-6 mb-2 hover:text-[#2c714c] transition-colors"
+        >
+          <BiArrowBack className="mr-1" />
+          <span>게시글로 돌아가기</span>
+        </Link>
 
-              {/* 메뉴 */}
-              <nav className="ml-12">
-                <ul className="flex space-x-8">
-                  <li>
-                    <Link
-                        href="/"
-                        className="text-gray-600 hover:text-gray-900 py-4"
-                    >
-                      홈
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                        href="/my-tree"
-                        className="text-gray-600 hover:text-gray-900 py-4"
-                    >
-                      나의 나무
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                        href="/dictionary"
-                        className="text-gray-600 hover:text-gray-900 py-4"
-                    >
-                      사전집
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-
-            {/* 인증된 사용자의 경우 보여줄 UI */}
-            {isAuthenticated && (
-                <div className="flex items-center gap-4">
-                  {/* 검색창 */}
-                  <div className="relative">
-                    <input
-                        type="text"
-                        placeholder="검색"
-                        className="bg-gray-100 rounded-full pl-10 pr-4 py-2 w-60 focus:outline-none focus:ring-2 focus:ring-[#2c714c]/30"
-                    />
-                    <BiSearch
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg"/>
-                  </div>
-
-                  {/* 글쓰기 버튼 */}
-                  <Link
-                      href="/boards/create"
-                      className="bg-[#2c714c] text-white px-4 py-2 rounded-full font-medium shadow-sm hover:bg-[#225c3d] transition-colors"
-                  >
-                    글쓰기
-                  </Link>
-
-                  {/* 프로필 이미지 */}
-                  <div
-                      className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden border-2 border-[#2c714c] cursor-pointer">
-                    <Image
-                        src="https://images.unsplash.com/photo-1560941001-d4b52ad00ecc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
-                        alt="Profile"
-                        width={36}
-                        height={36}
-                        className="object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/images/logo.png"; // 프로필 이미지 로드 실패 시 기본 이미지
-                        }}
-                    />
-                  </div>
-                </div>
-            )}
-          </div>
-        </header>
-
-        {/* 메인 콘텐츠 */}
-        <main className="flex-grow">
-          <div className="max-w-screen-lg mx-auto px-4 py-8">
-            {/* 뒤로가기 링크 */}
-            <Link
-                href={`/boards/${boardId}`}
-                className="flex items-center text-gray-600 mb-6 hover:text-[#2c714c] transition-colors"
-            >
-              <BiArrowBack className="mr-1"/>
-              <span>게시글로 돌아가기</span>
-            </Link>
-
-            <h1 className="text-4xl font-bold mb-8">게시글 수정</h1>
-
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* 제목 입력 */}
-              <div>
-                <label
+        <div className="flex gap-6 py-4">
+          <div className="flex-1">
+            <div className="bg-white rounded-lg p-6">
+              <h1 className="text-4xl font-bold mb-6">게시글 수정</h1>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 제목 입력 */}
+                <div>
+                  <label
                     htmlFor="title"
-                    className="block mb-2 font-bold text-gray-700 text-xl"
-                >
-                  제목
-                </label>
-                <input
-                    type="text"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#2c714c]"
-                    required
-                />
-              </div>
-
-              {/* 태그 입력 */}
-              <div>
-                <label className="block mb-2 font-bold text-gray-700 text-xl">
-                  태그
-                </label>
-                <div className="mb-2">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {tags.map((tag, index) => (
-                        <div
-                            key={index}
-                            className="inline-flex items-center bg-[#edf7f2] text-[#2c714c] px-3 py-1.5 rounded-full"
-                        >
-                          <span className="mr-1">#{tag}</span>
-                          <button
-                              type="button"
-                              onClick={() => handleRemoveTag(tag)}
-                              className="text-[#2c714c] hover:text-[#225c3d]"
-                          >
-                            <FaTimes size={14}/>
-                          </button>
-                        </div>
-                    ))}
+                    className="block text-lg font-medium text-black mb-2"
+                  >
+                    제목
+                  </label>
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      placeholder="제목을 입력하세요"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="block w-full border-0 text-base text-black placeholder-gray-600 focus:ring-0 focus:outline-none"
+                    />
                   </div>
-                  <div className="flex">
-                    <div className="relative flex-1">
-                      <input
-                          type="text"
-                          value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="태그를 입력하고 Enter를 누르세요"
-                          className="w-full border border-gray-300 rounded-l-md p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-[#2c714c]"
-                      />
-                      <BsTag
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"/>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={handleAddTag}
-                        className="bg-[#2c714c] text-white px-4 py-3 rounded-r-md hover:bg-[#225c3d] transition-colors"
-                    >
-                      추가
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    태그는 검색과 분류에 도움이 됩니다. (최대 10개)
-                  </p>
                 </div>
-              </div>
 
-              {/* 대표 이미지 업로드 - 직관적인 UI로 변경 */}
-              <div>
-                <label className="block mb-2 font-bold text-gray-700 text-xl">
-                  대표 이미지
-                </label>
-
-                <div className="border border-gray-300 rounded-md overflow-hidden">
-                  {representativeImage ? (
+                {/* 대표 이미지 업로드 */}
+                <div>
+                  <label className="block text-lg font-medium text-black mb-2">
+                    대표 이미지
+                  </label>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    {representativeImage || image ? (
                       // 이미지가 있는 경우 - 이미지 프리뷰 표시
                       <div className="relative">
                         <div className="bg-gray-100 w-full h-60 flex items-center justify-center">
                           <img
-                              src={representativeImage}
-                              alt="대표 이미지 미리보기"
-                              className="max-h-60 max-w-full object-contain"
+                            src={representativeImage || image || ""}
+                            alt="대표 이미지 미리보기"
+                            className="max-h-60 max-w-full object-contain"
                           />
                         </div>
 
-                        <div
-                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-25 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
+                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-25 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
                           <div className="flex gap-3">
                             {/* 이미지 변경 버튼 */}
-                            <label
-                                className="cursor-pointer px-4 py-2 bg-white rounded shadow text-gray-700 hover:bg-gray-100 transition-colors">
+                            <label className="cursor-pointer px-4 py-2 bg-white rounded shadow text-gray-700 hover:bg-gray-100 transition-colors">
                               <input
-                                  type="file"
-                                  accept="image/*"
-                                  ref={fileInputRef}
-                                  onChange={handleRepresentativeImageUpload}
-                                  className="hidden"
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                onChange={handleRepresentativeImageUpload}
+                                className="hidden"
                               />
                               변경
                             </label>
 
                             {/* 이미지 삭제 버튼 */}
                             <button
-                                type="button"
-                                onClick={handleRemoveRepresentativeImage}
-                                className="px-4 py-2 bg-white rounded shadow text-red-600 hover:bg-gray-100 transition-colors"
+                              type="button"
+                              onClick={handleRemoveRepresentativeImage}
+                              className="px-4 py-2 bg-white rounded shadow text-red-600 hover:bg-gray-100 transition-colors"
                             >
                               삭제
                             </button>
                           </div>
                         </div>
                       </div>
-                  ) : (
+                    ) : (
                       // 이미지가 없는 경우 - 이미지 업로드 인터페이스 표시
-                      <label
-                          className="flex flex-col items-center justify-center h-60 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <label className="flex flex-col items-center justify-center h-60 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
                         <div className="flex flex-col items-center justify-center p-6">
-                          <FaImage className="text-gray-400 w-16 h-16 mb-4"/>
+                          <FaImage className="text-gray-400 w-12 h-12 mb-4" />
                           <p className="text-gray-700 font-medium mb-2 text-lg">
                             대표 이미지 업로드
                           </p>
-                          <p className="text-gray-500 text-center">
-                            JPG, PNG 파일을 여기에 끌어다 놓거나 클릭하여 선택하세요
+                          <p className="text-gray-500 text-center text-sm">
+                            JPG, PNG 파일을 여기에 끌어다 놓거나 클릭하여
+                            선택하세요
                           </p>
                         </div>
                         <input
-                            type="file"
-                            accept="image/*"
-                            ref={fileInputRef}
-                            onChange={handleRepresentativeImageUpload}
-                            className="hidden"
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          onChange={handleRepresentativeImageUpload}
+                          className="hidden"
                         />
                       </label>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* 업로드된 이미지 목록 */}
-              <div className="mt-6">
-                <label className="block mb-2 font-bold text-gray-700 text-xl">
-                  업로드된 이미지
-                </label>
-                <div className="border border-gray-300 rounded-md p-4">
-                  {uploadedImages.length > 0 ? (
-                      <div className="grid grid-cols-4 gap-4">
-                        {uploadedImages.map((img, index) => (
-                            <div
-                                key={index}
-                                className="w-full aspect-square bg-gray-100 rounded-md overflow-hidden"
-                            >
-                              <img
-                                  src={img}
-                                  alt={`업로드된 이미지 ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                              />
-                            </div>
-                        ))}
-                      </div>
-                  ) : (
-                      <div className="text-center py-10 text-gray-500">
-                        에디터에 이미지를 추가하면 여기에 표시됩니다.
-                      </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 내용 입력 - Toast UI Editor 사용 */}
-              <div>
-                <label className="block mb-2 font-bold text-gray-700 text-xl">
-                  내용
-                </label>
-
-                {/* 에디터 영역 */}
-                <div className="border border-gray-300 rounded-md overflow-hidden">
-                  <div className="toast-ui-editor-container">
-                    {/* Toast UI Editor 컴포넌트 */}
-                    <Editor
-                        initialValue={content}
-                        previewStyle="tab"
-                        height="800px"
+                {/* 내용 입력 - Toast UI Editor */}
+                <div>
+                  <label
+                    htmlFor="content"
+                    className="block text-lg font-medium text-black mb-2"
+                  >
+                    내용
+                  </label>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="toast-ui-editor-container">
+                      <Editor
+                        initialValue={content || " "}
+                        height="900px"
                         initialEditType="wysiwyg"
                         useCommandShortcut={true}
                         usageStatistics={false}
@@ -559,88 +610,213 @@ export default function EditPostPage() {
                           ["code", "codeblock"],
                         ]}
                         hooks={{
-                          addImageBlobHook: handleEditorImageUpload,
+                          addImageBlobHook: (
+                            blob: File,
+                            callback: Function
+                          ) => {
+                            // 비동기 함수를 호출하지만 boolean을 반환
+                            handleEditorImageUpload(blob, callback as any);
+                            return false;
+                          },
                         }}
                         language="ko-KR"
-                        placeholder="내용을 입력하세요..."
+                        placeholder="내용을 입력하세요"
                         hideModeSwitch={true}
-                    />
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    * 이미지를 삽입하려면 툴바의 이미지 아이콘을 클릭하세요.
+                  </p>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* 사이드바 설정 영역 */}
+          <div className="w-72 flex-shrink-0">
+            <div className="bg-white rounded-lg p-6">
+              <h2 className="text-lg font-medium mb-6 text-black">글 설정</h2>
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium text-black">
+                      공개 설정
+                    </h3>
+                    <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
+                      전체 공개
+                    </button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  * 이미지를 삽입하려면 툴바의 이미지 아이콘을 클릭하세요.
-                </p>
-              </div>
 
-              {/* 버튼 영역 */}
-              <div className="flex justify-end gap-4 mt-10">
-                <Link
-                    href={`/boards/${boardId}`}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 transition-colors text-lg"
-                >
-                  취소
-                </Link>
-                <button
+                <div>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium text-black">카테고리</h3>
+                    <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
+                      카테고리 선택
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-black">댓글 허용</h3>
+                  <button
+                    type="button"
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1`}
+                    />
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-black mb-2">
+                    태그 추가
+                  </h3>
+                  <div className="mb-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {tags.map((tag, index) => (
+                        <div
+                          key={index}
+                          className="inline-flex items-center bg-[#edf7f2] text-[#2c714c] px-3 py-1.5 rounded-full"
+                        >
+                          <span className="mr-1">#{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="text-[#2c714c] hover:text-[#225c3d]"
+                          >
+                            <FaTimes size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="#태그 입력 (쉼표로 구분)"
+                        className="block w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black placeholder-gray-900 pr-14"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddTag}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 hover:text-black px-2 py-1"
+                      >
+                        추가
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-md p-4">
+                  <div className="flex items-center justify-center">
+                    <p className="text-sm text-gray-500 whitespace-nowrap">
+                      작성 중인 글은 1분마다 자동저장됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm rounded-md border border-gray-200 hover:bg-gray-50 text-black"
+                  >
+                    임시저장
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="px-4 py-2 text-sm rounded-md border border-gray-200 hover:bg-gray-50 text-black"
+                  >
+                    취소
+                  </button>
+                  <button
                     type="submit"
-                    className={`px-6 py-3 bg-[#2c714c] text-white rounded-md font-medium hover:bg-[#225c3d] transition-colors text-lg ${
-                        isLoading ? "opacity-70 cursor-not-allowed" : ""
-                    }`}
-                    disabled={isLoading}
-                >
-                  {isLoading ? "저장 중..." : "저장"}
-                </button>
+                    className="px-4 py-2 text-sm text-white rounded-md bg-black hover:bg-gray-800"
+                    onClick={handleSubmit}
+                  >
+                    저장
+                  </button>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
-        </main>
-
-        {/* Toast UI Editor 스타일 */}
-        <style jsx global>{`
-                /* 에디터 컨테이너 스타일링 */
-                .toast-ui-editor-container .toastui-editor-defaultUI {
-                    border: none;
-                }
-
-                /* 에디터 툴바 스타일링 */
-                .toast-ui-editor-container .toastui-editor-toolbar {
-                    background-color: #f9fafb;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-
-                /* 에디터 내용 영역 스타일링 */
-                .toast-ui-editor-container .toastui-editor-main {
-                    background-color: white;
-                }
-
-                /* 한글 입력 관련 스타일 */
-                .toast-ui-editor-container .toastui-editor-ww-container {
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-                    font-size: 1.15em;
-                }
-
-                /* 에디터 버튼 하이라이트 */
-                .toast-ui-editor-container .toastui-editor-toolbar-icons.active {
-                    color: #2c714c !important;
-                    background-color: #edf7f2 !important;
-                }
-
-                /* 에디터 버튼 호버 */
-                .toast-ui-editor-container .toastui-editor-toolbar-icons:hover {
-                    background-color: #edf7f2 !important;
-                }
-
-                /* 이미지 중앙 정렬 */
-                .toast-ui-editor-container .toastui-editor-contents img {
-                    display: block;
-                    margin: 0 auto;
-                }
-
-                /* 에디터 내용 글씨 크기 */
-                .toast-ui-editor-container .toastui-editor-contents {
-                    font-size: 1.15em;
-                }
-            `}</style>
+        </div>
       </div>
+
+      {/* Toast UI Editor 스타일 */}
+      <style jsx global>{`
+        /* 에디터 기본 텍스트 숨기기 */
+        .toastui-editor-defaultUI-toolbar {
+          background: white !important;
+        }
+
+        .toastui-editor-mode-switch {
+          display: none !important;
+        }
+
+        .toastui-editor-tabs {
+          display: none !important;
+        }
+
+        .toastui-editor-main .ProseMirror {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+          font-size: 1.3em !important; /* 글씨 크기 30% 증가 */
+          line-height: 1.6 !important;
+          text-align: left !important; /* 텍스트 왼쪽 정렬 강제 */
+          padding-top: 16px !important; /* 상단 패딩 추가 */
+        }
+
+        /* Write/Preview 텍스트 제거 - 이 부분 주석 처리 */
+        /* .toastui-editor-main .ProseMirror p:first-child {
+          display: none !important;
+        } */
+
+        /* 불필요한 여백 제거 */
+        .toastui-editor-defaultUI {
+          border: none !important;
+        }
+
+        .toastui-editor-main {
+          background-color: white !important;
+          padding-top: 16px !important; /* 상단 패딩 추가 */
+        }
+
+        /* 텍스트 왼쪽 정렬 */
+        .toastui-editor-contents p,
+        .toastui-editor-contents h1,
+        .toastui-editor-contents h2,
+        .toastui-editor-contents h3,
+        .toastui-editor-contents h4,
+        .toastui-editor-contents h5,
+        .toastui-editor-contents h6,
+        .toastui-editor-contents ul,
+        .toastui-editor-contents ol,
+        .toastui-editor-contents blockquote {
+          text-align: left !important;
+        }
+
+        /* 이미지 크기 조절 및 중앙 정렬 */
+        .toastui-editor-contents img {
+          max-width: 70% !important; /* 이미지 최대 너비를 70%로 제한 */
+          height: auto !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          display: block !important;
+        }
+
+        /* 에디터 내용 전체 스타일링 */
+        .toastui-editor-contents {
+          font-size: 1.3em !important; /* 글씨 크기 30% 증가 */
+        }
+
+        /* 코드블록 등 다른 요소들도 동일하게 중앙 정렬 필요시 추가 */
+      `}</style>
+    </div>
   );
 }
