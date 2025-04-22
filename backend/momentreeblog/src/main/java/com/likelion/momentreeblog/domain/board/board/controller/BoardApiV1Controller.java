@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.hibernate.Hibernate;
 
 import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/boards")
@@ -120,10 +121,10 @@ public class BoardApiV1Controller {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBoard(
-            @RequestHeader(value = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable(name = "id") Long id) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
             String message = boardService.deleteBoard(id, userId);
             return ResponseEntity.ok(message);
         } catch (SecurityException e) {
@@ -195,8 +196,16 @@ public class BoardApiV1Controller {
         }
     }
 
+    @GetMapping("/latest")
+    public List<BoardListResponseDto> getLatestPosts() {
+        return boardService.getLatestPosts();
+    }
 
-
+    @GetMapping("/popular")
+    public ResponseEntity<List<BoardListResponseDto>> getPopularBoards() {
+        List<BoardListResponseDto> popularBoards = boardService.getPopularPosts();
+        return ResponseEntity.ok(popularBoards);
+    }
 
     @GetMapping("/{boardId}/likes")
     public ResponseEntity<?> likeBoardList(@PathVariable(name = "boardId") Long boardId) {

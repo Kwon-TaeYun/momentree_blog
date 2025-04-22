@@ -124,7 +124,7 @@ export default function CreatePostPage() {
           }),
         }
       )
-        .then(response => {
+        .then((response) => {
           if (!response.ok) {
             throw new Error("프리사인드 URL 생성에 실패했습니다.");
           }
@@ -138,7 +138,7 @@ export default function CreatePostPage() {
               "Content-Type": contentType,
             },
             body: blob,
-          }).then(uploadResponse => {
+          }).then((uploadResponse) => {
             if (!uploadResponse.ok) {
               throw new Error("이미지 업로드에 실패했습니다.");
             }
@@ -151,7 +151,7 @@ export default function CreatePostPage() {
             setUploadedImages((prev) => [...prev, key]);
           });
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("에디터 이미지 업로드 오류:", error);
           alert("이미지 업로드에 실패했습니다.");
         });
@@ -253,7 +253,7 @@ export default function CreatePostPage() {
       alert("게시글이 성공적으로 작성되었습니다.");
 
       // 게시글 목록 페이지로 이동
-      router.push("/boards");
+      router.push("/members/login/myblog");
     } catch (error) {
       console.error("게시글 작성 오류:", error);
       alert("게시글 작성 중 오류가 발생했습니다.");

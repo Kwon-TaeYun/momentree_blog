@@ -114,7 +114,7 @@ export default function Header() {
             <ul className="flex space-x-8">
               <li>
                 <Link
-                  href="/success"
+                  href="/home"
                   className="text-gray-600 hover:text-gray-900 py-4"
                 >
                   홈
@@ -130,7 +130,7 @@ export default function Header() {
               </li>
               <li>
                 <Link
-                  href="/dictionary"
+                  href="/photoList"
                   className="text-gray-600 hover:text-gray-900 py-4"
                 >
                   사진첩
@@ -171,8 +171,18 @@ export default function Header() {
 
           {isUserLoggedIn ? (
             <div className="flex items-center gap-4">
+              
               <div>{loginMember.name}님 환영합니다!</div>
               <button
+
+              <Link 
+                href="/mypage" 
+                className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 transition"
+              >
+                마이페이지
+              </Link>
+              <button 
+
                 onClick={handleLogout}
                 className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition"
               >
