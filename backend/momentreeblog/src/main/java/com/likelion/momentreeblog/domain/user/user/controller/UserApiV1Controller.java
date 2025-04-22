@@ -7,7 +7,6 @@ import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.global.rq.Rq;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -228,10 +227,23 @@ public class UserApiV1Controller {
         return new UserDto(user);
     }
 
+    //회원 탈퇴로 상태 변경하기
+    @PostMapping("/delete")
+    public ResponseEntity<String> changeStatusDeleted(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody UserDeleteRequest request
+    ) {
+        Long userId = customUserDetails.getUserId();
+        userService.changeUserStatusDeleted(userId, request);
+
+        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+    }
+
     @GetMapping("/top5")
     public ResponseEntity<List<UserResponse>> getTop5Users() {
         List<UserResponse> top5Users = userService.getTop5Bloggers();
         return ResponseEntity.ok(top5Users);
+
     }
 
 }

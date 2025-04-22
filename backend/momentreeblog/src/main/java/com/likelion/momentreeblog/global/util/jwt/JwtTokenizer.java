@@ -1,7 +1,5 @@
 package com.likelion.momentreeblog.global.util.jwt;
 
-import com.likelion.momentreeblog.domain.user.role.entity.Role;
-import com.likelion.momentreeblog.domain.user.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

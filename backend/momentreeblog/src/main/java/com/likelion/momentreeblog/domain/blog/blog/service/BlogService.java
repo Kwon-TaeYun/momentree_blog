@@ -107,7 +107,7 @@ public class BlogService {
         blogRepository.deleteById(id);
     }
 
-    public Optional<Blog> findById(Long id){
+    public Optional<Blog> findById(Long id) {
         return blogRepository.findById(id);
     }
 

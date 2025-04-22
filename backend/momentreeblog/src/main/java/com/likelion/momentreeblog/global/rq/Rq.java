@@ -1,11 +1,9 @@
 package com.likelion.momentreeblog.global.rq;
 
-import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
-import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import com.likelion.momentreeblog.global.util.security.SecurityUser;
 import jakarta.servlet.http.HttpServletRequest;
