@@ -8,6 +8,7 @@ spring:
         registration:
           kakao:
             clientId: ON_SECRET
+            client-secret: ON_SECRET # 이 부분이 추가되어야 함
             scope: profile_nickname
             client-name: Kakao
             authorization-grant-type: authorization_code
@@ -29,11 +30,11 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/mydb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-#    username: taeyun
-#    password: 1234
-#    driver-class-name: com.mysql.cj.jdbc.Driver
+  #  datasource:
+  #    url: jdbc:mysql://localhost:3306/mydb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+  #    username: taeyun
+  #    password: 1234
+  #    driver-class-name: com.mysql.cj.jdbc.Driver
   h2:
     console:
       enabled: true
@@ -52,10 +53,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB  #업로드할 수 있는 개별 파일의 최대 크기. 기본 1MB
+      max-file-size: 10MB #업로드할 수 있는 개별 파일의 최대 크기. 기본 1MB
       max-request-size: 10MB #multipart/form-data 요청의 최대 허용 크기. 기본 10MB
-
-
 
 logging:
   level:
