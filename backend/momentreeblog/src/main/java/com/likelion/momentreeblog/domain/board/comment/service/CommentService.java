@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.board.comment.service;
 
+import com.amazonaws.services.kms.model.NotFoundException;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.comment.dto.CommentDto;
@@ -70,7 +71,7 @@ public class CommentService {
 
     private void validateBoardExists(Long boardId) {
         if (!boardRepository.existsById(boardId)) {
-            throw new IllegalArgumentException("존재하지 않는 게시글입니다. boardId: " + boardId);
+            throw new NotFoundException("게시글을 찾을 수 없습니다: " + boardId);
         }
     }
 

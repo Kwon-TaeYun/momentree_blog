@@ -111,18 +111,18 @@ public class UserService {
     }
 
 
-    @Transactional
-    public void changeUserStatusDeleted(Long id, UserDeleteRequest request) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
-
-        if (!request.getEmail().equals(user.getEmail())) {
-            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이매일을 다시 입력해주세요");
-        }
-
-        user.setStatus(UserStatus.DELETED);
-        userRepository.save(user);
-    }
+//    @Transactional
+//    public void changeUserStatusDeleted(Long id, UserDeleteRequest request) {
+//        User user = userRepository.findById(id)
+//                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
+//
+//        if (!request.getEmail().equals(user.getEmail())) {
+//            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이매일을 다시 입력해주세요");
+//        }
+//
+//        user.setStatus(UserStatus.DELETED);
+//        userRepository.save(user);
+//    }
 
 
     public User getMemberFromAccessToken(String accessToken) {
