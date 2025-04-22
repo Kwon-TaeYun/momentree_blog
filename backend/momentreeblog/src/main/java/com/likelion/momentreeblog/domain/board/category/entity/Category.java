@@ -21,6 +21,9 @@ public class Category extends BaseEntity {
     @JoinColumn(name = "blog_id", nullable = false)
     private Blog blog;
 
+    @Column(nullable = false )
+    private boolean isDefault = false;
+
     public void update(String name) {
         this.name = name;
     }

@@ -4,6 +4,9 @@ import com.likelion.momentreeblog.domain.user.follower.entity.FollowManagement;
 import com.likelion.momentreeblog.domain.user.user.dto.UserFollowDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.FollowRepository;
+
+import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
+
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,15 +20,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FollowServiceImpl implements FollowService{
+public class FollowServiceImpl implements FollowService {
     private final FollowRepository followRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public void follow(User follower, User following) {
-        if(isFollowing(follower, following)){
-            throw new IllegalArgumentException("이미 팔로우 중인 유저입니다.");
-        }
 
         FollowManagement follow = FollowManagement.builder()
                 .follower(follower)
@@ -56,7 +57,6 @@ public class FollowServiceImpl implements FollowService{
     public boolean isFollowing(User follower, User following) {
         return followRepository.findByFollowerAndFollowing(follower, following).isPresent();
     }
-
 
     @Override
     public List<UserFollowDto> getFollowings(Long myUserId) {
@@ -98,4 +98,5 @@ public class FollowServiceImpl implements FollowService{
                 ))
                 .collect(Collectors.toList());
     }
+
 }

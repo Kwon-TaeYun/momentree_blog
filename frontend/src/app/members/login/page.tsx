@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import styled from "styled-components";
-const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
-const redirectUrlAfterSocialLogin = `http://localhost:3000/success`;
+const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`
+const redirectUrlAfterSocialLogin = `http://localhost:3000/home`
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -13,10 +13,34 @@ export default function LoginPage() {
     rememberMe: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    console.log("Login attempt with:", formData);
+  
+    try {
+      const response = await fetch(`http://localhost:8090/api/v1/members/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // 중요: 쿠키를 포함한 요청
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorMessage = await response.text(); // 서버에서 보낸 에러 메시지
+        alert(errorMessage);
+        return;
+      }
+  
+      // 로그인 성공 - 원하는 페이지로 이동
+      window.location.href = redirectUrlAfterSocialLogin;
+    } catch (error) {
+      console.error("로그인 에러:", error);
+      alert("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

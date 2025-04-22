@@ -35,13 +35,13 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/api/v1/members/signup", 
-                                "/api/v1/members/login",
-                                "/api/v1/members/search").permitAll()
-                                
+
+                                .requestMatchers("/api/v1/members/**", "/api/v1/boards/**", "/api/s3/presigned-url").permitAll()
+
                                 .requestMatchers("/h2-console/**")
                                 .permitAll()
                                 .requestMatchers("/api/*/**")
+
                                 .authenticated()
                                 .anyRequest()
                                 .permitAll()

@@ -16,7 +16,6 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "comments")
 @ToString(exclude = {"user", "board"})
 public class Comment extends BaseEntity {
-
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
