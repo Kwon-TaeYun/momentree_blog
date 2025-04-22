@@ -2,14 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import UserFollower from "@/components/user_follower";
-
-export default function MyBlogPage() {
-  const [isFollowerModalOpen, setIsFollowerModalOpen] = useState(false);
-  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
 import { useRouter } from "next/navigation";
-import axios from "axios";
 
 interface Post {
   id: number;
@@ -173,33 +166,10 @@ export default function MyBlogPage() {
                 <p className="text-gray-500 mb-4">{userInfo.username}</p>
                 
                 <div className="w-full flex flex-col space-y-3 mb-4">
-                  <div className="flex justify-between">
-                    <p className="text-black">게시글</p>
-                    <p className="font-bold">{userInfo.posts}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="text-black">방문자</p>
-                    <p className="font-bold">{userInfo.visitors.toLocaleString()}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="text-black">팔로워</p>
-                    <p 
-                      className="font-bold cursor-pointer hover:text-green-600 transition-colors"
-                      onClick={() => setIsFollowerModalOpen(true)}
-                    >
-                      {userInfo.followers}
-                    </p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="text-black">팔로잉</p>
-                    <p 
-                      className="font-bold cursor-pointer hover:text-green-600 transition-colors"
-                      onClick={() => setIsFollowingModalOpen(true)}
-                    >
-                      {userInfo.following}
-                    </p>
-                  </div>
-
+                  <InfoRow label="게시글" value={userInfo.posts} />
+                  <InfoRow label="조회수" value={userInfo.viewCount || 0} />
+                  <InfoRow label="팔로워" value={userInfo.followers} />
+                  <InfoRow label="팔로잉" value={userInfo.following} />
                 </div>
                 
                 <button className="w-full bg-green-50 text-green-700 font-medium py-2 px-4 rounded-md flex items-center justify-center gap-2">
@@ -267,20 +237,6 @@ export default function MyBlogPage() {
           </div>
         </div>
       </main>
-
-      {/* 팔로워 모달 */}
-      <UserFollower 
-        isOpen={isFollowerModalOpen} 
-        onClose={() => setIsFollowerModalOpen(false)}
-        userId={userInfo.id}
-      />
-
-      {/* 팔로잉 모달 */}
-      <UserFollower 
-        isOpen={isFollowingModalOpen} 
-        onClose={() => setIsFollowingModalOpen(false)}
-        userId={userInfo.id}
-      />
     </div>
   );
 }
