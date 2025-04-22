@@ -5,6 +5,7 @@ import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.dto.*;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import com.likelion.momentreeblog.global.rq.Rq;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.servlet.http.Cookie;
@@ -19,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -52,6 +54,10 @@ public class UserApiV1Controller {
 
         if (!passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 같지 않습니다. 다시 입력해주세요.");
+        }
+
+        if (user.getStatus().equals(UserStatus.DELETED)) {
+            return ResponseEntity.badRequest().body("탈퇴한 회원이므로 로그인하실 수 없습니다.");
         }
 
         List<String> roleNames = user.getRoles().stream()
@@ -174,17 +180,18 @@ public class UserApiV1Controller {
 
     @PutMapping("/edit")
     public ResponseEntity<?> editUser(
-            @RequestHeader(name = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody UserUpdateDto updateDto) {
 
-        Long tokenUserId = jwtTokenizer.getUserIdFromToken(authorization);
+        Long tokenUserId = customUserDetails.getUserId();
+        log.info("tokenUserId" + tokenUserId);
 
 //        if (!tokenUserId.equals(updateDto.getId())) {
 //            return ResponseEntity.status(HttpStatus.FORBIDDEN)
 //                    .body("본인만 수정할 수 있습니다.");
 //        }
 
-        User user = userService.findUserById(jwtTokenizer.getUserIdFromToken(authorization));
+        User user = userService.findUserById(tokenUserId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 사용자를 찾을 수 없습니다.");
         }
@@ -209,7 +216,7 @@ public class UserApiV1Controller {
 
         userService.editUser(user);
 
-        return ResponseEntity.ok("회원정보가 수정되었습니다.");
+        return ResponseEntity.ok(Map.of("message", "회원정보가 수정되었습니다."));
     }
 
 
@@ -226,8 +233,6 @@ public class UserApiV1Controller {
         User user = userService.findUserById((Long) userId);
         return new UserDto(user);
     }
-
-    //회원 탈퇴로 상태 변경하기
 
     @GetMapping("/top5")
     public ResponseEntity<List<UserResponse>> getTop5Users() {
