@@ -35,9 +35,13 @@ public class UserApiV1Controller {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody UserSignupDto userSignupDto) {
         try {
-            return ResponseEntity.ok(userService.saveUser(userSignupDto));
+            log.info("회원가입 요청 수신 - email: {}, name: {}", userSignupDto.getEmail(), userSignupDto.getName());
+            String result = userService.saveUser(userSignupDto);
+            log.info("회원가입 성공 - result: {}", result);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("서버 오류가 발생하였습니다.");
+            log.error("회원가입 처리 중 오류 발생", e);
+            return ResponseEntity.internalServerError().body("회원가입 처리 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
@@ -89,43 +93,6 @@ public class UserApiV1Controller {
 
         return ResponseEntity.ok(userLoginResponseDto);
     }
-//    @PostMapping("/logout")
-//    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader,
-//                                    HttpServletResponse response) {
-//        try {
-//            // "Bearer {token}" → token만 추출
-//            String accessToken = authorizationHeader.replace("Bearer ", "").trim();
-//
-//            Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
-//            User user = userService.findUserById(userId);
-//
-//            if (user == null) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("존재하지 않는 사용자입니다.");
-//            }
-//
-//            user.setRefreshToken(null);
-//            userService.editUser(user);
-//
-//            // 쿠키 삭제
-//            Cookie accessCookie = new Cookie("accessToken", null);
-//            accessCookie.setHttpOnly(true);
-//            accessCookie.setPath("/");
-//            accessCookie.setMaxAge(0);
-//            response.addCookie(accessCookie);
-//
-//            Cookie refreshCookie = new Cookie("refreshToken", null);
-//            refreshCookie.setHttpOnly(true);
-//            refreshCookie.setPath("/");
-//            refreshCookie.setMaxAge(0);
-//            response.addCookie(refreshCookie);
-//
-//            return ResponseEntity.ok("로그아웃 되었습니다 !!");
-//
-//        } catch (Exception e) {
-//            log.info("로그아웃 실패: " + e.getMessage());
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
-//        }
-//    }
 
     //회원 탈퇴로 상태 변경하기
     @PostMapping("/delete")
@@ -138,39 +105,6 @@ public class UserApiV1Controller {
 
         return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
     }
-
-    //로그아웃
-//    @DeleteMapping("/logout")
-//    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader, HttpServletResponse response) {
-//        {
-//            String accessToken = authorizationHeader;
-//            try {
-//                Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
-//                User user = userService.findUserById(userId);
-//                System.out.println(user);
-//                user.setRefreshToken(null);
-//                userService.editUser(user);
-//
-//                // 로그아웃 시 쿠키 삭제 추가
-//                Cookie cookie = new Cookie("accessToken", null);
-//                cookie.setHttpOnly(true);
-//                cookie.setPath("/");
-//                cookie.setMaxAge(0);
-//                response.addCookie(cookie);
-//
-//                Cookie refreshCookie = new Cookie("refreshToken", null);
-//                refreshCookie.setHttpOnly(true);
-//                refreshCookie.setPath("/");
-//                refreshCookie.setMaxAge(0);
-//                response.addCookie(refreshCookie);
-//
-//                return ResponseEntity.ok("로그아웃 되었습니다 !!");
-//            } catch (Exception e) {
-//                log.info(e.getMessage());
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
-//            }
-//        }
-//    }
 
     @PutMapping("/edit")
     public ResponseEntity<?> editUser(
@@ -212,7 +146,6 @@ public class UserApiV1Controller {
         return ResponseEntity.ok("회원정보가 수정되었습니다.");
     }
 
-
     @DeleteMapping("/logout")
     public void logout() {
         rq.deleteCookie("accessToken");
@@ -227,25 +160,11 @@ public class UserApiV1Controller {
         return new UserDto(user);
     }
 
-    //회원 탈퇴로 상태 변경하기
-    @PostMapping("/delete")
-    public ResponseEntity<String> changeStatusDeleted(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody UserDeleteRequest request
-    ) {
-        Long userId = customUserDetails.getUserId();
-        userService.changeUserStatusDeleted(userId, request);
-
-        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
-    }
-
     @GetMapping("/top5")
     public ResponseEntity<List<UserResponse>> getTop5Users() {
         List<UserResponse> top5Users = userService.getTop5Bloggers();
         return ResponseEntity.ok(top5Users);
-
     }
-
 }
 
 

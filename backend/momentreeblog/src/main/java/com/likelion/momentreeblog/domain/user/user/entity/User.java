@@ -41,24 +41,17 @@ public class User extends BaseEntity {
     @Column(nullable = false, name = "refresh_token")
     private String refreshToken;
 
-    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
     @Enumerated(EnumType.STRING)
-    private UserStatus status = UserStatus.ACTIVE;
-
+    private UserStatus status;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
 
-
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
     private Blog blog;
-
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
-
 
     public void setBlog(Blog blog) {
         this.blog = blog;
@@ -100,5 +93,4 @@ public class User extends BaseEntity {
     // 유저가 올린 모든 사진 기록 (여기에는 프로필 사진 변경 이력도 포함)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos = new ArrayList<>();
-
 }

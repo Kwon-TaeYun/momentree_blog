@@ -17,12 +17,21 @@ export default function LoginPage() {
     e.preventDefault();
   
     try {
-      const response = await fetch(`http://localhost:8090/api/v1/members/login`, {
+      if (!formData.email || !formData.password) {
+        throw new Error("이메일과 비밀번호를 모두 입력해주세요.");
+      }
+
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error("올바른 이메일 형식이 아닙니다.");
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/members/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // 중요: 쿠키를 포함한 요청
+        credentials: "include", // 쿠키를 포함한 요청
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -30,16 +39,31 @@ export default function LoginPage() {
       });
   
       if (!response.ok) {
-        const errorMessage = await response.text(); // 서버에서 보낸 에러 메시지
-        alert(errorMessage);
-        return;
+        const errorText = await response.text();
+        
+        if (response.status === 401) {
+          throw new Error("이메일 또는 비밀번호가 일치하지 않습니다.");
+        } else if (response.status === 404) {
+          throw new Error("등록되지 않은 이메일입니다.");
+        } else if (response.status === 500) {
+          throw new Error("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        } else {
+          throw new Error(errorText || "로그인 처리 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 아이디 저장 처리
+      if (formData.rememberMe) {
+        localStorage.setItem('rememberedEmail', formData.email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
       }
   
-      // 로그인 성공 - 원하는 페이지로 이동
+      // 로그인 성공 처리
       window.location.href = redirectUrlAfterSocialLogin;
     } catch (error) {
-      console.error("로그인 에러:", error);
-      alert("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      console.error("로그인 오류:", error);
+      alert(error instanceof Error ? error.message : "로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 

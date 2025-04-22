@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -37,56 +38,64 @@ public class UserService {
     private final PhotoRepository photoRepository;
 
     @Transactional
-    public String saveUser(UserSignupDto dto){
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            return "이미 존재하는 이메일입니다!";
+    public String saveUser(UserSignupDto dto) {
+        log.info("회원가입 시도 - email: {}, name: {}", dto.getEmail(), dto.getName());
+        
+        try {
+            // 필수 필드 검증
+            if (dto.getEmail() == null || dto.getPassword() == null || dto.getName() == null) {
+                return "필수 정보가 누락되었습니다.";
+            }
+
+            // 이메일 중복 체크
+            if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+                return "이미 존재하는 이메일입니다!";
+            }
+            
+            String blogName = dto.getBlogName() != null ? dto.getBlogName() : dto.getName() + "의 블로그";
+            if (blogRepository.findByName(blogName).isPresent()) {
+                return "이미 존재하는 블로그 이름입니다!";
+            }
+
+            // 이메일 형식 체크
+            if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                return "이메일 형식이 올바르지 않습니다!";
+            }
+
+            // 비밀번호 유효성 검사
+            if (dto.getPassword().length() < 8) {
+                return "비밀번호는 최소 8자리 이상이어야 합니다!";
+            }
+
+            // User 객체 생성
+            User user = User.builder()
+                    .name(dto.getName())
+                    .email(dto.getEmail())
+                    .password(passwordEncoder.encode(dto.getPassword()))
+                    .refreshToken(UUID.randomUUID().toString())
+                    .status(UserStatus.ACTIVE)
+                    .roles(Set.of(Role.USER))
+                    .build();
+
+            // Blog 객체 생성
+            Blog blog = Blog.builder()
+                    .name(blogName)
+                    .viewCount(0L)
+                    .user(user)
+                    .build();
+
+            user.setBlog(blog);
+            
+            // 저장
+            userRepository.save(user);
+            
+            log.info("회원가입 성공 - userId: {}", user.getId());
+            
+            return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
+        } catch (Exception e) {
+            log.error("회원가입 실패 - 원인: {}", e.getMessage(), e);
+            return "회원가입 처리 중 오류가 발생했습니다: " + e.getMessage();
         }
-        if (blogRepository.findByName(dto.getBlogName()).isPresent()) {
-            return "이미 존재하는 블로그 이름입니다!";
-        }
-
-        // 이메일 형식 체크 추가
-        if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            return "이메일 형식이 올바르지 않습니다!";
-        }
-
-        // 비밀번호 길이 체크 추가
-        if (dto.getPassword().length() < 8) {
-            return "비밀번호는 최소 8자리 이상이어야 합니다!";
-        }
-
-        List<Role> roles = new ArrayList<>();
-        roles.add(Role.USER);
-
-        // 2. User 객체 생성
-        User user = User.builder()
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .status(UserStatus.ACTIVE)
-                .roles(Set.of(Role.USER))
-                .status(UserStatus.ACTIVE)
-                .build();
-
-        // 3. Blog 객체 생성
-        Blog blog = Blog.builder()
-                .name(dto.getBlogName())
-                .viewCount(0L)
-                .user(user)
-                .build();
-
-        user.setBlog(blog);
-        String refreshToken = jwtTokenizer.createRefreshToken(
-                user.getId(), // 아직 id가 없으므로 null (필요하다면 id 없이 생성하는 오버로드 만들 수도 있음)
-                user.getEmail(),
-               user.getName(),null
-        );
-        user.setRefreshToken(refreshToken);
-
-        blogRepository.save(blog); // Blog 먼저 저장되면 blog_id 설정 가능
-        userRepository.save(user);
-
-        return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
     }
 
     @Transactional
@@ -117,7 +126,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
 
         if (!request.getEmail().equals(user.getEmail())) {
-            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이매일을 다시 입력해주세요");
+            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이메일을 다시 입력해주세요");
         }
 
         user.setStatus(UserStatus.DELETED);
@@ -167,19 +176,6 @@ public class UserService {
                     .orElseThrow(() -> new RuntimeException("프로필 사진을 찾을 수 없습니다."));
             user.setCurrentProfilePhoto(profilePhoto);
         }
-    }
-
-
-    @Transactional
-    public void changeUserStatusDeleted(Long id, UserDeleteRequest request) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
-
-        if (!request.getEmail().equals(user.getEmail())) {
-            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이매일을 다시 입력해주세요");
-        }
-
-        user.setStatus(UserStatus.DELETED);
     }
 
 

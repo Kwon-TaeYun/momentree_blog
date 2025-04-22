@@ -18,9 +18,9 @@ export default function SignUp() {
   const checkEmail = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8090/api/v1/members/email?email=${encodeURIComponent(
-          email
-        )}`,
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/members/email?email=${encodeURIComponent(email)}`,
         {
           method: "GET",
           headers: {
@@ -49,33 +49,37 @@ export default function SignUp() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!isEmailChecked) {
-      setIsError(true);
-      setMessage("이메일 중복 확인을 해주세요.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setIsError(true);
-      setMessage("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-
-    // 비밀번호 유효성 검사
-    const passwordRegex =
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,20}$/;
-    if (!passwordRegex.test(password)) {
-      setIsError(true);
-      setMessage(
-        "비밀번호는 8~20자의 영문, 숫자, 특수문자를 모두 포함해야 합니다."
-      );
-      return;
-    }
+    setIsError(false);
+    setMessage("");
 
     try {
+      // 1. 기본 유효성 검사
+      if (!isEmailChecked) {
+        throw new Error("이메일 중복 확인을 해주세요.");
+      }
+
+      if (!email || !password || !name) {
+        throw new Error("모든 필수 항목을 입력해주세요.");
+      }
+
+      if (password !== confirmPassword) {
+        throw new Error("비밀번호가 일치하지 않습니다.");
+      }
+
+      // 2. 비밀번호 유효성 검사
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,20}$/;
+      if (!passwordRegex.test(password)) {
+        throw new Error("비밀번호는 8~20자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+      }
+
+      // 3. 이메일 형식 검사
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("올바른 이메일 형식이 아닙니다.");
+      }
+
       const response = await fetch(
-        "http://localhost:8090/api/v1/members/signup",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"}/api/v1/members/signup`,
         {
           method: "POST",
           headers: {
@@ -85,63 +89,38 @@ export default function SignUp() {
             email,
             password,
             name,
-            blogName: email.split("@")[0], // 기본 블로그 이름으로 이메일 아이디 사용
-          }),
+            blogName: `${name}의 블로그`
+          })
         }
       );
 
+      const data = await response.text();
+
       if (response.ok) {
-        setIsError(false);
-        setMessage("회원가입이 완료되었습니다.");
+        alert("회원가입이 성공적으로 완료되었습니다."); 
         router.push("/members/login");
       } else {
-        const data = await response.text();
-        setIsError(true);
-        setMessage(data || "회원가입 중 오류가 발생했습니다.");
+        // HTTP 상태 코드별 처리
+        if (response.status === 400) {
+          throw new Error(data || "입력하신 정보를 다시 확인해주세요.");
+        } else if (response.status === 409) {
+          throw new Error(data || "이미 사용 중인 이메일입니다.");
+        } else if (response.status === 500) {
+          console.error("Server Error:", data);
+          throw new Error("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        } else {
+          throw new Error(data || "회원가입 처리 중 오류가 발생했습니다.");
+        }
       }
     } catch (error) {
+      console.error("회원가입 실패:", error);
       setIsError(true);
-      setMessage("서버와의 통신 중 오류가 발생했습니다.");
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-  
-    try {
-      const response = await fetch('http://localhost:8090/api/v1/members/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-          blogName: name + '의 블로그', // 또는 사용자가 입력하게 만들 수도 있음
-        }),
-      });
-  
-      const message = await response.text();
-  
-      if (response.ok) {
-        alert(message); // 회원가입 성공 메시지
-        // 로그인 페이지로 이동
-        window.location.href = '/members/login';
-      } else {
-        alert(`회원가입 실패: ${message}`);
-      }
-    } catch (error) {
-      console.error('회원가입 오류:', error);
-      alert('서버 오류가 발생했습니다.');
+      setMessage(error instanceof Error ? error.message : "회원가입 처리 중 오류가 발생했습니다.");
     }
   };
-  
 
   return (
-    <div className="min-h-screen flex flex-col items-center py-8 px-4">
+    <div className="min-h-screen flex flex-col items-center py-8 px-4 bg-gray-50">
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="flex flex-col items-center mb-8">
@@ -159,7 +138,9 @@ export default function SignUp() {
               </span>
             </div>
           </Link>
-          <h1 className="text-center text-xl font-medium mt-6">회원가입</h1>
+          <h1 className="text-center text-2xl font-semibold mt-6 text-gray-900">
+            회원가입
+          </h1>
         </div>
 
         {message && (
@@ -173,14 +154,14 @@ export default function SignUp() {
         )}
 
         {/* Signup Form */}
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
           <form onSubmit={handleSignUp} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-base font-medium text-gray-900 mb-2">
                 아이디(이메일) <span className="text-red-500">*</span>
               </label>
-              <div className="flex">
+              <div className="flex gap-2">
                 <input
                   type="email"
                   value={email}
@@ -189,40 +170,43 @@ export default function SignUp() {
                     setIsEmailChecked(false);
                   }}
                   placeholder="예: example@email.com"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500
+                    focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required
                 />
                 <button
                   type="button"
                   onClick={checkEmail}
-                  className="ml-2 bg-black text-white px-4 py-2 rounded-md text-sm"
+                  className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 
+                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors"
                 >
-                  이메일 중복 확인
+                  중복 확인
                 </button>
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-base font-medium text-gray-900 mb-2">
                 비밀번호 <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="예: Abcd1234!"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
+                placeholder="비밀번호 입력"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-2 text-sm text-gray-600">
                 8~20자의 영문, 숫자, 특수문자를 조합하여 입력해주세요
               </p>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-base font-medium text-gray-900 mb-2">
                 비밀번호 확인 <span className="text-red-500">*</span>
               </label>
               <input
@@ -230,22 +214,24 @@ export default function SignUp() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="비밀번호를 다시 입력해주세요"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
             </div>
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                이름(별명) <span className="text-red-500">*</span>
+              <label className="block text-base font-medium text-gray-900 mb-2">
+                이름 <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="예: 홍길동"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
+                placeholder="이름을 입력해주세요"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
             </div>
@@ -253,11 +239,24 @@ export default function SignUp() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-black text-white py-3 rounded-md font-medium hover:bg-gray-900 transition-colors"
+              className="w-full bg-gray-900 text-white py-3 rounded-md font-medium
+                hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900
+                transition-colors"
             >
               가입하기
             </button>
           </form>
+
+          {/* Login Link */}
+          <div className="mt-6 text-center text-base text-gray-600">
+            이미 계정이 있으신가요?{" "}
+            <Link
+              href="/members/login"
+              className="text-green-700 hover:underline font-medium"
+            >
+              로그인하기
+            </Link>
+          </div>
         </div>
 
         {/* Footer */}
