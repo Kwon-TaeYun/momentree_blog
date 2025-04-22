@@ -466,6 +466,40 @@ export default function CreatePostPage() {
     setIsCategoryModalOpen(false);
   };
 
+  // 카테고리 조회 함수
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 인증 정보 포함
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.map((category: { name: string }) => category.name)); // 카테고리 이름만 추출
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 조회 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 조회 중 오류:", error);
+      alert("카테고리 조회 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 페이지 로드 시 카테고리 조회
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   // 카테고리 추가
   const handleAddCategory = async () => {
     if (!newCategory.trim()) {
@@ -521,6 +555,47 @@ export default function CreatePostPage() {
       categoryId: category, // 선택된 카테고리를 설정
     }));
     closeCategoryModal(); // 모달 닫기
+  };
+
+  // 카테고리 삭제
+  const handleDeleteCategory = async (category: string) => {
+    if (!confirm(`"${category}" 카테고리를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      // blogId 가져오기
+      const blogId = loginMember.blogId;
+      if (!blogId) {
+        alert("블로그 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      // API 호출
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${blogId}/${category}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        setCategories((prev) => prev.filter((cat) => cat !== category)); // 삭제된 카테고리를 목록에서 제거
+        alert("카테고리가 삭제되었습니다.");
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 삭제 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 삭제 중 오류:", error);
+      alert("카테고리 삭제 중 오류가 발생했습니다.");
+    }
   };
 
   // 로딩 중이면 로딩 상태 표시
@@ -829,13 +904,22 @@ export default function CreatePostPage() {
                   className="flex items-center justify-between border-b pb-2"
                 >
                   <span className="text-sm text-gray-700">{category}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectCategory(category)}
-                    className="text-sm text-blue-500 hover:underline"
-                  >
-                    선택
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory(category)}
+                      className="text-sm text-blue-500 hover:underline"
+                    >
+                      선택
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(category)}
+                      className="text-sm text-red-500 hover:underline"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </div>
               ))}
 
