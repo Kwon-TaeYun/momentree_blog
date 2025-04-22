@@ -12,7 +12,7 @@ public class BoardListResponseDto {
     private String title;
     private Long blogId;
     private String imageUrl;  // ✅ 대표 이미지 URL 필드 추가
-
+    private Long likeCount;
     public static BoardListResponseDto from(Board board) {
         String imageUrl = board.getCurrentMainPhoto() != null
                 ? board.getCurrentMainPhoto().getUrl()
@@ -22,7 +22,8 @@ public class BoardListResponseDto {
                 board.getId(),
                 board.getTitle(),
                 board.getBlog().getId(),
-                imageUrl
+                imageUrl,
+                board.getLikes().stream().count()
         );
     }
 }

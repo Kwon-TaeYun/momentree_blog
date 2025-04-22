@@ -8,8 +8,11 @@ import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.awt.print.Pageable;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -107,4 +110,5 @@ public class BlogService {
     public Optional<Blog> findById(Long id){
         return blogRepository.findById(id);
     }
+
 }

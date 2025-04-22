@@ -253,7 +253,7 @@ export default function CreatePostPage() {
       alert("게시글이 성공적으로 작성되었습니다.");
 
       // 게시글 목록 페이지로 이동
-      router.push("/boards");
+      router.push("/members/login/myblog");
     } catch (error) {
       console.error("게시글 작성 오류:", error);
       alert("게시글 작성 중 오류가 발생했습니다.");
