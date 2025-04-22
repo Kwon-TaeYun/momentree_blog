@@ -85,7 +85,7 @@ export default function SignUp() {
             email,
             password,
             name,
-            blogName: email.split("@")[0], // 기본 블로그 이름으로 이메일 아이디 사용
+            blogName: `${name}의 블로그`,
           }),
         }
       );

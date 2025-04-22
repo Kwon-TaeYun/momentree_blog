@@ -7,6 +7,8 @@ type Member = {
   modifyDate: string;
   name: string;
   email: string;
+  blogName: string;
+  // profileImage?: string;
 };
 
 export const LoginMemberContext = createContext<{
@@ -31,7 +33,9 @@ function createEmptyMember(): Member {
     createDate: "",
     modifyDate: "",
     email: "",
-    name: ""
+    name: "",
+    blogName: "",
+    // profileImage: "",
   };
 }
 
