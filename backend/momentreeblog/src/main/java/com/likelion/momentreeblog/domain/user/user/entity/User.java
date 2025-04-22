@@ -46,8 +46,8 @@ public class User extends BaseEntity {
         name = "user_roles", 
         joinColumns = @JoinColumn(name = "user_id")
     )
-    @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(name = "role")
     private Set<Role> roles = new HashSet<>();
 
 
@@ -100,10 +100,10 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos = new ArrayList<>();
 
-    // 기본 생성자에서 역할 초기화 추가
+    // 기본 생성자에서 역할 초기화
     public User() {
         this.roles = new HashSet<>();
-        this.roles.add(Role.USER); // 기본 역할 설정
+        this.roles.add(Role.USER);
         this.photos = new ArrayList<>();
     }
 
