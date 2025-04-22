@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 interface UserFollowerProps {
   isOpen: boolean;
   onClose: () => void;
+  userId?: string; // 현재 보고 있는 프로필의 사용자 ID
 }
 
 interface User {
@@ -14,46 +15,84 @@ interface User {
   isFollowing: boolean;
 }
 
-const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose }) => {
+const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose, userId }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'followers' | 'following'>('followers');
-  
-  // 팔로워 목록 샘플 데이터 (나를 팔로우하는 사람들)
-  const [followers, setFollowers] = useState<User[]>([
-    { id: '1', name: 'Gourmet Food Blog', username: 'gourmetfood', imageUrl: '/images/food.jpg', isFollowing: true },
-    { id: '2', name: 'Nature Explorer Blog', username: 'natureexplorer', imageUrl: '/images/nature.jpg', isFollowing: true },
-    { id: '3', name: 'Asian Business Blog', username: 'asianbiz', imageUrl: '/images/business.jpg', isFollowing: true },
-    { id: '4', name: 'Urban Life Blog', username: 'urbanlife', imageUrl: '/images/urban.jpg', isFollowing: true },
-    { id: '5', name: 'Business Insights Blog', username: 'bizinsights', imageUrl: '/images/insights.jpg', isFollowing: true },
-  ]);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // 팔로우 목록 샘플 데이터 (내가 팔로우하는 사람들)
-  const [following, setFollowing] = useState<User[]>([
-    { id: '6', name: 'Tech Review Blog', username: 'techreview', imageUrl: '/images/tech.jpg', isFollowing: true },
-    { id: '7', name: 'Travel Stories', username: 'travelstories', imageUrl: '/images/travel.jpg', isFollowing: true },
-    { id: '8', name: 'Fitness Guide', username: 'fitguide', imageUrl: '/images/fitness.jpg', isFollowing: true },
-  ]);
+  // 팔로워와 팔로잉 목록을 가져오는 함수
+  const fetchFollowData = async () => {
+    setLoading(true);
+    try {
+      // 팔로워 목록 가져오기
+      const followersResponse = await fetch(`http://localhost:8090/api/v1/follows/followers/${userId}`);
+      const followersData = await followersResponse.json();
+      setFollowers(followersData);
 
-  // 팔로우/언팔로우 상태 변경 핸들러
-  const handleFollowToggle = (id: string) => {
-    if (activeTab === 'followers') {
-      // 팔로워 탭에서는 삭제(차단)시 목록에서 제거
-      setFollowers(followers.filter(user => user.id !== id));
-    } else {
-      // 팔로우 탭에서는 팔로우/언팔로우 토글
-      setFollowing(
-        following.map(user => 
-          user.id === id 
-            ? { ...user, isFollowing: !user.isFollowing } 
-            : user
-        )
-      );
+      // 팔로잉 목록 가져오기
+      const followingResponse = await fetch(`http://localhost:8090/api/v1/follows/following/${userId}`);
+      const followingData = await followingResponse.json();
+      setFollowing(followingData);
+    } catch (error) {
+      console.error('Failed to fetch follow data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 현재 탭에 따른 사용자 목록과 필터링
+  // 팔로우/언팔로우 처리 함수
+  const handleFollowToggle = async (targetUserId: string) => {
+    try {
+      const isCurrentlyFollowing = activeTab === 'following' 
+        ? following.find(user => user.id === targetUserId)?.isFollowing
+        : followers.find(user => user.id === targetUserId)?.isFollowing;
+
+      const endpoint = isCurrentlyFollowing ? 'unfollow' : 'follow';
+      
+      const response = await fetch(`http://localhost:8090/api/v1/follows/${endpoint}/${targetUserId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include' // 쿠키 포함
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle follow status');
+      }
+
+      // 상태 업데이트
+      const updateFollowStatus = (users: User[]) =>
+        users.map(user =>
+          user.id === targetUserId
+            ? { ...user, isFollowing: !isCurrentlyFollowing }
+            : user
+        );
+
+      if (activeTab === 'following') {
+        setFollowing(updateFollowStatus(following));
+      } else {
+        setFollowers(updateFollowStatus(followers));
+      }
+    } catch (error) {
+      console.error('Failed to toggle follow status:', error);
+    }
+  };
+
+  // 컴포넌트 마운트 시 데이터 가져오기
+  useEffect(() => {
+    if (isOpen && userId) {
+      fetchFollowData();
+    }
+  }, [isOpen, userId]);
+
+  // 현재 탭에 따른 사용자 목록
   const currentUsers = activeTab === 'followers' ? followers : following;
-  const filteredUsers = currentUsers.filter(user => 
+
+  // 검색어로 필터링된 사용자 목록
+  const filteredUsers = currentUsers.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -62,17 +101,11 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 블러 배경 */}
       <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={onClose}></div>
       
-      {/* 팔로워 모달 */}
       <div className="relative bg-white rounded-xl w-full max-w-[400px] mx-4">
-        {/* 헤더 */}
         <div className="flex items-center justify-between px-4 py-2 border-b">
-          <button 
-            onClick={onClose}
-            className="p-2 hover:opacity-50"
-          >
+          <button onClick={onClose} className="p-2 hover:opacity-50">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -83,7 +116,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose }) => {
           <div className="w-10"></div>
         </div>
 
-        {/* 탭 */}
         <div className="flex border-b">
           <button 
             onClick={() => setActiveTab('followers')}
@@ -107,7 +139,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
         
-        {/* 검색창 */}
         <div className="p-2">
           <div className="relative bg-gray-100 rounded-lg">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -125,9 +156,12 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
         
-        {/* 사용자 목록 */}
         <div className="overflow-y-auto max-h-[400px]">
-          {filteredUsers.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-6 text-gray-500 text-sm">
+              로딩 중...
+            </div>
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-6 text-gray-500 text-sm">
               {searchQuery ? '검색 결과가 없습니다' : `${activeTab === 'followers' ? '팔로워' : '팔로우'}가 없습니다`}
             </div>
@@ -161,17 +195,21 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose }) => {
                 {activeTab === 'followers' ? (
                   <button
                     onClick={() => handleFollowToggle(user.id)}
-                    className="ml-2 text-sm font-semibold text-red-500 hover:text-red-600"
+                    className={`ml-2 text-sm font-semibold px-4 py-1 rounded-md transition-colors ${
+                      user.isFollowing
+                        ? 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                   >
-                    삭제
+                    {user.isFollowing ? '팔로잉' : '팔로우'}
                   </button>
                 ) : (
                   <button
                     onClick={() => handleFollowToggle(user.id)}
-                    className={`ml-2 text-sm font-semibold ${
-                      user.isFollowing 
-                        ? 'text-gray-900 hover:text-gray-600' 
-                        : 'text-blue-500 hover:text-blue-600'
+                    className={`ml-2 text-sm font-semibold px-4 py-1 rounded-md transition-colors ${
+                      user.isFollowing
+                        ? 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
                     }`}
                   >
                     {user.isFollowing ? '팔로잉' : '팔로우'}
