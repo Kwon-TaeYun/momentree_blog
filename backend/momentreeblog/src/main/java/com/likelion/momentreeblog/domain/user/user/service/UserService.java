@@ -30,14 +30,14 @@ import java.util.*;
 public class UserService {
     private final UserRepository userRepository;
     private final BlogRepository blogRepository;
-//    private final RoleRepository roleRepository;
+    //    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
     private final PhotoRepository photoRepository;
 
     @Transactional
-    public String saveUser(UserSignupDto dto){
+    public String saveUser(UserSignupDto dto) {
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
             return "이미 존재하는 이메일입니다!";
         }
@@ -79,7 +79,7 @@ public class UserService {
         String refreshToken = jwtTokenizer.createRefreshToken(
                 user.getId(), // 아직 id가 없으므로 null (필요하다면 id 없이 생성하는 오버로드 만들 수도 있음)
                 user.getEmail(),
-               user.getName(),null
+                user.getName(), null
         );
         user.setRefreshToken(refreshToken);
 
@@ -90,13 +90,13 @@ public class UserService {
     }
 
     @Transactional
-    public User findUserByEmail(String email){
+    public User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElse(null); // 또는 예외 던지기
     }
 
     @Transactional
-    public User findUserById(Long id){
+    public User findUserById(Long id) {
         return userRepository.findById(id)
                 .orElse(null);
     }
@@ -106,7 +106,7 @@ public class UserService {
     }
 
     @Transactional
-    public User editUser(User user){
+    public User editUser(User user) {
         return userRepository.save(user);
     }
 
@@ -123,6 +123,7 @@ public class UserService {
         user.setStatus(UserStatus.DELETED);
         userRepository.save(user);
     }
+
 
 
     public User getMemberFromAccessToken(String accessToken) {
