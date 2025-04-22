@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -38,55 +39,70 @@ public class UserService {
 
     @Transactional
     public String saveUser(UserSignupDto dto){
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            return "이미 존재하는 이메일입니다!";
+        try {
+            log.info("회원가입 시작 - 이메일: {}, 이름: {}", dto.getEmail(), dto.getName());
+            
+            if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+                log.warn("회원가입 실패 - 이미 존재하는 이메일: {}", dto.getEmail());
+                return "이미 존재하는 이메일입니다!";
+            }
+            
+            if (blogRepository.findByName(dto.getBlogName()).isPresent()) {
+                log.warn("회원가입 실패 - 이미 존재하는 블로그 이름: {}", dto.getBlogName());
+                return "이미 존재하는 블로그 이름입니다!";
+            }
+
+            // 이메일 형식 체크
+            if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                log.warn("회원가입 실패 - 잘못된 이메일 형식: {}", dto.getEmail());
+                return "이메일 형식이 올바르지 않습니다!";
+            }
+
+            // 비밀번호 길이 체크
+            if (dto.getPassword().length() < 8) {
+                log.warn("회원가입 실패 - 비밀번호 길이 부족");
+                return "비밀번호는 최소 8자리 이상이어야 합니다!";
+            }
+
+            log.info("회원가입 유효성 검사 통과");
+            
+            // User 객체 생성 - 기본 생성자를 사용하여 roles가 초기화되도록 함
+            User user = new User();
+            user.setName(dto.getName());
+            user.setEmail(dto.getEmail());
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setStatus(UserStatus.ACTIVE);
+            user.setRefreshToken(""); // 빈 문자열로 초기화
+            
+            // Blog 객체 생성
+            Blog blog = Blog.builder()
+                    .name(dto.getBlogName())
+                    .viewCount(0L)
+                    .user(user)
+                    .build();
+
+            user.setBlog(blog);
+            
+            // refreshToken 생성 및 설정
+            String refreshToken = jwtTokenizer.createRefreshToken(
+                    0L, // 아직 id가 없으므로 임시값 사용
+                    user.getEmail(),
+                    user.getName(),
+                    user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toList())
+            );
+            user.setRefreshToken(refreshToken);
+
+            blogRepository.save(blog); // Blog 먼저 저장되면 blog_id 설정 가능
+            User savedUser = userRepository.save(user);
+            
+            log.info("회원가입 성공 - 사용자 ID: {}, 이메일: {}", savedUser.getId(), savedUser.getEmail());
+            return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
+        } catch (Exception e) {
+            log.error("회원가입 처리 중 오류 발생", e);
+            throw e;
         }
-        if (blogRepository.findByName(dto.getBlogName()).isPresent()) {
-            return "이미 존재하는 블로그 이름입니다!";
-        }
-
-        // 이메일 형식 체크 추가
-        if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            return "이메일 형식이 올바르지 않습니다!";
-        }
-
-        // 비밀번호 길이 체크 추가
-        if (dto.getPassword().length() < 8) {
-            return "비밀번호는 최소 8자리 이상이어야 합니다!";
-        }
-
-        List<Role> roles = new ArrayList<>();
-        roles.add(Role.USER);
-
-        // 2. User 객체 생성
-        User user = User.builder()
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .status(UserStatus.ACTIVE)
-                .roles(Set.of(Role.USER))
-                .status(UserStatus.ACTIVE)
-                .build();
-
-        // 3. Blog 객체 생성
-        Blog blog = Blog.builder()
-                .name(dto.getBlogName())
-                .viewCount(0L)
-                .user(user)
-                .build();
-
-        user.setBlog(blog);
-        String refreshToken = jwtTokenizer.createRefreshToken(
-                user.getId(), // 아직 id가 없으므로 null (필요하다면 id 없이 생성하는 오버로드 만들 수도 있음)
-                user.getEmail(),
-               user.getName(),null
-        );
-        user.setRefreshToken(refreshToken);
-
-        blogRepository.save(blog); // Blog 먼저 저장되면 blog_id 설정 가능
-        userRepository.save(user);
-
-        return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
     }
 
     @Transactional
@@ -207,37 +223,50 @@ public class UserService {
 //    }
 
     public User join(String name, String email, String provider) {
-        // 중복 사용자 체크
-        userRepository.findByName(name).ifPresent(member -> {
-            throw new RuntimeException("해당 username은 이미 사용중입니다.");
-        });
+        try {
+            log.info("OAuth2 회원가입 처리 시작 - email: {}, name: {}, provider: {}", email, name, provider);
+            
+            // 중복 사용자 체크
+            userRepository.findByName(name).ifPresent(member -> {
+                log.warn("OAuth2 회원가입 실패 - 이미 존재하는 사용자명: {}", name);
+                throw new RuntimeException("해당 username은 이미 사용중입니다.");
+            });
 
-        // Role 조회
-//        Optional<Role> role = roleRepository.findByName("ROLE_USER");
+            // Set 생성 및 Role 추가
+            Set<Role> userRoles = new HashSet<>();
+            userRoles.add(Role.USER);
 
-        // User 생성
-        User member = User.builder()
-                .name(name)
-                .password(UUID.randomUUID().toString())
-                .email(email)
-                .refreshToken(UUID.randomUUID().toString())
-                .oauth2Provider(provider)
-                .roles(Set.of(Role.USER))
-                .status(UserStatus.ACTIVE)
-                .build();
+            // User 생성 - 필수 필드 초기화 확인
+            User member = User.builder()
+                    .name(name)
+                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .email(email)
+                    .refreshToken(UUID.randomUUID().toString())
+                    .oauth2Provider(provider)
+                    .roles(userRoles)
+                    .status(UserStatus.ACTIVE)
+                    .build();
 
-        log.info("user의 role :: " + member.getRoles().toString());
+            log.info("user의 role :: " + member.getRoles().toString());
 
-        // Blog 생성 및 양방향 관계 설정
-        Blog blog = Blog.builder()
-                .name(name + "의 블로그")
-                .viewCount(0L)
-                .build();
+            // Blog 생성 및 양방향 관계 설정
+            Blog blog = Blog.builder()
+                    .name(name + "의 블로그")
+                    .viewCount(0L)
+                    .build();
 
-        member.setBlog(blog); // 이 한 줄로 양방향 모두 설정됨 (위에서 편의 메서드 작성했다면)
+            member.setBlog(blog); // 양방향 관계 설정
+            blog.setUser(member); // 양방향 관계 명시적 설정
 
-        // user 저장 (cascade = ALL이므로 blog도 함께 저장됨)
-        return userRepository.save(member);
+            // user 저장 (cascade = ALL이므로 blog도 함께 저장됨)
+            User savedUser = userRepository.save(member);
+            log.info("OAuth2 회원가입 성공 - userId: {}, email: {}", savedUser.getId(), savedUser.getEmail());
+            
+            return savedUser;
+        } catch (Exception e) {
+            log.error("OAuth2 회원가입 처리 중 오류 발생", e);
+            throw e;
+        }
     }
 
 
@@ -249,15 +278,25 @@ public class UserService {
     }
 
     public User modifyOrJoin(String username, String nickname, String provider) {
-        Optional<User> opMember = findByName(username);
+        try {
+            log.info("OAuth2 사용자 처리 시작 - 이름: {}, 이메일: {}, 제공자: {}", username, nickname, provider);
+            
+            Optional<User> opMember = findByName(username);
 
-        if (opMember.isPresent()) {
-            User member = opMember.get();
-            modify(member, nickname);
-            return member;
+            if (opMember.isPresent()) {
+                User member = opMember.get();
+                log.info("기존 OAuth2 사용자 발견 - userId: {}, 이름: {}", member.getId(), member.getName());
+                modify(member, nickname);
+                log.info("기존 OAuth2 사용자 정보 업데이트 완료");
+                return member;
+            }
+
+            log.info("신규 OAuth2 사용자 등록 시작");
+            return join(username, nickname, provider);
+        } catch (Exception e) {
+            log.error("OAuth2 사용자 처리 중 오류 발생", e);
+            throw e;
         }
-
-        return join(username, nickname, provider);
     }
 
 

@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 @Table(name = "users")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
 @ToString
@@ -38,12 +37,16 @@ public class User extends BaseEntity {
     @Column(name = "oauth2_provider")
     private String oauth2Provider;
 
-    @Column(nullable = false, name = "refresh_token")
+    @Column(name = "refresh_token")
     private String refreshToken;
 
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(
+        name = "user_roles", 
+        joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
 
@@ -96,5 +99,12 @@ public class User extends BaseEntity {
     // 유저가 올린 모든 사진 기록 (여기에는 프로필 사진 변경 이력도 포함)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Photo> photos = new ArrayList<>();
+
+    // 기본 생성자에서 역할 초기화 추가
+    public User() {
+        this.roles = new HashSet<>();
+        this.roles.add(Role.USER); // 기본 역할 설정
+        this.photos = new ArrayList<>();
+    }
 
 }

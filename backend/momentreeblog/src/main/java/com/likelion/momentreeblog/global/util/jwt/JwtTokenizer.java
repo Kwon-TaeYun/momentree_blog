@@ -64,9 +64,21 @@ public class JwtTokenizer {
     }
 
     public Claims parseToken(String token, byte[] secretKey){
-        return Jwts.parserBuilder().setSigningKey(getSigningKey(secretKey))
-                .build().parseClaimsJws(token)
-                .getBody();
+        if (token == null || token.isEmpty()) {
+            log.warn("토큰이 null이거나 비어 있습니다.");
+            return null;
+        }
+        
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey(secretKey))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception e) {
+            log.error("토큰 파싱 중 오류 발생: {}", e.getMessage());
+            throw e;
+        }
     }
 
     public Claims parseAccessToken(String accessToken){

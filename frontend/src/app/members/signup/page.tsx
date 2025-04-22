@@ -16,29 +16,34 @@ export default function SignUp() {
   const [isEmailChecked, setIsEmailChecked] = useState(false);
 
   const checkEmail = async () => {
+    if (!email || !email.trim()) {
+      setIsError(true);
+      setMessage("이메일을 입력해주세요.");
+      return;
+    }
+    
     try {
       const response = await fetch(
-        `http://localhost:8090/api/v1/members/email?email=${encodeURIComponent(
-          email
-        )}`,
+        `http://localhost:8090/api/v1/members/check-email`,
         {
-          method: "GET",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ email }),
         }
       );
 
-      const data = await response.text();
+      const data = await response.json();
 
-      if (data.includes("찾을 수 없습니다")) {
+      if (data.available) {
         setIsEmailChecked(true);
         setIsError(false);
-        setMessage("사용 가능한 이메일입니다.");
+        setMessage(data.message || "사용 가능한 이메일입니다.");
       } else {
         setIsEmailChecked(false);
         setIsError(true);
-        setMessage("이미 사용 중인 이메일입니다.");
+        setMessage(data.message || "이미 사용 중인 이메일입니다.");
       }
     } catch (error) {
       setIsEmailChecked(false);
