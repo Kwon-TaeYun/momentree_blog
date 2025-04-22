@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BiSearch } from "react-icons/bi";
 import React from "react";
 import { LoginMemberContext, useLoginMember } from "@/stores/auth/loginMember";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const socialLoginForKakaoUrl =
@@ -19,6 +20,19 @@ export default function Header() {
     logoutAndHome,
   } = useLoginMember();
 
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(
+        `/boards/search?keyword=${encodeURIComponent(searchTerm.trim())}`
+      );
+      setSearchTerm(""); // 검색 후 입력 필드 초기화
+    }
+  };
+
   // Add a local state to track login status
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
 
@@ -33,7 +47,7 @@ export default function Header() {
           // Clear login state
           setNoLoginMember();
           setIsUserLoggedIn(false);
-          
+
           // Force page refresh to clear any cached state
           window.location.href = "/";
         }
@@ -129,14 +143,21 @@ export default function Header() {
         {/* 인증된 사용자의 경우 보여줄 UI */}
         <div className="flex items-center gap-4">
           {/* 검색창 */}
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="검색"
               className="bg-gray-100 rounded-full pl-10 pr-4 py-2 w-60 focus:outline-none focus:ring-2 focus:ring-[#2c714c]/30"
             />
-            <BiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg" />
-          </div>
+            <button
+              type="submit"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2"
+            >
+              <BiSearch className="text-gray-500 text-lg" />
+            </button>
+          </form>
 
           {/* 글쓰기 버튼 - 로그인한 사용자에게만 표시 */}
           {isUserLoggedIn && (
@@ -152,6 +173,8 @@ export default function Header() {
             <div className="flex items-center gap-4">
               
               <div>{loginMember.name}님 환영합니다!</div>
+              <button
+
               <Link 
                 href="/mypage" 
                 className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 transition"
@@ -159,6 +182,7 @@ export default function Header() {
                 마이페이지
               </Link>
               <button 
+
                 onClick={handleLogout}
                 className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition"
               >
