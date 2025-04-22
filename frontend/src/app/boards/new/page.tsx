@@ -7,6 +7,7 @@ import { FaImage, FaTimes } from "react-icons/fa";
 import { BsTag } from "react-icons/bs";
 import dynamic from "next/dynamic";
 import type { EditorInstance } from "@toast-ui/react-editor";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // Toast UI Editor 동적 임포트
 const Editor = dynamic(
@@ -32,12 +33,22 @@ enum PhotoType {
   PROFILE = "PROFILE",
 }
 
+// formData의 타입 정의
+interface FormDataType {
+  title: string;
+  content: string;
+  tags: string;
+  categoryId: string | null; // categoryId를 string | null로 설정
+}
+
 export default function CreatePostPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const { loginMember } = useGlobalLoginMember(); // 전역 상태에서 사용자 정보 가져오기
+  const [formData, setFormData] = useState<FormDataType>({
     title: "",
     content: "",
     tags: "",
+    categoryId: null, // 초기값은 null
   });
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
@@ -59,6 +70,11 @@ export default function CreatePostPage() {
   // 이미지 키를 관리하기 위한 상태 추가
   const [mainPhotoKey, setMainPhotoKey] = useState<string>("");
   const [additionalKeys, setAdditionalKeys] = useState<string[]>([]);
+
+  // 카테고리 관련 상태값 추가
+  const [categories, setCategories] = useState<string[]>([]); // 기존 카테고리 목록
+  const [newCategory, setNewCategory] = useState(""); // 새 카테고리 입력값
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false); // 모달 상태
 
   // Editor 참조
   const editorRef = useRef<EditorInstance>(null);
@@ -231,6 +247,11 @@ export default function CreatePostPage() {
       return;
     }
 
+    if (!mainPhotoData) {
+      alert("대표 이미지를 업로드해주세요.");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -267,7 +288,7 @@ export default function CreatePostPage() {
       alert("게시글이 성공적으로 작성되었습니다.");
 
       // 게시글 목록 페이지로 이동
-      router.push("/boards");
+      router.push("/members/login/myblog");
     } catch (error) {
       console.error("게시글 작성 오류:", error);
       alert("게시글 작성 중 오류가 발생했습니다.");
@@ -435,6 +456,73 @@ export default function CreatePostPage() {
     setMainPhotoKey("");
   };
 
+  // 카테고리 모달 열기
+  const openCategoryModal = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  // 카테고리 모달 닫기
+  const closeCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+  };
+
+  // 카테고리 추가
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      alert("카테고리 이름을 입력하세요.");
+      return;
+    }
+    console.log("loginMember:", loginMember);
+    try {
+      // blogId 가져오기
+
+      const blogId = loginMember.blogId;
+      if (!blogId) {
+        alert("블로그 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      // API 호출
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${blogId}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newCategory.trim(), // 카테고리 이름
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories((prev) => [...prev, data.name]); // 새 카테고리를 목록에 추가
+        setNewCategory(""); // 입력 필드 초기화
+        alert("카테고리가 추가되었습니다.");
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 추가 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 추가 중 오류:", error);
+      alert("카테고리 추가 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 카테고리 선택
+  const handleSelectCategory = (category: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryId: category, // 선택된 카테고리를 설정
+    }));
+    closeCategoryModal(); // 모달 닫기
+  };
+
   // 로딩 중이면 로딩 상태 표시
   if (isLoading) {
     return (
@@ -541,6 +629,25 @@ export default function CreatePostPage() {
                   </div>
                 </div>
 
+                {/* 카테고리 선택 */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">
+                    카테고리
+                  </label>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      {formData.categoryId || "카테고리를 선택하세요"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={openCategoryModal}
+                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                    >
+                      카테고리 선택
+                    </button>
+                  </div>
+                </div>
+
                 {/* 내용 입력 - Toast UI Editor */}
                 <div>
                   <label
@@ -601,7 +708,11 @@ export default function CreatePostPage() {
                 <div>
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-medium text-black">카테고리</h3>
-                    <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
+                    <button
+                      type="button"
+                      onClick={openCategoryModal}
+                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                    >
                       카테고리 선택
                     </button>
                   </div>
@@ -702,6 +813,72 @@ export default function CreatePostPage() {
           </div>
         </div>
       </div>
+
+      {/* 카테고리 모달 */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-lg font-medium text-black mb-4">
+              카테고리 선택
+            </h2>
+            <div className="space-y-4">
+              {/* 기존 카테고리 목록 */}
+              {categories.map((category, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between border-b pb-2"
+                >
+                  <span className="text-sm text-gray-700">{category}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectCategory(category)}
+                    className="text-sm text-blue-500 hover:underline"
+                  >
+                    선택
+                  </button>
+                </div>
+              ))}
+
+              {/* 새 카테고리 추가 */}
+              <div>
+                <label
+                  htmlFor="new-category"
+                  className="block text-sm font-medium text-black mb-2"
+                >
+                  새 카테고리 추가
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    id="new-category"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 모달 닫기 버튼 */}
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={closeCategoryModal}
+                className="px-4 py-2 text-sm text-black border border-gray-300 rounded-md hover:bg-gray-100"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast UI Editor 스타일 */}
       <style jsx global>{`
