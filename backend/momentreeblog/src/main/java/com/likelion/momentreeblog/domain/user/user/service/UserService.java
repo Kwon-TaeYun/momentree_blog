@@ -2,9 +2,13 @@ package com.likelion.momentreeblog.domain.user.user.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
+import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
+import com.likelion.momentreeblog.domain.user.user.dto.UserResponse;
 import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
+import com.likelion.momentreeblog.domain.user.user.dto.UserUpdateDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
@@ -12,6 +16,8 @@ import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +34,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
+    private final PhotoRepository photoRepository;
 
     @Transactional
     public String saveUser(UserSignupDto dto){
@@ -56,6 +63,7 @@ public class UserService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
+                .status(UserStatus.ACTIVE)
                 .roles(Set.of(Role.USER))
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -128,6 +136,52 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
 
     }
+
+    public List<UserResponse> getTop5Bloggers() {
+        List<User> topUsers = userRepository.findTop5ByOrderByViewCountDescCreatedAtDesc((Pageable) PageRequest.of(0, 5));
+        return topUsers.stream()
+                .map(UserResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public void updateUser(Long userId, UserUpdateDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+        // blogName → Blog 조회해서 설정
+        if (dto.getBlogName() != null) {
+            Blog blog = blogRepository.findByName(dto.getBlogName())
+                    .orElseThrow(() -> new RuntimeException("해당 이름의 블로그를 찾을 수 없습니다."));
+            user.setBlog(blog);
+        }
+
+        // 프로필 사진
+        if (dto.getCurrentProfilePhoto() != null) {
+            Long photoId = dto.getCurrentProfilePhoto().getId();
+            Photo profilePhoto = photoRepository.findById(photoId)
+                    .orElseThrow(() -> new RuntimeException("프로필 사진을 찾을 수 없습니다."));
+            user.setCurrentProfilePhoto(profilePhoto);
+        }
+    }
+
+
+    @Transactional
+    public void changeUserStatusDeleted(Long id, UserDeleteRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다. id=" + id));
+
+        if (!request.getEmail().equals(user.getEmail())) {
+            throw new IllegalArgumentException("이메일이 일치 하지 않습니다. 이매일을 다시 입력해주세요");
+        }
+
+        user.setStatus(UserStatus.DELETED);
+    }
+
 
     public String genAccessToken(User member) {
         return authTokenService.genAccessToken(member);

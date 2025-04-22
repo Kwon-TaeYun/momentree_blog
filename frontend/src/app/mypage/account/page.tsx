@@ -13,7 +13,7 @@ interface UserProfileType {
   joinDate: string;
   username?: string;
   blogName?: string;
-  profileImage?: string;
+  profileImage?: string | null;
 }
 
 export default function Mypage() {
@@ -28,7 +28,7 @@ export default function Mypage() {
     message: '안녕하세요!',
     username: '',
     blogName: '',
-    profileImage: '',
+    profileImage: null,
   });
 
   // 활동 내역 상태
@@ -37,31 +37,40 @@ export default function Mypage() {
     { type: '댓글 작성', date: '2024-02-13' },
   ]);
 
-  // 토큰 가져오기 함수
-  const getAuthToken = () => {
-    return localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+  // 알림 설정 상태
+  const [notifications, setNotifications] = useState({
+    emailNotif: true,
+    pushNotif: false,
+  });
+
+  // 보안 설정 상태
+  const [security, setSecurity] = useState({
+    twoFactor: true,
+  });
+
+  // 토글 핸들러
+  const handleToggle = (setting: string, value: boolean) => {
+    if (setting === 'emailNotif') {
+      setNotifications({...notifications, emailNotif: value});
+    } else if (setting === 'pushNotif') {
+      setNotifications({...notifications, pushNotif: value});
+    } else if (setting === 'twoFactor') {
+      setSecurity({...security, twoFactor: value});
+    }
   };
 
   // 사용자 정보 가져오기
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        // 토큰 확인
-        const token = getAuthToken();
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json'
-        };
-        
-        // 토큰이 있으면 헤더에 추가
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
         // 현재 로그인한 사용자 정보 가져오기 (쿠키 기반 인증)
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/members/me`, {
           method: 'GET',
           credentials: "include", // 쿠키 포함
-          headers
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
 
         if (!userResponse.ok) {
@@ -81,8 +90,10 @@ export default function Mypage() {
           blogName: userData.blogName || "나의 블로그",
           profileImage: userData.profileImage || "",
         });
+        setLoading(false);
       } catch (err) {
         console.error("사용자 정보 로딩 오류:", err);
+        setLoading(false);
         // 로그인 페이지로 리디렉션
         router.push("/members/login");
       }
@@ -91,6 +102,103 @@ export default function Mypage() {
     fetchUserInfo();
   }, [router]);
 
+  // 토큰 가져오기 유틸리티 함수
+  const getAuthToken = async () => {
+    // 1. localStorage 또는 sessionStorage에서 토큰 확인
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) return token;
+    
+    // 2. 현재 사용자 정보 API 호출을 통해 토큰 획득 시도
+    try {
+      const meResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/members/me`, {
+        credentials: "include",
+      });
+
+      if (!meResponse.ok) {
+        console.error("인증 정보를 가져올 수 없습니다.");
+        return null;
+      }
+
+      // Authorization 헤더에서 토큰 확인
+      const authHeader = meResponse.headers.get('Authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const extractedToken = authHeader.substring(7);
+        // 추출한 토큰 저장
+        sessionStorage.setItem('token', extractedToken);
+        return extractedToken;
+      }
+
+      // 응답 본문에서 토큰 확인
+      try {
+        const userData = await meResponse.json();
+        if (userData.token) {
+          sessionStorage.setItem('token', userData.token);
+          return userData.token;
+        }
+      } catch (e) {
+        console.error("사용자 데이터 파싱 오류:", e);
+      }
+    } catch (err) {
+      console.error("토큰 획득 중 오류:", err);
+    }
+    
+    return null;
+  };
+
+  // 프로필 정보 수정 핸들러
+  const handleSave = async () => {
+    try {
+      // 토큰 가져오기
+      const token = await getAuthToken();
+      
+      if (!token) {
+        alert("인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.");
+        router.push("/members/login");
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/members/edit`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // 서버에서 요구하는 Authorization 헤더 추가
+        },
+        credentials: "include", // 쿠키 포함
+        body: JSON.stringify({
+          id: userProfile.id,
+          name: userProfile.name,
+          email: userProfile.email,
+          blogName: userProfile.blogName,
+          currentProfilePhoto: userProfile.profileImage,
+        }),
+      });
+
+      if (!response.ok) {
+        // 인증 오류인 경우 재로그인 유도
+        if (response.status === 401 || response.status === 403) {
+          alert("인증이 만료되었습니다. 다시 로그인해주세요.");
+          router.push("/members/login");
+          return;
+        }
+        
+        let errorMessage = "회원정보 수정 중 오류가 발생했습니다.";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // JSON 파싱 실패 시 기본 메시지 사용
+        }
+        
+        throw new Error(errorMessage);
+      }
+  
+      alert("회원정보가 수정되었습니다.");
+    } catch (error) {
+      console.error("수정 중 에러 발생:", error);
+      alert(error instanceof Error ? error.message : "회원정보 수정 중 오류가 발생했습니다.");
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50 text-black">
 
@@ -160,24 +268,40 @@ export default function Mypage() {
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">블로그 정보</h2>
             <div className="bg-white rounded border-gray-100 border p-4">
-              <div className="mb-2">
-                <p className="text-sm font-medium text-gray-700 mb-1">블로그 이름</p>
-                <p className="p-2 bg-gray-50 rounded">{userProfile.blogName}</p>
+              <div className="mb-4">
+                <label htmlFor="blogName" className="block text-sm font-medium text-gray-700 mb-1">블로그 이름</label>
+                <input
+                  id="blogName"
+                  type="text"
+                  value={userProfile.blogName}
+                  onChange={(e) => setUserProfile({...userProfile, blogName: e.target.value})}
+                  className="w-full p-2 border-gray-100 border rounded"
+                />
               </div>
             </div>
           </div>
 
           {/* 개인정보 관리 */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">개인정보</h2>
+            <h2 className="text-xl font-semibold mb-4">개인정보 관리</h2>
             <div className="bg-white rounded border-gray-100 border divide-y divide-gray-100">
               <div className="p-4">
-                <p className="text-sm text-gray-500 mb-1">이름</p>
-                <p className="font-medium">{userProfile.name}</p>
+                <p className="text-sm text-black mb-1">이름</p>
+                <input
+                  type="text"
+                  value={userProfile.name}
+                  onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+                  className="w-full p-2 border-gray-100 border rounded"
+                />
               </div>
               <div className="p-4">
-                <p className="text-sm text-gray-500 mb-1">이메일</p>
-                <p className="font-medium">{userProfile.email}</p>
+                <p className="text-sm text-black mb-1">이메일</p>
+                <input
+                  type="email"
+                  value={userProfile.email}
+                  onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
+                  className="w-full p-2 border-gray-100 border rounded"
+                />
               </div>
             </div>
           </div>
@@ -197,6 +321,16 @@ export default function Mypage() {
             </div>
           </div>
 
+          {/* 저장 버튼 */}
+          <div className="mt-6 flex gap-4">
+            <button 
+              onClick={handleSave}
+              className="flex-1 bg-black text-white py-3 px-4 rounded-md font-medium"
+            >
+              정보 저장하기
+            </button>
+            <button className="bg-gray-200 text-black py-3 px-4 rounded-md font-medium">비밀번호 변경</button>
+          </div>
         </main>
       </div>
     </div>

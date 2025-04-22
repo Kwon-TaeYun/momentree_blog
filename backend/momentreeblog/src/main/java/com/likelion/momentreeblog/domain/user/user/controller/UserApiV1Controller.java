@@ -11,6 +11,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -126,6 +127,18 @@ public class UserApiV1Controller {
 //        }
 //    }
 
+    //회원 탈퇴로 상태 변경하기
+    @PostMapping("/delete")
+    public ResponseEntity<String> changeStatusDeleted(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody UserDeleteRequest request
+    ) {
+        Long userId = customUserDetails.getUserId();
+        userService.changeUserStatusDeleted(userId, request);
+
+        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+    }
+
     //로그아웃
 //    @DeleteMapping("/logout")
 //    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader, HttpServletResponse response) {
@@ -159,6 +172,47 @@ public class UserApiV1Controller {
 //        }
 //    }
 
+    @PutMapping("/edit")
+    public ResponseEntity<?> editUser(
+            @RequestHeader(name = "Authorization") String authorization,
+            @RequestBody UserUpdateDto updateDto) {
+
+        Long tokenUserId = jwtTokenizer.getUserIdFromToken(authorization);
+
+//        if (!tokenUserId.equals(updateDto.getId())) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body("본인만 수정할 수 있습니다.");
+//        }
+
+        User user = userService.findUserById(jwtTokenizer.getUserIdFromToken(authorization));
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 사용자를 찾을 수 없습니다.");
+        }
+        user.setId(user.getId());
+
+        // 값이 존재할 때만 업데이트
+        if (updateDto.getName() != null) {
+            user.setName(updateDto.getName());
+        }
+        if (updateDto.getEmail() != null) {
+            user.setEmail(updateDto.getEmail());
+        }
+        if (updateDto.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(updateDto.getPassword()));  // 비밀번호는 반드시 암호화
+        }
+        if (updateDto.getBlogName() != null) {
+            user.getBlog().setName(updateDto.getBlogName());
+        }
+        if (updateDto.getCurrentProfilePhoto() != null) {
+            user.setCurrentProfilePhoto(updateDto.getCurrentProfilePhoto());
+        }
+
+        userService.editUser(user);
+
+        return ResponseEntity.ok("회원정보가 수정되었습니다.");
+    }
+
+
     @DeleteMapping("/logout")
     public void logout() {
         rq.deleteCookie("accessToken");
@@ -183,6 +237,13 @@ public class UserApiV1Controller {
         userService.changeUserStatusDeleted(userId, request);
 
         return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+    }
+
+    @GetMapping("/top5")
+    public ResponseEntity<List<UserResponse>> getTop5Users() {
+        List<UserResponse> top5Users = userService.getTop5Bloggers();
+        return ResponseEntity.ok(top5Users);
+
     }
 
 }

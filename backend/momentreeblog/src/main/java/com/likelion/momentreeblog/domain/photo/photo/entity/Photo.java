@@ -1,6 +1,7 @@
 package com.likelion.momentreeblog.domain.photo.photo.entity;
 
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
+//import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;

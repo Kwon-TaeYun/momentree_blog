@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDeleteRequest {
     String email;
+    String password;
 }

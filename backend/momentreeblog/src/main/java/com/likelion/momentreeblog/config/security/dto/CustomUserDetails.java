@@ -21,7 +21,6 @@ public class CustomUserDetails implements UserDetails {
         this.email = email;
         this.authorities = roles;
         this.userId = userId;
-
     }
 
     @Override

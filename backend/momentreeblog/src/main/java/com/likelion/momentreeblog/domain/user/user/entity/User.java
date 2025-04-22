@@ -46,7 +46,6 @@ public class User extends BaseEntity {
     private UserStatus status = UserStatus.ACTIVE;
 
 
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
@@ -56,6 +55,10 @@ public class User extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
     private Blog blog;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
 
     public void setBlog(Blog blog) {
         this.blog = blog;
