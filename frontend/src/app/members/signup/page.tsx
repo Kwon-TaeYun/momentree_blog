@@ -224,11 +224,6 @@ export default function SignUp() {
             </button>
           </form>
         </div>
-
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500 mt-8">
-          © 2024 Momentree. All rights reserved.
-        </div>
       </div>
     </div>
   );
