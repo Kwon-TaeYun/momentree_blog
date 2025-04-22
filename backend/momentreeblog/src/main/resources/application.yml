@@ -8,11 +8,12 @@ spring:
         registration:
           kakao:
             clientId: ON_SECRET
-            client-secret: ON_SECRET # 이 부분이 추가되어야 함
+            client-secret: ON_SECRET
             scope: profile_nickname
             client-name: Kakao
             authorization-grant-type: authorization_code
-            redirect-uri: "${custom.site.backUrl}/{action}/oauth2/code/{registrationId}"
+            redirect-uri: "${custom.site.backUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_post
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize

@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ public class Rq {
     private final JwtTokenizer jwtTokenizer;
     private final UserRepository userRepository;
     private final BlogRepository blogRepository;
+    private static final Logger log = LoggerFactory.getLogger(Rq.class);
 
     public void setLogin(User member) {
         UserDetails user = new SecurityUser(
@@ -134,29 +137,54 @@ public class Rq {
     }
 
     public String makeAuthCookies(User user) {
-        List<String> authorities = new ArrayList<>();
-        List<String> roleNames = user.getRoles()
-                .stream()
-                .map(Role::getName)
-                .collect(Collectors.toList());
-        if (user.getRoles() != null) {
-            authorities = user.getRoles().stream()
-                    .map(Role::getName)  // 여기서는 getAuthority()가 아닌 getName()을 사용
-                    .collect(Collectors.toList());
+        try {
+            if (user == null) {
+                log.error("makeAuthCookies: 사용자가 null입니다");
+                return null;
+            }
+            
+            log.info("makeAuthCookies: 사용자 ID={}, 이름={}", user.getId(), user.getName());
+            
+            List<String> authorities = new ArrayList<>();
+            if (user.getRoles() != null) {
+                authorities = user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toList());
+                log.info("사용자 권한: {}", authorities);
+            } else {
+                log.warn("사용자에게 역할이 없습니다");
+            }
+            
+            // 토큰 생성
+            String accessToken = jwtTokenizer.createAccessToken(user.getId(), user.getEmail(), user.getName(), authorities);
+            String refreshToken = jwtTokenizer.createRefreshToken(user.getId(), user.getEmail(), user.getName(), authorities);
+            
+            log.info("토큰 생성 완료: accessToken={}, refreshToken={}", 
+                    accessToken != null ? accessToken.substring(0, Math.min(10, accessToken.length())) + "..." : "null",
+                    refreshToken != null ? refreshToken.substring(0, Math.min(10, refreshToken.length())) + "..." : "null");
+            
+            // 사용자 정보 업데이트
+            try {
+                User persistentUser = userRepository.findById(user.getId()).orElseThrow();
+                persistentUser.setRefreshToken(refreshToken);
+                persistentUser.setOauth2(accessToken);
+                userRepository.save(persistentUser);
+                log.info("사용자 정보 업데이트 완료: ID={}", persistentUser.getId());
+            } catch (Exception e) {
+                log.error("사용자 정보 업데이트 실패: ID={}", user.getId(), e);
+                throw e;
+            }
+            
+            // 쿠키 설정
+            setCookie("refreshToken", refreshToken);
+            setCookie("accessToken", accessToken);
+            log.info("쿠키 설정 완료");
+            
+            return accessToken;
+        } catch (Exception e) {
+            log.error("인증 쿠키 생성 중 오류 발생", e);
+            return null;
         }
-        String accessToken = jwtTokenizer.createAccessToken(user.getId(),user.getEmail(),user.getName(),authorities);
-        String refreshToken = jwtTokenizer.createRefreshToken(user.getId(),user.getEmail(),user.getName(),authorities);
-
-        User persistentUser = userRepository.findById(user.getId()).orElseThrow();
-        persistentUser.setRefreshToken(refreshToken);
-        persistentUser.setOauth2(accessToken);
-// save 생략 가능 (@Transactional이면 dirty checking 됨)
-        userRepository.save(persistentUser);
-
-         setCookie("refreshToken", refreshToken);
-        setCookie("accessToken", accessToken);
-
-        return accessToken;
     }
 
 
