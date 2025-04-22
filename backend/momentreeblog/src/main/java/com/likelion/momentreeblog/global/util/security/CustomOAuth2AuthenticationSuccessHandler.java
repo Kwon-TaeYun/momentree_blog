@@ -32,6 +32,21 @@ public class CustomOAuth2AuthenticationSuccessHandler extends SavedRequestAwareA
         rq.makeAuthCookies(actor);
 
         String redirectUrl = request.getParameter("state");
+        
+        // state 파라미터가 없으면 기본 URL로 리디렉션
+        if (redirectUrl == null || redirectUrl.isEmpty()) {
+            redirectUrl = "http://localhost:3000/home";
+        }
+
+        // URL 인코딩 문제 해결 (http%3A%2F%2Flocalhost%3A3000%2Fhome 와 같은 형태일 경우)
+        if (redirectUrl.contains("%")) {
+            try {
+                redirectUrl = java.net.URLDecoder.decode(redirectUrl, "UTF-8");
+            } catch (Exception e) {
+                // 디코딩 실패시 기본 URL 사용
+                redirectUrl = "http://localhost:3000/home";
+            }
+        }
 
         // 프론트 주소로 redirect
         response.sendRedirect(redirectUrl);

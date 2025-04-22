@@ -39,16 +39,18 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
         Map<String, Object> additionalParameters = new HashMap<>(authorizationRequest.getAdditionalParameters());
 
-
+        // 리디렉션 URL을 가져오고, 없으면 기본값 설정
         String redirectUrl = request.getParameter("redirectUrl");
-        if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            additionalParameters.put("redirectUrl", redirectUrl);
+        if (redirectUrl == null || redirectUrl.isEmpty()) {
+            // 기본 리디렉션 URL 설정 (프론트엔드 기본 경로)
+            redirectUrl = "http://localhost:3000/home";
         }
-
+        
+        additionalParameters.put("redirectUrl", redirectUrl);
 
         return OAuth2AuthorizationRequest.from(authorizationRequest)
                 .additionalParameters(additionalParameters)
-                .state(redirectUrl) // ← redirectUrl 이 없으면 state 가 빈 문자열(null) 로 바뀌어 버립니다
+                .state(redirectUrl)
                 .build();
     }
 }

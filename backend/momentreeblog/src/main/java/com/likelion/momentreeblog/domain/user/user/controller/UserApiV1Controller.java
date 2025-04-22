@@ -153,11 +153,19 @@ public class UserApiV1Controller {
     }
 
     @GetMapping("/me")
-    public UserDto me(){
-        String accessToken = rq.getCookieValue("accessToken");
-        Long userId = Long.parseLong(jwtTokenizer.parseAccessToken(accessToken).get("userId").toString());
-        User user = userService.findUserById((Long) userId);
-        return new UserDto(user);
+    public ResponseEntity<?> me(){
+        try {
+            String accessToken = rq.getCookieValue("accessToken");
+            if (accessToken == null || accessToken.isEmpty()) {
+                return ResponseEntity.status(401).body("로그인이 필요합니다.");
+            }
+            
+            Long userId = Long.parseLong(jwtTokenizer.parseAccessToken(accessToken).get("userId").toString());
+            User user = userService.findUserById((Long) userId);
+            return ResponseEntity.ok(new UserDto(user));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("인증에 실패했습니다: " + e.getMessage());
+        }
     }
 
     @GetMapping("/top5")

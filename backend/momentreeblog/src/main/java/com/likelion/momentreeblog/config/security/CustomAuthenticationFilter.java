@@ -44,35 +44,25 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             try{
                 Authentication authentication = getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
             }catch (ExpiredJwtException e){
                 request.setAttribute("exception", JwtExceptionCode.EXPIRED_TOKEN.getCode());
                 log.error("Expired Token : {}",token,e);
                 SecurityContextHolder.clearContext();
-                throw new BadCredentialsException("Expired token exception", e);
             }catch (UnsupportedJwtException e){
                 request.setAttribute("exception", JwtExceptionCode.UNSUPPORTED_TOKEN.getCode());
                 log.error("Unsupported Token: {}", token, e);
                 SecurityContextHolder.clearContext();
-                throw new BadCredentialsException("Unsupported token exception", e);
             } catch (MalformedJwtException e) {
                 request.setAttribute("exception", JwtExceptionCode.INVALID_TOKEN.getCode());
                 log.error("Invalid Token: {}", token, e);
-
                 SecurityContextHolder.clearContext();
-
-                throw new BadCredentialsException("Invalid token exception", e);
             } catch (IllegalArgumentException e) {
                 request.setAttribute("exception", JwtExceptionCode.NOT_FOUND_TOKEN.getCode());
                 log.error("Token not found: {}", token, e);
-
                 SecurityContextHolder.clearContext();
-
-                throw new BadCredentialsException("Token not found exception", e);
             } catch (Exception e){
-                log.error("JWT Filter - Internal Error : {}", token,e);
+                log.error("JWT Filter - Internal Error : {}", token, e);
                 SecurityContextHolder.clearContext();
-                throw new BadCredentialsException("JWT Filter - Internal Error");
             }
         }
         filterChain.doFilter(request, response);

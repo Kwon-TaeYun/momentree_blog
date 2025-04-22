@@ -64,6 +64,9 @@ public class JwtTokenizer {
     }
 
     public Claims parseToken(String token, byte[] secretKey){
+        if(token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("JWT String argument cannot be null or empty.");
+        }
         return Jwts.parserBuilder().setSigningKey(getSigningKey(secretKey))
                 .build().parseClaimsJws(token)
                 .getBody();
