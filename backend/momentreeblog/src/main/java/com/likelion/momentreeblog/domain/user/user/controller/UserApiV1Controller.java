@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -183,6 +184,7 @@ public class UserApiV1Controller {
             @RequestBody UserUpdateDto updateDto) {
 
         Long tokenUserId = customUserDetails.getUserId();
+        log.info("tokenUserId" + tokenUserId);
 
 //        if (!tokenUserId.equals(updateDto.getId())) {
 //            return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -214,7 +216,7 @@ public class UserApiV1Controller {
 
         userService.editUser(user);
 
-        return ResponseEntity.ok("회원정보가 수정되었습니다.");
+        return ResponseEntity.ok(Map.of("message", "회원정보가 수정되었습니다."));
     }
 
 
