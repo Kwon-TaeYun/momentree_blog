@@ -59,8 +59,8 @@ public class CategoryController {
 
     // 모든 카테고리 조회 (선택)
     @GetMapping
-    public ResponseEntity<?> getAllCategories(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+    public ResponseEntity<?> getAllCategories(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
         User user = userService.findUserById(userId);
         Long userBlogId = user.getBlog().getId();
 
@@ -87,8 +87,8 @@ public class CategoryController {
     //카테고리 삭제
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<?> deleteCategory(@PathVariable(name = "categoryId") Long categoryId,
-                                            @RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+                                            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
         try {
             categoryService.deleteCategory(userId, categoryId);
             return ResponseEntity.ok("카테고리 삭제 성공");
