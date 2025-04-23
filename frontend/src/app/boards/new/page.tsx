@@ -41,6 +41,11 @@ interface FormDataType {
   categoryId: string | null; // categoryId를 string | null로 설정
 }
 
+type Category = {
+  id: number;
+  name: string;
+};
+
 export default function CreatePostPage() {
   const router = useRouter();
   const { loginMember } = useGlobalLoginMember(); // 전역 상태에서 사용자 정보 가져오기
@@ -589,8 +594,9 @@ export default function CreatePostPage() {
         setCategories((prev) => prev.filter((cat) => cat !== category)); // 삭제된 카테고리를 목록에서 제거
         alert("카테고리가 삭제되었습니다.");
       } else {
-        const errorMessage = await response.text();
-        alert(`카테고리 삭제 실패: ${errorMessage}`);
+        const errorData = await response.json();
+        const errorMessage = errorData.message || "카테고리 삭제 실패";
+        alert(errorMessage);
       }
     } catch (error) {
       console.error("카테고리 삭제 중 오류:", error);
