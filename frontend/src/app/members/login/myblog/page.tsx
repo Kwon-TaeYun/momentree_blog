@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import UserFollower from "../../../../components/user_follower";
 
 interface Post {
   id: number;
@@ -47,6 +48,10 @@ export default function MyBlogPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // 팔로워/팔로잉 모달 상태 추가
+  const [isFollowerModalOpen, setIsFollowerModalOpen] = useState(false);
+  const [activeFollowTab, setActiveFollowTab] = useState<'followers' | 'following'>('followers');
 
   // 사용자 정보 가져오기
   useEffect(() => {
@@ -132,6 +137,48 @@ export default function MyBlogPage() {
 
     fetchMyPosts();
   }, [userInfo.id]);
+  
+  // 팔로워/팔로잉 정보를 가져오는 함수 추가
+  useEffect(() => {
+    const fetchFollowStats = async () => {
+      if (userInfo.id === 0) return; // 사용자 정보가 로드되지 않았으면 스킵
+      
+      try {
+        // 팔로워 수 가져오기
+        const followersResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/follows/members/${userInfo.id}/followers/counts`,
+          { credentials: "include" }
+        );
+        
+        // 팔로잉 수 가져오기
+        const followingResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/follows/members/${userInfo.id}/followings/counts`,
+          { credentials: "include" }
+        );
+
+        if (followersResponse.ok && followingResponse.ok) {
+          const followersCount = await followersResponse.json();
+          const followingCount = await followingResponse.json();
+          
+          setUserInfo(prev => ({
+            ...prev,
+            followers: followersCount,
+            following: followingCount
+          }));
+        }
+      } catch (error) {
+        console.error("팔로우 정보 로딩 오류:", error);
+      }
+    };
+
+    fetchFollowStats();
+  }, [userInfo.id]);
+
+  // 팔로워/팔로잉 클릭 핸들러
+  const handleFollowClick = (tab: 'followers' | 'following') => {
+    setActiveFollowTab(tab);
+    setIsFollowerModalOpen(true);
+  };
 
   // 게시글 클릭 핸들러
   const handlePostClick = (postId: number) => {
@@ -181,8 +228,18 @@ export default function MyBlogPage() {
                 <div className="w-full flex flex-col space-y-3 mb-4">
                   <InfoRow label="게시글" value={userInfo.posts} />
                   <InfoRow label="조회수" value={userInfo.viewCount || 0} />
-                  <InfoRow label="팔로워" value={userInfo.followers} />
-                  <InfoRow label="팔로잉" value={userInfo.following} />
+                  <InfoRow 
+                    label="팔로워" 
+                    value={userInfo.followers} 
+                    onClick={() => handleFollowClick('followers')}
+                    isClickable={true}
+                  />
+                  <InfoRow 
+                    label="팔로잉" 
+                    value={userInfo.following} 
+                    onClick={() => handleFollowClick('following')}
+                    isClickable={true}
+                  />
                 </div>
 
                 <button className="w-full bg-green-50 text-green-700 font-medium py-2 px-4 rounded-md flex items-center justify-center gap-2">
@@ -274,13 +331,34 @@ export default function MyBlogPage() {
           </div>
         </div>
       </main>
+
+      {/* 팔로워/팔로잉 모달 */}
+      <UserFollower 
+        isOpen={isFollowerModalOpen} 
+        onClose={() => setIsFollowerModalOpen(false)} 
+        userId={userInfo.id.toString()}
+        initialTab={activeFollowTab}
+      />
     </div>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string | number }) {
+function InfoRow({ 
+  label, 
+  value, 
+  onClick, 
+  isClickable = false 
+}: { 
+  label: string; 
+  value: string | number; 
+  onClick?: () => void;
+  isClickable?: boolean;
+}) {
   return (
-    <div className="flex justify-between">
+    <div 
+      className={`flex justify-between ${isClickable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+      onClick={onClick}
+    >
       <p className="text-black">{label}</p>
       <p className="font-bold">{value}</p>
     </div>

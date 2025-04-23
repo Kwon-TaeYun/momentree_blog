@@ -37,45 +37,52 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        //request 로부터 토큰을 얻어온다.
-        log.info("JwtAuthenticationFilter 실행!!!");
-        String token = getToken(request);
-        if(StringUtils.hasText(token)){
-            try{
-                Authentication authentication = getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            }catch (ExpiredJwtException e){
-                request.setAttribute("exception", JwtExceptionCode.EXPIRED_TOKEN.getCode());
-                log.error("Expired Token : {}",token,e);
-                SecurityContextHolder.clearContext();
-                throw new BadCredentialsException("Expired token exception", e);
-            }catch (UnsupportedJwtException e){
-                request.setAttribute("exception", JwtExceptionCode.UNSUPPORTED_TOKEN.getCode());
-                log.error("Unsupported Token: {}", token, e);
-                SecurityContextHolder.clearContext();
-                throw new BadCredentialsException("Unsupported token exception", e);
-            } catch (MalformedJwtException e) {
-                request.setAttribute("exception", JwtExceptionCode.INVALID_TOKEN.getCode());
-                log.error("Invalid Token: {}", token, e);
-
-                SecurityContextHolder.clearContext();
-
-                throw new BadCredentialsException("Invalid token exception", e);
-            } catch (IllegalArgumentException e) {
-                request.setAttribute("exception", JwtExceptionCode.NOT_FOUND_TOKEN.getCode());
-                log.error("Token not found: {}", token, e);
-
-                SecurityContextHolder.clearContext();
-
-                throw new BadCredentialsException("Token not found exception", e);
-            } catch (Exception e){
-                log.error("JWT Filter - Internal Error : {}", token,e);
-                SecurityContextHolder.clearContext();
-                throw new BadCredentialsException("JWT Filter - Internal Error");
+        try {
+            log.info("JwtAuthenticationFilter 실행!!!");
+            // /api/v1/members/me 엔드포인트를 특별 처리
+            String requestURI = request.getRequestURI();
+            
+            // 토큰을 얻어온다
+            String token = getToken(request);
+            
+            // 토큰이 있으면 검증
+            if (StringUtils.hasText(token)) {
+                try {
+                    Authentication authentication = getAuthentication(token);
+                    if (authentication != null) {
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.info("JWT 인증 성공: {}", token);
+                    } else {
+                        log.warn("유효한 인증 정보를 얻을 수 없습니다.");
+                    }
+                } catch (ExpiredJwtException e) {
+                    request.setAttribute("exception", JwtExceptionCode.EXPIRED_TOKEN.getCode());
+                    log.error("만료된 토큰: {}", token, e);
+                    SecurityContextHolder.clearContext();
+                } catch (UnsupportedJwtException e) {
+                    request.setAttribute("exception", JwtExceptionCode.UNSUPPORTED_TOKEN.getCode());
+                    log.error("지원되지 않는 토큰: {}", token, e);
+                    SecurityContextHolder.clearContext();
+                } catch (MalformedJwtException e) {
+                    request.setAttribute("exception", JwtExceptionCode.INVALID_TOKEN.getCode());
+                    log.error("잘못된 토큰: {}", token, e);
+                    SecurityContextHolder.clearContext();
+                } catch (IllegalArgumentException e) {
+                    request.setAttribute("exception", JwtExceptionCode.NOT_FOUND_TOKEN.getCode());
+                    log.error("토큰을 찾을 수 없음: {}", token, e);
+                    SecurityContextHolder.clearContext();
+                } catch (Exception e) {
+                    log.error("JWT 필터 - 내부 오류: {}", e.getMessage(), e);
+                    SecurityContextHolder.clearContext();
+                }
+            } else {
+                log.debug("JWT 토큰이 없습니다. 인증되지 않은 요청입니다.");
             }
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            log.error("JWT 필터 처리 중 예상치 못한 오류 발생", e);
+            filterChain.doFilter(request, response);
         }
-        filterChain.doFilter(request, response);
     }
 
     private void handleJwtException(HttpServletRequest request, JwtExceptionCode code, String token, Exception e) {
@@ -86,42 +93,82 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Authentication getAuthentication(String token){
-        Claims claims = jwtTokenizer.parseAccessToken(token);
-        log.info("JWT Claims: {}", claims); // 👉 요기!
-        String email = claims.getSubject();
-        Long userId = claims.get("userId", Long.class);
-        String username = claims.get("username", String.class);
-
-        List<GrantedAuthority> grantedAuthorization = getGrantedAuthorization(claims);
-        // UserDetails 생성
-        CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization, userId);
-
-        return new JwtAuthenticationToken(grantedAuthorization, customUserDetails, null);
+        try {
+            if (token == null || token.isEmpty()) {
+                log.warn("토큰이 없거나 비어 있습니다.");
+                return null;
+            }
+            
+            Claims claims = jwtTokenizer.parseAccessToken(token);
+            log.info("JWT Claims: {}", claims);
+            
+            if (claims == null) {
+                log.warn("JWT 클레임을 파싱할 수 없습니다.");
+                return null;
+            }
+            
+            String email = claims.getSubject();
+            Long userId = claims.get("userId", Long.class);
+            String username = claims.get("username", String.class);
+            
+            List<GrantedAuthority> grantedAuthorization = getGrantedAuthorization(claims);
+            // UserDetails 생성
+            CustomUserDetails customUserDetails = new CustomUserDetails(username, "", email, grantedAuthorization, userId);
+            
+            return new JwtAuthenticationToken(grantedAuthorization, customUserDetails, null);
+        } catch (Exception e) {
+            log.error("인증 정보 생성 중 오류 발생: {}", e.getMessage());
+            return null;
+        }
     }
 
     private List<GrantedAuthority> getGrantedAuthorization(Claims claims){
-        List<String> roles = (List<String>)claims.get("roles");
-        return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        try {
+            List<String> roles = (List<String>)claims.get("roles");
+            if (roles == null || roles.isEmpty()) {
+                log.warn("권한 정보가 없습니다.");
+                return List.of();
+            }
+            return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("권한 정보 변환 중 오류 발생: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     private String getToken(HttpServletRequest request){
+        // Authorization 헤더에서 토큰 추출
         String authorization = request.getHeader("Authorization");
         log.info("Authorization header: {}", authorization);
+        
         if(StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")){
             log.info("Extracting token from Authorization header");
             String token = authorization.substring(7).trim(); // "Bearer " 제거 후 공백도 제거
+            if (token.isEmpty()) {
+                log.warn("Authorization 헤더가 'Bearer '로 시작하지만 토큰이 비어 있습니다.");
+                return null;
+            }
             log.info("Extracted token: {}", token);
             return token;
         }
+        
+        // 쿠키에서 토큰 추출
         Cookie[] cookies = request.getCookies();
         if(cookies != null){
             for (Cookie cookie : cookies) {
                 if("accessToken".equals(cookie.getName())){
-                    return cookie.getValue();
+                    String cookieValue = cookie.getValue();
+                    if (cookieValue == null || cookieValue.isEmpty()) {
+                        log.warn("accessToken 쿠키가 있지만 값이 비어 있습니다.");
+                        return null;
+                    }
+                    log.info("Found accessToken in cookie: {}", cookieValue);
+                    return cookieValue;
                 }
             }
         }
-
+        
+        log.debug("토큰을 Authorization 헤더나 쿠키에서 찾을 수 없습니다.");
         return null;
     }
 }

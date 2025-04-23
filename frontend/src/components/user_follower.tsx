@@ -5,6 +5,7 @@ interface UserFollowerProps {
   isOpen: boolean;
   onClose: () => void;
   userId?: string; // 현재 보고 있는 프로필의 사용자 ID
+  initialTab?: 'followers' | 'following'; // 초기 선택 탭
 }
 
 interface User {
@@ -15,28 +16,51 @@ interface User {
   isFollowing: boolean;
 }
 
-const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose, userId }) => {
+const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose, userId, initialTab = 'followers' }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'followers' | 'following'>('followers');
+  const [activeTab, setActiveTab] = useState<'followers' | 'following'>(initialTab);
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // initialTab이 변경되면 activeTab도 업데이트
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   // 팔로워와 팔로잉 목록을 가져오는 함수
   const fetchFollowData = async () => {
     setLoading(true);
     try {
       // 팔로워 목록 가져오기
-      const followersResponse = await fetch(`http://localhost:8090/api/v1/follows/followers/${userId}`);
-      const followersData = await followersResponse.json();
-      setFollowers(followersData);
-
+      const followersResponse = await fetch(`http://localhost:8090/api/v1/follows/members/${userId}/followers`, {
+        credentials: 'include'
+      });
+      
       // 팔로잉 목록 가져오기
-      const followingResponse = await fetch(`http://localhost:8090/api/v1/follows/following/${userId}`);
-      const followingData = await followingResponse.json();
-      setFollowing(followingData);
+      const followingResponse = await fetch(`http://localhost:8090/api/v1/follows/members/${userId}/following`, {
+        credentials: 'include'
+      });
+
+      if (followersResponse.ok) {
+        const followersData = await followersResponse.json();
+        setFollowers(Array.isArray(followersData) ? followersData : []);
+      } else {
+        setFollowers([]);
+      }
+
+      if (followingResponse.ok) {
+        const followingData = await followingResponse.json();
+        setFollowing(Array.isArray(followingData) ? followingData : []);
+      } else {
+        setFollowing([]);
+      }
     } catch (error) {
       console.error('Failed to fetch follow data:', error);
+      setFollowers([]);
+      setFollowing([]);
     } finally {
       setLoading(false);
     }
@@ -49,10 +73,11 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose, userId }) 
         ? following.find(user => user.id === targetUserId)?.isFollowing
         : followers.find(user => user.id === targetUserId)?.isFollowing;
 
-      const endpoint = isCurrentlyFollowing ? 'unfollow' : 'follow';
+      const method = isCurrentlyFollowing ? 'DELETE' : 'POST';
+      const endpoint = isCurrentlyFollowing ? '/unfollow' : '/follow';
       
-      const response = await fetch(`http://localhost:8090/api/v1/follows/${endpoint}/${targetUserId}`, {
-        method: 'POST',
+      const response = await fetch(`http://localhost:8090/api/v1/follows${endpoint}?followingid=${targetUserId}`, {
+        method: method,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -162,8 +187,66 @@ const UserFollower: React.FC<UserFollowerProps> = ({ isOpen, onClose, userId }) 
               로딩 중...
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-6 text-gray-500 text-sm">
-              {searchQuery ? '검색 결과가 없습니다' : `${activeTab === 'followers' ? '팔로워' : '팔로우'}가 없습니다`}
+            <div className="py-8 px-4">
+              <div className="text-center">
+                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="text-gray-400"
+                  >
+                    {activeTab === 'followers' ? (
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    ) : (
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    )}
+                    <circle cx="9" cy="7" r="4"></circle>
+                    {activeTab === 'following' && (
+                      <>
+                        <circle cx="19" cy="11" r="2"></circle>
+                        <path d="M19 8v1"></path>
+                        <path d="M19 13v1"></path>
+                        <path d="M16 11h1"></path>
+                        <path d="M21 11h1"></path>
+                      </>
+                    )}
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold mb-1">
+                  {searchQuery 
+                    ? '검색 결과가 없습니다'
+                    : activeTab === 'followers'
+                      ? '아직 팔로워가 없습니다'
+                      : '아직 팔로우하는 사용자가 없습니다'
+                  }
+                </h3>
+                <p className="text-gray-500 text-sm mb-4">
+                  {searchQuery 
+                    ? '다른 검색어를 시도해보세요'
+                    : activeTab === 'followers'
+                      ? '다른 사용자들이 회원님을 팔로우하면 여기에 표시됩니다.'
+                      : '관심 있는 사용자를 팔로우하면 여기에 표시됩니다.'
+                  }
+                </p>
+                {!searchQuery && activeTab === 'following' && (
+                  <button 
+                    className="px-4 py-2 bg-black text-white rounded-md text-sm font-medium"
+                    onClick={() => {
+                      onClose();
+                      // 이 부분은 필요에 따라 다른 페이지로 네비게이션 추가 가능
+                    }}
+                  >
+                    사용자 찾아보기
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             filteredUsers.map((user) => (
