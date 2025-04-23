@@ -31,88 +31,73 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final BlogRepository blogRepository;
-//    private final RoleRepository roleRepository;
+    //    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
     private final PhotoRepository photoRepository;
 
     @Transactional
-    public String saveUser(UserSignupDto dto){
-        try {
-            log.info("회원가입 시작 - 이메일: {}, 이름: {}", dto.getEmail(), dto.getName());
-            
-            if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-                log.warn("회원가입 실패 - 이미 존재하는 이메일: {}", dto.getEmail());
-                return "이미 존재하는 이메일입니다!";
-            }
-            
-            if (blogRepository.findByName(dto.getBlogName()).isPresent()) {
-                log.warn("회원가입 실패 - 이미 존재하는 블로그 이름: {}", dto.getBlogName());
-                return "이미 존재하는 블로그 이름입니다!";
-            }
-
-            // 이메일 형식 체크
-            if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-                log.warn("회원가입 실패 - 잘못된 이메일 형식: {}", dto.getEmail());
-                return "이메일 형식이 올바르지 않습니다!";
-            }
-
-            // 비밀번호 길이 체크
-            if (dto.getPassword().length() < 8) {
-                log.warn("회원가입 실패 - 비밀번호 길이 부족");
-                return "비밀번호는 최소 8자리 이상이어야 합니다!";
-            }
-
-            log.info("회원가입 유효성 검사 통과");
-            
-            // User 객체 생성 - 기본 생성자를 사용하여 roles가 초기화되도록 함
-            User user = new User();
-            user.setName(dto.getName());
-            user.setEmail(dto.getEmail());
-            user.setPassword(passwordEncoder.encode(dto.getPassword()));
-            user.setStatus(UserStatus.ACTIVE);
-            user.setRefreshToken(""); // 빈 문자열로 초기화
-            
-            // Blog 객체 생성
-            Blog blog = Blog.builder()
-                    .name(dto.getBlogName())
-                    .viewCount(0L)
-                    .user(user)
-                    .build();
-
-            user.setBlog(blog);
-            
-            // refreshToken 생성 및 설정
-            String refreshToken = jwtTokenizer.createRefreshToken(
-                    0L, // 아직 id가 없으므로 임시값 사용
-                    user.getEmail(),
-                    user.getName(),
-                    user.getRoles().stream()
-                        .map(Role::getName)
-                        .collect(Collectors.toList())
-            );
-            user.setRefreshToken(refreshToken);
-
-            blogRepository.save(blog); // Blog 먼저 저장되면 blog_id 설정 가능
-            User savedUser = userRepository.save(user);
-            
-            log.info("회원가입 성공 - 사용자 ID: {}, 이메일: {}", savedUser.getId(), savedUser.getEmail());
-            return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
-        } catch (Exception e) {
-            log.error("회원가입 처리 중 오류 발생", e);
-            throw e;
+    public String saveUser(UserSignupDto dto) {
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            return "이미 존재하는 이메일입니다!";
         }
+        if (blogRepository.findByName(dto.getBlogName()).isPresent()) {
+            return "이미 존재하는 블로그 이름입니다!";
+        }
+
+        // 이메일 형식 체크 추가
+        if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            return "이메일 형식이 올바르지 않습니다!";
+        }
+
+        // 비밀번호 길이 체크 추가
+        if (dto.getPassword().length() < 8) {
+            return "비밀번호는 최소 8자리 이상이어야 합니다!";
+        }
+
+        List<Role> roles = new ArrayList<>();
+        roles.add(Role.USER);
+
+        // 2. User 객체 생성
+        User user = User.builder()
+                .name(dto.getName())
+                .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .status(UserStatus.ACTIVE)
+                .roles(Set.of(Role.USER))
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        // 3. Blog 객체 생성
+        Blog blog = Blog.builder()
+                .name(dto.getBlogName())
+                .viewCount(0L)
+                .user(user)
+                .build();
+
+        user.setBlog(blog);
+        String refreshToken = jwtTokenizer.createRefreshToken(
+                user.getId(), // 아직 id가 없으므로 null (필요하다면 id 없이 생성하는 오버로드 만들 수도 있음)
+                user.getEmail(),
+                user.getName(), null
+        );
+        user.setRefreshToken(refreshToken);
+
+        blogRepository.save(blog); // Blog 먼저 저장되면 blog_id 설정 가능
+        userRepository.save(user);
+
+        return "회원가입에 성공하셨습니다!! 저희 블로그의 회원이 되신 것을 축하드립니다!!";
     }
 
     @Transactional
-    public User findUserByEmail(String email){
+    public User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElse(null); // 또는 예외 던지기
     }
 
     @Transactional
-    public User findUserById(Long id){
+    public User findUserById(Long id) {
         return userRepository.findById(id)
                 .orElse(null);
     }
@@ -122,7 +107,7 @@ public class UserService {
     }
 
     @Transactional
-    public User editUser(User user){
+    public User editUser(User user) {
         return userRepository.save(user);
     }
 
@@ -139,6 +124,7 @@ public class UserService {
         user.setStatus(UserStatus.DELETED);
         userRepository.save(user);
     }
+
 
 
     public User getMemberFromAccessToken(String accessToken) {
