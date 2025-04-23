@@ -261,20 +261,21 @@ public class BoardApiV1Controller {
     @GetMapping("/{boardId}/comments")
     public ResponseEntity<?> getComments(
             @PathVariable(name = "boardId") Long boardId,
-            @RequestParam(name = "page", defaultValue = "1") int page  // 기본값을 1로 설정
+            @RequestParam(name = "page", defaultValue = "1") int page
     ) {
         try {
             Page<CommentDto> comments = commentService.getCommentsByBoardId(boardId, page);
-            if (comments.isEmpty()) {
-                return ResponseEntity.ok("댓글이 없습니다.");
+            if(comments.isEmpty()){
+                return ResponseEntity.ok(Collections.emptyList()); // 빈 배열 반환
             } else {
-                return ResponseEntity.ok(comments);
+                return ResponseEntity.ok(comments.getContent()); // Page의 내용만 반환
             }
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("댓글 조회 중 오류가 발생했습니다.");
+                    .body(Collections.singletonMap("message", "댓글 조회 중 오류가 발생했습니다."));
         }
     }
 
@@ -284,10 +285,10 @@ public class BoardApiV1Controller {
     public ResponseEntity<?> createComment(
             @PathVariable(name = "boardId") Long boardId,
             @RequestBody @Valid CommentRequestDto dto,
-            @RequestHeader(name = "Authorization") String authorization
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
             CommentDto savedComment = commentService.createComment(boardId, userId, dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
         } catch (IllegalArgumentException e) {
@@ -302,11 +303,11 @@ public class BoardApiV1Controller {
     public ResponseEntity<?> updateComment(
             @PathVariable(name = "boardId") Long boardId,
             @PathVariable(name = "commentId") Long commentId,
-            @RequestHeader(name = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody @Valid CommentRequestDto dto
     ) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
             CommentDto updatedComment = commentService.updateComment(commentId, userId, boardId, dto);
             return ResponseEntity.ok(updatedComment);
         } catch (IllegalArgumentException e) {
@@ -321,10 +322,10 @@ public class BoardApiV1Controller {
     public ResponseEntity<?> deleteComment(
             @PathVariable(name = "boardId") Long boardId,
             @PathVariable(name = "commentId") Long commentId,
-            @RequestHeader(name = "Authorization") String authorization
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
         try {
-            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
+            Long userId = customUserDetails.getUserId();
             commentService.deleteComment(commentId, userId, boardId);
             return ResponseEntity.ok("댓글 삭제 완료!");
         } catch (IllegalArgumentException e) {

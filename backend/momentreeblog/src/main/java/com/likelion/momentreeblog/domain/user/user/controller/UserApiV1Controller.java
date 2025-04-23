@@ -190,17 +190,17 @@ public class UserApiV1Controller {
 //        }
 //    }
 
-    //회원 탈퇴로 상태 변경하기
-    @PostMapping("/delete")
-    public ResponseEntity<String> changeStatusDeleted(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody UserDeleteRequest request
-    ) {
-        Long userId = customUserDetails.getUserId();
-        userService.changeUserStatusDeleted(userId, request);
-
-        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
-    }
+//    //회원 탈퇴로 상태 변경하기
+//    @PostMapping("/delete")
+//    public ResponseEntity<String> changeStatusDeleted(
+//            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+//            @RequestBody UserDeleteRequest request
+//    ) {
+//        Long userId = customUserDetails.getUserId();
+//        userService.changeUserStatusDeleted(userId, request);
+//
+//        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+//    }
 
     //로그아웃
 //    @DeleteMapping("/logout")
@@ -315,6 +315,18 @@ public class UserApiV1Controller {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("사용자 정보 조회 중 오류가 발생했습니다.");
         }
     }
+
+    @PostMapping("/delete")
+    public ResponseEntity<String> changeStatusDeleted(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody UserDeleteRequest request
+    ) {
+        Long userId = customUserDetails.getUserId();
+        userService.changeUserStatusDeleted(userId, request);
+
+        return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
+    }
+
 
     @GetMapping("/top5")
     public ResponseEntity<List<UserResponse>> getTop5Users() {
