@@ -4,6 +4,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import {
+  HiOutlinePencilAlt,
+  HiOutlineTrash,
+  HiOutlineDocumentText,
+} from "react-icons/hi";
+import { IoPersonOutline, IoImagesOutline } from "react-icons/io5";
+import { MdOutlineDateRange, MdOutlineRemoveRedEye } from "react-icons/md";
+import { FaRegComment } from "react-icons/fa";
 
 // 동적 임포트로 LikeList 컴포넌트 가져오기
 const LikeList = dynamic(() => import("@/components/LikeList"), {
@@ -21,6 +29,11 @@ interface Post {
   likeCount: number;
   photos: string[] | null;
   likeUsers: string[];
+  blogName?: string; // 추가
+  date?: string; // 추가
+  image?: string; // 추가
+  views?: number; // 추가
+  keyFeatures?: string[]; // 추가
 }
 
 interface Comment {
