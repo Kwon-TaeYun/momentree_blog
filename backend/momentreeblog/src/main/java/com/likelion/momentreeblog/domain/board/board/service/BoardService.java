@@ -6,7 +6,6 @@ import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardEditResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardResponseDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
@@ -18,6 +17,7 @@ import com.likelion.momentreeblog.domain.photo.photo.service.board.BoardPhotoSer
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +37,8 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
     private final BoardPhotoService boardPhotoService;
-    private static final String DEFAULT_BOARD_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
 //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
@@ -87,7 +88,7 @@ public class BoardService {
         // 대표 사진 업로드 안했을때와 했을때 구별
         String mainPhotoKey = (requestDto.getCurrentMainPhotoUrl() == null
                 || requestDto.getCurrentMainPhotoUrl().isBlank())
-                ? DEFAULT_BOARD_IMAGE_URL
+                ? DEFAULT_IMAGE_URL
                 : requestDto.getCurrentMainPhotoUrl();
 
         // dto.getCurrentMainPhotoUrl() 에는 프론트에서 보낸 S3 key 가 담겨있다.

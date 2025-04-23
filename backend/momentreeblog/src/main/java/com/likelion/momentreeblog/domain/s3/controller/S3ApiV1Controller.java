@@ -1,6 +1,5 @@
 package com.likelion.momentreeblog.domain.s3.controller;
 
-import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadMultiRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlMultiResponseDto;
@@ -20,9 +19,8 @@ import java.util.List;
 public class S3ApiV1Controller {
 
     private final S3V1Service s3V1Service;
-    private final PhotoV1Service photoV1Service;
 
-    private static final String DEFAULT_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
+    private static final String DEFAULT_IMAGE_URL = "uploads/06d53db6-906c-402b-954a-9cd2f41549d5-logo.png";
 
     //프리사인 URL 요청 엔드포인트
     //클라이언트는 사진 업로드 전 이 API를 호출해 S3에 PUT 요청할 수 있는 URL과 key를 받습니다.

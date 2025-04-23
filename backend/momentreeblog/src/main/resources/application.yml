@@ -78,3 +78,5 @@ custom:
     cookieDomain: "${custom.dev.cookieDomain}"
     frontUrl: "${custom.dev.frontUrl}"
     backUrl: "${custom.dev.backUrl}"
+  default-image:
+    url: uploads/06d53db6-906c-402b-954a-9cd2f41549d5-logo.png
