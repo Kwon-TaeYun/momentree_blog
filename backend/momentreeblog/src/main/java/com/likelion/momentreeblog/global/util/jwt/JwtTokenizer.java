@@ -18,7 +18,7 @@ public class JwtTokenizer {
     private final byte[] accessSecret;
     private final byte[] refreshSecret;
 
-    public static Long ACCESS_TOKEN_EXPIRE_COUNT = 30 * 60 * 1000L; //유지시간 30분
+    public static Long ACCESS_TOKEN_EXPIRE_COUNT = 2 * 60 * 60 * 1000L; //유지시간 30분 ( 잠시 2시간으로 변경)
     public static Long REFRESH_TOKEN_EXPIRE_COUNT = 7 * 24 * 60 * 1000L;
 
     public JwtTokenizer(
@@ -64,12 +64,31 @@ public class JwtTokenizer {
     }
 
     public Claims parseToken(String token, byte[] secretKey){
-        return Jwts.parserBuilder().setSigningKey(getSigningKey(secretKey))
-                .build().parseClaimsJws(token)
-                .getBody();
+        if (token == null || token.isEmpty()) {
+            log.warn("토큰이 null이거나 비어 있습니다.");
+            return null;
+        }
+        
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey(secretKey))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception e) {
+            log.error("토큰 파싱 중 오류 발생: {}", e.getMessage());
+            throw e;
+        }
     }
 
-    public Claims parseAccessToken(String accessToken){
+    public Claims parseAccessToken(String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new IllegalArgumentException("액세스 토큰이 요청에 없습니다.");
+        }
+        // 쿠키에는 보통 순수 토큰만 저장하니, Bearer 검사도 옵션으로
+        if (accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.substring(7).trim();
+        }
         return parseToken(accessToken, accessSecret);
     }
 

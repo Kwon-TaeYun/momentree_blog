@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.board.category.controller;
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.board.category.dto.CategoryCreateRequestDto;
 import com.likelion.momentreeblog.domain.board.category.dto.CategoryUpdateRequestDto;
 import com.likelion.momentreeblog.domain.board.category.dto.CategoryResponseDto;
@@ -9,6 +10,7 @@ import com.likelion.momentreeblog.domain.user.user.service.UserService;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +29,8 @@ public class CategoryController {
     @PostMapping("/{id}")
     public ResponseEntity<?> createCategory(@RequestBody CategoryCreateRequestDto requestDto,
                                             @PathVariable(name = "id") Long id,
-                                            @RequestHeader("Authorization") String authorizationHeader) {
-        Long userId = jwtTokenizer.getUserIdFromToken(authorizationHeader);
+                                            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
         User user = userService.findUserById(userId);
         Long userBlogId = user.getBlog().getId();
 
@@ -57,8 +59,8 @@ public class CategoryController {
 
     // 모든 카테고리 조회 (선택)
     @GetMapping
-    public ResponseEntity<?> getAllCategories(@RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+    public ResponseEntity<?> getAllCategories(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
         User user = userService.findUserById(userId);
         Long userBlogId = user.getBlog().getId();
 
@@ -83,12 +85,13 @@ public class CategoryController {
     }
 
     //카테고리 삭제
-    @DeleteMapping("/{categoryId}")
-    public ResponseEntity<?> deleteCategory(@PathVariable(name = "categoryId") Long categoryId,
-                                            @RequestHeader("Authorization") String authHeader) {
-        Long userId = jwtTokenizer.getUserIdFromToken(authHeader);
+    @DeleteMapping("/{blogId}/{categoryName}")
+    public ResponseEntity<?> deleteCategoryByName(@PathVariable Long blogId,
+                                                  @PathVariable String categoryName,
+                                                  @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
         try {
-            categoryService.deleteCategory(userId, categoryId);
+            categoryService.deleteCategoryByName(userId, blogId, categoryName);
             return ResponseEntity.ok("카테고리 삭제 성공");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(403).body(e.getMessage());

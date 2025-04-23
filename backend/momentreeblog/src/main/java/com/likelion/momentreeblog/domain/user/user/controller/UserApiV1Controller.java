@@ -2,9 +2,15 @@ package com.likelion.momentreeblog.domain.user.user.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
+import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
+import com.likelion.momentreeblog.domain.user.user.dto.UserDto;
+import com.likelion.momentreeblog.domain.user.user.dto.UserLoginDto;
+import com.likelion.momentreeblog.domain.user.user.dto.UserLoginResponseDto;
+import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.dto.*;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
+import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import com.likelion.momentreeblog.global.rq.Rq;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.servlet.http.Cookie;
@@ -19,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,13 +38,65 @@ public class UserApiV1Controller {
     private final JwtTokenizer jwtTokenizer;
     private final Rq rq;
 
+    // 이메일 중복 확인 API 추가
+    @PostMapping("/check-email")
+    public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        log.info("이메일 중복 확인 요청: {}", email);
+        
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("이메일을 입력해주세요.");
+        }
+        
+        User user = userService.findUserByEmail(email);
+        
+        if (user != null) {
+            return ResponseEntity.ok(Map.of("available", false, "message", "이미 사용 중인 이메일입니다."));
+        }
+        
+        return ResponseEntity.ok(Map.of("available", true, "message", "사용 가능한 이메일입니다."));
+    }
+
     //회원 가입
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody UserSignupDto userSignupDto) {
         try {
-            return ResponseEntity.ok(userService.saveUser(userSignupDto));
+            log.info("회원가입 요청 - email: {}, name: {}", userSignupDto.getEmail(), userSignupDto.getName());
+            
+            // 입력값 검증
+            if (userSignupDto.getEmail() == null || userSignupDto.getEmail().trim().isEmpty()) {
+                log.warn("회원가입 실패 - 이메일 누락");
+                return ResponseEntity.badRequest().body("이메일을 입력해주세요.");
+            }
+            
+            if (userSignupDto.getName() == null || userSignupDto.getName().trim().isEmpty()) {
+                log.warn("회원가입 실패 - 이름 누락");
+                return ResponseEntity.badRequest().body("이름을 입력해주세요.");
+            }
+            
+            if (userSignupDto.getPassword() == null || userSignupDto.getPassword().trim().isEmpty()) {
+                log.warn("회원가입 실패 - 비밀번호 누락");
+                return ResponseEntity.badRequest().body("비밀번호를 입력해주세요.");
+            }
+            
+            if (userSignupDto.getBlogName() == null || userSignupDto.getBlogName().trim().isEmpty()) {
+                log.warn("회원가입 실패 - 블로그 이름 누락");
+                return ResponseEntity.badRequest().body("블로그 이름을 입력해주세요.");
+            }
+            
+            String result = userService.saveUser(userSignupDto);
+            
+            // 오류 메시지가 반환된 경우
+            if (result.contains("이미 존재하는") || result.contains("형식이 올바르지") || result.contains("최소 8자리")) {
+                log.warn("회원가입 실패 - {}", result);
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+            log.info("회원가입 성공 - email: {}", userSignupDto.getEmail());
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("서버 오류가 발생하였습니다.");
+            log.error("회원가입 처리 중 오류 발생", e);
+            return ResponseEntity.internalServerError().body("서버 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
@@ -52,6 +111,10 @@ public class UserApiV1Controller {
 
         if (!passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 같지 않습니다. 다시 입력해주세요.");
+        }
+
+        if (user.getStatus().equals(UserStatus.DELETED)) {
+            return ResponseEntity.badRequest().body("탈퇴한 회원이므로 로그인하실 수 없습니다.");
         }
 
         List<String> roleNames = user.getRoles().stream()
@@ -174,17 +237,18 @@ public class UserApiV1Controller {
 
     @PutMapping("/edit")
     public ResponseEntity<?> editUser(
-            @RequestHeader(name = "Authorization") String authorization,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody UserUpdateDto updateDto) {
 
-        Long tokenUserId = jwtTokenizer.getUserIdFromToken(authorization);
+        Long tokenUserId = customUserDetails.getUserId();
+        log.info("tokenUserId" + tokenUserId);
 
 //        if (!tokenUserId.equals(updateDto.getId())) {
 //            return ResponseEntity.status(HttpStatus.FORBIDDEN)
 //                    .body("본인만 수정할 수 있습니다.");
 //        }
 
-        User user = userService.findUserById(jwtTokenizer.getUserIdFromToken(authorization));
+        User user = userService.findUserById(tokenUserId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 사용자를 찾을 수 없습니다.");
         }
@@ -209,7 +273,7 @@ public class UserApiV1Controller {
 
         userService.editUser(user);
 
-        return ResponseEntity.ok("회원정보가 수정되었습니다.");
+        return ResponseEntity.ok(Map.of("message", "회원정보가 수정되었습니다."));
     }
 
 
@@ -220,14 +284,38 @@ public class UserApiV1Controller {
     }
 
     @GetMapping("/me")
-    public UserDto me(){
-        String accessToken = rq.getCookieValue("accessToken");
-        Long userId = Long.parseLong(jwtTokenizer.parseAccessToken(accessToken).get("userId").toString());
-        User user = userService.findUserById((Long) userId);
-        return new UserDto(user);
+    public ResponseEntity<?> me(){
+        try {
+            String accessToken = rq.getCookieValue("accessToken");
+            log.debug("액세스 토큰: {}", accessToken);
+            
+            // 액세스 토큰이 없는 경우
+            if (accessToken == null) {
+                log.info("인증되지 않은 사용자가 /me 엔드포인트에 접근했습니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 정보가 없습니다.");
+            }
+            
+            Map<String, Object> claims = jwtTokenizer.parseAccessToken(accessToken);
+            if (claims == null || !claims.containsKey("userId")) {
+                log.warn("유효하지 않은 토큰: userId 클레임 없음");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 인증 정보입니다.");
+            }
+            
+            Long userId = Long.parseLong(claims.get("userId").toString());
+            User user = userService.findUserById(userId);
+            
+            if (user == null) {
+                log.warn("ID {}에 해당하는 사용자를 찾을 수 없음", userId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자 정보를 찾을 수 없습니다.");
+            }
+            
+            return ResponseEntity.ok(new UserDto(user));
+        } catch (Exception e) {
+            log.error("사용자 정보 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("사용자 정보 조회 중 오류가 발생했습니다.");
+        }
     }
 
-    //회원 탈퇴로 상태 변경하기
     @PostMapping("/delete")
     public ResponseEntity<String> changeStatusDeleted(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -238,6 +326,7 @@ public class UserApiV1Controller {
 
         return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
     }
+
 
     @GetMapping("/top5")
     public ResponseEntity<List<UserResponse>> getTop5Users() {

@@ -1,7 +1,7 @@
 ---- 1. Role 추가
---INSERT INTO roles (id, name, created_at, modified_at)
---VALUES (1, 'USER', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
---
+INSERT INTO roles (id, name, created_at, modified_at)
+VALUES (1, 'USER', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+
 ---- 2. Blog 추가
 --INSERT INTO blogs (id, name, view_count, created_at, modified_at)
 --VALUES (1, 'test blog', 0, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());

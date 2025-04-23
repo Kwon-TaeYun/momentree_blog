@@ -8,11 +8,8 @@ import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -111,4 +108,8 @@ public class BlogService {
         return blogRepository.findById(id);
     }
 
+
+    public Blog findByUserId(Long userId) {
+        return blogRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("해당 유저의 블로그가 없습니다"));
+    }
 }

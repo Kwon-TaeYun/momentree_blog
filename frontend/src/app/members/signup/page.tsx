@@ -16,29 +16,34 @@ export default function SignUp() {
   const [isEmailChecked, setIsEmailChecked] = useState(false);
 
   const checkEmail = async () => {
+    if (!email || !email.trim()) {
+      setIsError(true);
+      setMessage("이메일을 입력해주세요.");
+      return;
+    }
+    
     try {
       const response = await fetch(
-        `http://localhost:8090/api/v1/members/email?email=${encodeURIComponent(
-          email
-        )}`,
+        `http://localhost:8090/api/v1/members/check-email`,
         {
-          method: "GET",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({ email }),
         }
       );
 
-      const data = await response.text();
+      const data = await response.json();
 
-      if (data.includes("찾을 수 없습니다")) {
+      if (data.available) {
         setIsEmailChecked(true);
         setIsError(false);
-        setMessage("사용 가능한 이메일입니다.");
+        setMessage(data.message || "사용 가능한 이메일입니다.");
       } else {
         setIsEmailChecked(false);
         setIsError(true);
-        setMessage("이미 사용 중인 이메일입니다.");
+        setMessage(data.message || "이미 사용 중인 이메일입니다.");
       }
     } catch (error) {
       setIsEmailChecked(false);
@@ -85,7 +90,7 @@ export default function SignUp() {
             email,
             password,
             name,
-            blogName: email.split("@")[0], // 기본 블로그 이름으로 이메일 아이디 사용
+            blogName: `${name}의 블로그`,
           }),
         }
       );
@@ -258,11 +263,6 @@ export default function SignUp() {
               가입하기
             </button>
           </form>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500 mt-8">
-          © 2024 Momentree. All rights reserved.
         </div>
       </div>
     </div>

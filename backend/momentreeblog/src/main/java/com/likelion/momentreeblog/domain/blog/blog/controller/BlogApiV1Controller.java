@@ -8,7 +8,6 @@ import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -53,6 +52,8 @@ public class BlogApiV1Controller {
 
         return ResponseEntity.ok(dto);
     }
+
+    
 
     /**
      * 블로그 수정

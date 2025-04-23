@@ -25,6 +25,7 @@ public class UserDto {
 
     private final String blogName;
     private final Long viewCount;
+    private final Long blogId;
 
     public UserDto(User member) {
         this.id = member.getId();
@@ -33,6 +34,7 @@ public class UserDto {
         this.email = member.getEmail();
         this.name = member.getName();
         this.blogName = member.getBlog().getName();
+        this.blogId = member.getBlog().getId();
         this.viewCount = member.getBlog().getViewCount();
     }
 }
