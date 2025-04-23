@@ -9,12 +9,13 @@ interface UserFollowerProps {
 }
 
 interface User {
-  id: string;
+  id: number;
   name: string;
   status: string;
   currentProfilePhoto?: {
     url: string;
   } | null;
+  isFollowing?: boolean;
 }
 
 const UserFollower: React.FC<UserFollowerProps> = ({
@@ -31,26 +32,13 @@ const UserFollower: React.FC<UserFollowerProps> = ({
   const [following, setFollowing] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // initialTab이 변경되면 activeTab도 업데이트
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
-
   // 팔로워와 팔로잉 목록을 가져오는 함수
   const fetchFollowData = async () => {
+    if (!userId) return;
+
     setLoading(true);
     try {
-      // 팔로워 목록 가져오기
-      const followersResponse = await fetch(
-        `http://localhost:8090/api/v1/follows/members/${userId}/followers`,
-        {
-          credentials: "include",
-        }
-      );
-
-      // 팔로잉 목록 가져오기
+      // 팔로잉 목록 가져오기 (내가 팔로우하는 사람들)
       const followingResponse = await fetch(
         `http://localhost:8090/api/v1/follows/members/${userId}/followings`,
         {
@@ -58,18 +46,27 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         }
       );
 
+      // 팔로워 목록 가져오기 (나를 팔로우하는 사람들)
+      const followersResponse = await fetch(
+        `http://localhost:8090/api/v1/follows/members/${userId}/followers`,
+        {
+          credentials: "include",
+        }
+      );
+
+      const followingData = await followingResponse.json();
+      const followersData = await followersResponse.json();
+
+      console.log("Following data (내가 팔로우하는 사람들):", followingData);
+      console.log("Followers data (나를 팔로우하는 사람들):", followersData);
+
+      // 상태 업데이트를 올바른 배열에 할당
       if (followersResponse.ok) {
-        const followersData = await followersResponse.json();
-        setFollowers(followersData);
-      } else {
-        setFollowers([]);
+        setFollowers(followersData || []); // 나를 팔로우하는 사람들
       }
 
       if (followingResponse.ok) {
-        const followingData = await followingResponse.json();
-        setFollowing(followingData);
-      } else {
-        setFollowing([]);
+        setFollowing(followingData || []); // 내가 팔로우하는 사람들
       }
     } catch (error) {
       console.error("Failed to fetch follow data:", error);
@@ -80,65 +77,19 @@ const UserFollower: React.FC<UserFollowerProps> = ({
     }
   };
 
-  // 팔로우/언팔로우 처리 함수
-  const handleFollowToggle = async (targetUserId: string) => {
-    try {
-      const isCurrentlyFollowing =
-        activeTab === "following"
-          ? following.find((user) => user.id === targetUserId)?.isFollowing
-          : followers.find((user) => user.id === targetUserId)?.isFollowing;
-
-      const method = isCurrentlyFollowing ? "DELETE" : "POST";
-      const endpoint = isCurrentlyFollowing ? "/unfollow" : "/follow";
-
-      const response = await fetch(
-        `http://localhost:8090/api/v1/follows${endpoint}?followingid=${targetUserId}`,
-        {
-          method: method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // 쿠키 포함
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to toggle follow status");
-      }
-
-      // 상태 업데이트
-      const updateFollowStatus = (users: User[]) =>
-        users.map((user) =>
-          user.id === targetUserId
-            ? { ...user, isFollowing: !isCurrentlyFollowing }
-            : user
-        );
-
-      if (activeTab === "following") {
-        setFollowing(updateFollowStatus(following));
-      } else {
-        setFollowers(updateFollowStatus(followers));
-      }
-    } catch (error) {
-      console.error("Failed to toggle follow status:", error);
-    }
-  };
-
-  // 컴포넌트 마운트 시 데이터 가져오기
+  // 컴포넌트가 마운트되거나 userId가 변경될 때만 데이터를 가져옴
   useEffect(() => {
     if (isOpen && userId) {
       fetchFollowData();
     }
   }, [isOpen, userId]);
 
-  // 현재 탭에 따른 사용자 목록
-  const currentUsers = activeTab === "followers" ? followers : following;
+  // 현재 탭에 따른 사용자 목록을 교체
+  const currentUsers = activeTab === "followers" ? following : followers;
 
   // 검색어로 필터링된 사용자 목록
-  const filteredUsers = currentUsers.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.status.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = currentUsers.filter((user) =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!isOpen) return null;

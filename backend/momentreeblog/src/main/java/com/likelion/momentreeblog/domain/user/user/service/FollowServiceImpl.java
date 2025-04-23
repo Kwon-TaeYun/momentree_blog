@@ -61,21 +61,17 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional(readOnly = true)
     public List<UserFollowDto> getFollowings(Long myUserId) {
-
-        // 내 팔로잉 목록 가져오기
-        List<FollowManagement> following =
-                followRepository.findAllByFollowerId(myUserId);
-
-        // 삭제 필터를 거쳐서 팔로윙 가져오기
-        return following.stream()
-                .map(FollowManagement::getFollowing)         // User 객체
-                .filter(u -> u.getStatus() != UserStatus.DELETED)
-                .map(u -> new UserFollowDto(
-                        u.getId(),
-                        u.getName(),
-                        u.getStatus(),
-                        u.getCurrentProfilePhoto()
-
+        // 내가 팔로우하는 사람들 목록을 가져옴 (followerId가 myUserId)
+        List<FollowManagement> followings = followRepository.findAllByFollowerId(myUserId);
+        
+        return followings.stream()
+                .map(FollowManagement::getFollowing)
+                .filter(user -> user.getStatus() != UserStatus.DELETED)
+                .map(user -> new UserFollowDto(
+                        user.getId(),
+                        user.getName(),
+                        user.getStatus(),
+                        user.getCurrentProfilePhoto()
                 ))
                 .collect(Collectors.toList());
     }
@@ -83,20 +79,17 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional(readOnly = true)
     public List<UserFollowDto> getFollowers(Long myUserId) {
-
-        // 나를 팔로우 한 사람들의 목록 가져오기
-        List<FollowManagement> followers =
-                followRepository.findAllByFollowingId(myUserId);
-
-        // 삭제 필터를 거쳐서 나를 팔로우한 사람들 가져오기
+        // 나를 팔로우하는 사람들 목록을 가져옴 (followingId가 myUserId)
+        List<FollowManagement> followers = followRepository.findAllByFollowingId(myUserId);
+        
         return followers.stream()
                 .map(FollowManagement::getFollower)
-                .filter(u -> u.getStatus() != UserStatus.DELETED)
-                .map(u -> new UserFollowDto(
-                        u.getId(),
-                        u.getName(),
-                        u.getStatus(),
-                        u.getCurrentProfilePhoto()
+                .filter(user -> user.getStatus() != UserStatus.DELETED)
+                .map(user -> new UserFollowDto(
+                        user.getId(),
+                        user.getName(),
+                        user.getStatus(),
+                        user.getCurrentProfilePhoto()
                 ))
                 .collect(Collectors.toList());
     }
