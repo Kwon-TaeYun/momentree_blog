@@ -100,6 +100,7 @@ public class CommentService {
         return CommentDto.builder()
                 .id(comment.getId())
                 .userId(comment.getUser().getId())
+                .userName(comment.getUser().getName()) // 작성자 이름 추가
                 .boardId(comment.getBoard().getId())
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())

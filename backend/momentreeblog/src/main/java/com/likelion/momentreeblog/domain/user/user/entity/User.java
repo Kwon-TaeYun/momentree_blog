@@ -41,6 +41,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, name = "refresh_token")
     private String refreshToken;
 
+    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
