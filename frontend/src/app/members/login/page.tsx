@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import styled from "styled-components";
-const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`
-const redirectUrlAfterSocialLogin = `http://localhost:3000/success`
+const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
+const redirectUrlAfterSocialLogin = `http://localhost:3000/home`;
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -17,17 +17,20 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`http://localhost:8090/api/v1/members/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // 중요: 쿠키를 포함한 요청
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8090/api/v1/members/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 중요: 쿠키를 포함한 요청
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorMessage = await response.text(); // 서버에서 보낸 에러 메시지
@@ -52,90 +55,88 @@ export default function LoginPage() {
   };
 
   return (
-      <LoginContainer>
-        <LoginBox>
-          <LogoWrapper>
-            <Image
-                src="/logo.png"
-                alt="Momentree"
-                width={60} // 크기 축소
-                height={60} // 크기 축소
+    <LoginContainer>
+      <LoginBox>
+        <LogoWrapper>
+          <Image
+            src="/logo.png"
+            alt="Momentree"
+            width={60} // 크기 축소
+            height={60} // 크기 축소
+            quality={100}
+            priority
+          />
+        </LogoWrapper>
+
+        <Title>로그인</Title>
+
+        <LoginForm onSubmit={handleSubmit}>
+          <InputWrapper>
+            <InputLabel>아이디(이메일)</InputLabel>
+            <InputField
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </InputWrapper>
+
+          <InputWrapper>
+            <InputLabel>비밀번호</InputLabel>
+            <InputField
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+          </InputWrapper>
+
+          <CheckboxWrapper>
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleChange}
+            />
+            <label htmlFor="rememberMe">아이디 저장</label>
+          </CheckboxWrapper>
+
+          <LoginButton type="submit">로그인</LoginButton>
+        </LoginForm>
+
+        <LinkContainer>
+          <Link href="/members/find/password">비밀번호 찾기</Link>
+          <Separator>|</Separator>
+          <Link href="/members/signup">회원가입</Link>
+        </LinkContainer>
+
+        <SocialLoginSection>
+          <SocialText>소셜 계정으로 로그인</SocialText>
+          <Link
+            href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+          >
+            <KakaoButton>
+              <Image
+                src="/kakao_login.png"
+                alt="카카오 로그인"
+                width={300}
+                height={45}
                 quality={100}
                 priority
-            />
-          </LogoWrapper>
-
-          <Title>로그인</Title>
-
-          <LoginForm onSubmit={handleSubmit}>
-            <InputWrapper>
-              <InputLabel>아이디(이메일)</InputLabel>
-              <InputField
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
               />
-            </InputWrapper>
+            </KakaoButton>
+          </Link>
+        </SocialLoginSection>
 
-            <InputWrapper>
-              <InputLabel>비밀번호</InputLabel>
-              <InputField
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-              />
-            </InputWrapper>
-
-            <CheckboxWrapper>
-              <input
-                  type="checkbox"
-                  id="rememberMe"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-              />
-              <label htmlFor="rememberMe">아이디 저장</label>
-            </CheckboxWrapper>
-
-            <LoginButton type="submit">로그인</LoginButton>
-          </LoginForm>
-
-          <LinkContainer>
-            <Link href="/find-id">아이디 찾기</Link>
-            <Separator>|</Separator>
-            <Link href="/find-password">비밀번호 찾기</Link>
-            <Separator>|</Separator>
-            <Link href="/signup">회원가입</Link>
-          </LinkContainer>
-
-          <SocialLoginSection>
-            <SocialText>소셜 계정으로 로그인</SocialText>
-            <Link
-                href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-            >
-              <KakaoButton>
-                <Image
-                    src="/kakao_login.png"
-                    alt="카카오 로그인"
-                    width={300}
-                    height={45}
-                    quality={100}
-                    priority
-                />
-              </KakaoButton>
-            </Link>
-          </SocialLoginSection>
-
-          <Footer>
-            <FooterText>개인정보처리방침</FooterText>
-            <Separator>|</Separator>
-            <FooterText>이용약관</FooterText>
-            <ContactInfo>고객센터: 1234-5678 (평일 09:00-18:00)</ContactInfo>
-          </Footer>
-        </LoginBox>
-      </LoginContainer>
+        <Footer>
+          <FooterText>개인정보처리방침</FooterText>
+          <Separator>|</Separator>
+          <FooterText>이용약관</FooterText>
+          <ContactInfo>고객센터: 1234-5678 (평일 09:00-18:00)</ContactInfo>
+        </Footer>
+      </LoginBox>
+    </LoginContainer>
   );
 }
 

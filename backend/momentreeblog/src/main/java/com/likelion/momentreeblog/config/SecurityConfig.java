@@ -35,7 +35,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
+
                                 .requestMatchers("/api/v1/members/**", "/api/v1/boards/**", "/api/s3/presigned-url").permitAll()
+
                                 .requestMatchers("/h2-console/**")
                                 .permitAll()
                                 .requestMatchers("/api/*/**")
@@ -79,23 +81,21 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // 허용할 오리진 설정
-        configuration.setAllowedOrigins(Arrays.asList("https://cdpn.io", AppConfig.getSiteFrontUrl()));
-
-        // 허용할 HTTP 메서드 설정
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-
-        // 자격 증명 허용 설정
-        configuration.setAllowCredentials(true);
-
-        // 허용할 헤더 설정
+        
+        // 프론트엔드 주소 추가
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000",     // 개발 환경
+            "https://cdpn.io",          // 기존 설정
+            AppConfig.getSiteFrontUrl()  // 기존 설정
+        ));
+        
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-
-        // CORS 설정을 소스에 등록
+        configuration.setAllowCredentials(true);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
-
+        source.registerCorsConfiguration("/**", configuration);  // 모든 경로에 대해 CORS 설정 적용
+        
         return source;
     }
 

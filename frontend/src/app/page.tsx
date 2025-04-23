@@ -98,7 +98,7 @@ export default function Home() {
       </section>
       
       {/* 인기 블로거 섹션 */}
-      <section className="py-12 px-4 max-w-6xl mx-auto w-full">
+      {/* <section className="py-12 px-4 max-w-6xl mx-auto w-full">
         <h2 className="text-xl font-bold mb-6 text-black">인기 블로거</h2>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {[1, 2, 3, 4].map((item) => (
@@ -109,10 +109,10 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
       
       {/* 인기 콘텐츠 섹션 */}
-      <section className="py-12 px-4 max-w-6xl mx-auto w-full">
+      {/* <section className="py-12 px-4 max-w-6xl mx-auto w-full">
         <h2 className="text-xl font-bold mb-6 text-black">인기 콘텐츠</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {[
@@ -142,10 +142,10 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
       
       {/* 실시간 인기글 섹션 */}
-      <section className="py-12 px-4 max-w-6xl mx-auto w-full">
+      {/* <section className="py-12 px-4 max-w-6xl mx-auto w-full">
         <h2 className="text-xl font-bold mb-6 text-black">실시간 인기글</h2>
         <div className="space-y-4">
           {[
@@ -175,7 +175,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
     </main>
   );
 }

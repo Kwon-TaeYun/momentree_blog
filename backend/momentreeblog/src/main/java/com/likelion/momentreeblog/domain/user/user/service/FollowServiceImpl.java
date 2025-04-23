@@ -4,7 +4,9 @@ import com.likelion.momentreeblog.domain.user.follower.entity.FollowManagement;
 import com.likelion.momentreeblog.domain.user.user.dto.UserFollowDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.FollowRepository;
+
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
+
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
