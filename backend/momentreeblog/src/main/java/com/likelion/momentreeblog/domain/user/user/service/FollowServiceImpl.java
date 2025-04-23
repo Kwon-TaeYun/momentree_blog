@@ -59,6 +59,7 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserFollowDto> getFollowings(Long myUserId) {
 
         // 내 팔로잉 목록 가져오기
@@ -80,6 +81,7 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserFollowDto> getFollowers(Long myUserId) {
 
         // 나를 팔로우 한 사람들의 목록 가져오기
