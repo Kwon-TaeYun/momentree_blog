@@ -85,12 +85,13 @@ public class CategoryController {
     }
 
     //카테고리 삭제
-    @DeleteMapping("/{categoryId}")
-    public ResponseEntity<?> deleteCategory(@PathVariable(name = "categoryId") Long categoryId,
-                                            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+    @DeleteMapping("/{blogId}/{categoryName}")
+    public ResponseEntity<?> deleteCategoryByName(@PathVariable Long blogId,
+                                                  @PathVariable String categoryName,
+                                                  @AuthenticationPrincipal CustomUserDetails customUserDetails) {
         Long userId = customUserDetails.getUserId();
         try {
-            categoryService.deleteCategory(userId, categoryId);
+            categoryService.deleteCategoryByName(userId, blogId, categoryName);
             return ResponseEntity.ok("카테고리 삭제 성공");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(403).body(e.getMessage());
