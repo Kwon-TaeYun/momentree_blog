@@ -1,13 +1,21 @@
 package com.likelion.momentreeblog.domain.blog.blog.service;
 
+import com.likelion.momentreeblog.domain.blog.blog.dto.BlogDetailResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogUpdateRequestDto;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
+import com.likelion.momentreeblog.domain.board.board.service.BoardService;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import com.likelion.momentreeblog.domain.user.user.userenum.UserStatus;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,6 +26,7 @@ public class BlogService {
 
     private final BlogRepository blogRepository;
     private final UserRepository userRepository;
+    private final BoardService boardService;
 
     /**
      * 블로그 생성
@@ -111,5 +120,27 @@ public class BlogService {
 
     public Blog findByUserId(Long userId) {
         return blogRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("해당 유저의 블로그가 없습니다"));
+    }
+
+
+
+    /**
+     * 블로그 상세보기
+     */
+    public BlogDetailResponseDto getBlogDetails(Long blogId, int page, int size) {
+        Blog blog = blogRepository.findById(blogId)
+                .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<BoardListResponseDto> boards = boardService.getBoardsByBlogId(blogId, pageable);
+
+        // 필요한 연관 엔티티들을 명시적으로 초기화
+        Hibernate.initialize(blog.getUser());
+
+        return BlogDetailResponseDto.builder()
+                .id(blog.getId())
+                .name(blog.getName())
+                .boards(boards)
+                .build();
     }
 }

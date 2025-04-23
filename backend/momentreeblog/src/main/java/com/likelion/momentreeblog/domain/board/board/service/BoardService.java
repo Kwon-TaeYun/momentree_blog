@@ -306,6 +306,19 @@ public class BoardService {
                 .collect(Collectors.toList());
     }
 
+    public Page<BoardListResponseDto> getBoardsByBlogId(Long blogId, Pageable pageable) {
+        Page<Board> boards = boardRepository.findByBlogId(blogId, pageable);
+        return boards.map(board -> new BoardListResponseDto(
+                board.getId(),
+                board.getTitle(),
+                board.getBlog().getId(),
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                board.getLikes().stream().count() // likeCount
+        ));
+    }
+
+
+
 
 
 }
