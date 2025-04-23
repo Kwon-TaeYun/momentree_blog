@@ -83,7 +83,7 @@ public class BoardApiV1Controller {
 
 
 
-    @GetMapping("/{id}/edit")
+    @PutMapping("/{id}/edit")
     public ResponseEntity<BoardEditResponseDto> getBoardForEdit(
             @PathVariable(name = "id") Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails
