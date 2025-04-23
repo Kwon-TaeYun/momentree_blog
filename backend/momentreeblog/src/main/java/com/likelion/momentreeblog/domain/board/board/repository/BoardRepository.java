@@ -30,6 +30,6 @@ public interface BoardRepository extends JpaRepository<Board, Long>{
     ORDER BY COUNT(l) DESC, MAX(b.createdAt) DESC
 """)
     List<Board> findTop5ByLikeCount(Pageable pageable);
-
+    boolean existsByCategory(Category category);
 
 }
