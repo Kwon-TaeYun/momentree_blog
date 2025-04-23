@@ -274,7 +274,30 @@ export default function CreatePostPage() {
         photoUrls: additionalKeys, // 배열 형태로 키 전송
         categoryId: null, // 카테고리 기능 구현 시 추가
       };
+    const requestData = {
+      title: formData.title,
+      content: formData.content,
+      currentMainPhotoUrl: mainPhotoData.url,
+      photoUrls: uploadedImages,
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null, // 유효하지 않은 값은 null로 처리
+    };
 
+    console.log("Request Data:", requestData); // 디버깅용 로그
+
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/boards`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(requestData),
+        }
+      );
       // 백엔드 API 호출
       const response = await fetch(`http://localhost:8090/api/v1/boards`, {
         method: "POST",
@@ -286,19 +309,15 @@ export default function CreatePostPage() {
       });
 
       if (!response.ok) {
-        throw new Error("게시글 작성에 실패했습니다.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "게시글 작성에 실패했습니다.");
       }
 
-      const result = await response.text();
       alert("게시글이 성공적으로 작성되었습니다.");
-
-      // 게시글 목록 페이지로 이동
       router.push("/members/login/myblog");
-    } catch (error) {
+    } catch (error: any) {
       console.error("게시글 작성 오류:", error);
-      alert("게시글 작성 중 오류가 발생했습니다.");
-    } finally {
-      setSubmitting(false);
+      alert(error.message || "게시글 작성 중 오류가 발생했습니다.");
     }
   };
 
@@ -489,7 +508,7 @@ export default function CreatePostPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.map((category: { name: string }) => category.name)); // 카테고리 이름만 추출
+        setCategories(data.map((category: Category) => category)); // 카테고리 객체로 설정
       } else {
         const errorMessage = await response.text();
         alert(`카테고리 조회 실패: ${errorMessage}`);
@@ -540,7 +559,7 @@ export default function CreatePostPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setCategories((prev) => [...prev, data.name]); // 새 카테고리를 목록에 추가
+        setCategories((prev) => [...prev, data]); // 새 카테고리를 목록에 추가
         setNewCategory(""); // 입력 필드 초기화
         alert("카테고리가 추가되었습니다.");
       } else {
@@ -554,12 +573,12 @@ export default function CreatePostPage() {
   };
 
   // 카테고리 선택
-  const handleSelectCategory = (category: string) => {
+  const handleSelectCategory = (category: Category) => {
     setFormData((prev) => ({
       ...prev,
-      categoryId: category, // 선택된 카테고리를 설정
+      categoryId: category.id.toString(), // 카테고리 ID를 문자열로 설정
     }));
-    closeCategoryModal(); // 모달 닫기
+    closeCategoryModal();
   };
 
   // 카테고리 삭제
@@ -591,7 +610,7 @@ export default function CreatePostPage() {
       );
 
       if (response.ok) {
-        setCategories((prev) => prev.filter((cat) => cat !== category)); // 삭제된 카테고리를 목록에서 제거
+        setCategories((prev) => prev.filter((cat) => cat.name !== category)); // 삭제된 카테고리를 목록에서 제거
         alert("카테고리가 삭제되었습니다.");
       } else {
         const errorData = await response.json();
@@ -717,7 +736,10 @@ export default function CreatePostPage() {
                   </label>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-700">
-                      {formData.categoryId || "카테고리를 선택하세요"}
+                      {categories.find(
+                        (category) =>
+                          category.id.toString() === formData.categoryId
+                      )?.name || "카테고리를 선택하세요"}
                     </span>
                     <button
                       type="button"
@@ -904,12 +926,12 @@ export default function CreatePostPage() {
             </h2>
             <div className="space-y-4">
               {/* 기존 카테고리 목록 */}
-              {categories.map((category, index) => (
+              {categories.map((category: Category, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between border-b pb-2"
                 >
-                  <span className="text-sm text-gray-700">{category}</span>
+                  <span className="text-sm text-gray-700">{category.name}</span>
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -920,7 +942,7 @@ export default function CreatePostPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDeleteCategory(category)}
+                      onClick={() => handleDeleteCategory(category.name)}
                       className="text-sm text-red-500 hover:underline"
                     >
                       삭제
