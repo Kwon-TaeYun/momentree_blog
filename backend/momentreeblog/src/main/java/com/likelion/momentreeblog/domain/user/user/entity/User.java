@@ -54,6 +54,8 @@ public class User extends BaseEntity {
     @JoinColumn(name = "blog_id")
     private Blog blog;
 
+    private UserStatus status;
+
     public void setBlog(Blog blog) {
         this.blog = blog;
         if (blog.getUser() != this) {
