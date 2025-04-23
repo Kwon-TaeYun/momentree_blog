@@ -339,7 +339,7 @@ export default function BoardDetail() {
           {isAuthenticated && isAuthor && (
             <div className="flex space-x-3">
               <Link
-                href={`/boards/edit/${boardIdNumber}`}
+                href={`/boards/${boardId}/edit`}
                 className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
               >
                 수정
