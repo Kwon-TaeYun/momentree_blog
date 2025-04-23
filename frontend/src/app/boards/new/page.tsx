@@ -77,7 +77,7 @@ export default function CreatePostPage() {
   const [additionalKeys, setAdditionalKeys] = useState<string[]>([]);
 
   // 카테고리 관련 상태값 추가
-  const [categories, setCategories] = useState<string[]>([]); // 기존 카테고리 목록
+  const [categories, setCategories] = useState<Category[]>([]); // 카테고리 목록
   const [newCategory, setNewCategory] = useState(""); // 새 카테고리 입력값
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false); // 모달 상태
 
@@ -270,21 +270,13 @@ export default function CreatePostPage() {
       const requestData = {
         title: formData.title,
         content: formData.content,
-        currentMainPhotoUrl: mainPhotoKey, // 백엔드에서는 url 필드명을 사용하지만 실제로는 키 전송
-        photoUrls: additionalKeys, // 배열 형태로 키 전송
-        categoryId: null, // 카테고리 기능 구현 시 추가
+        currentMainPhotoUrl: mainPhotoData.url,
+        photoUrls: uploadedImages,
+        categoryId: formData.categoryId ? parseInt(formData.categoryId) : null, // 유효하지 않은 값은 null로 처리
       };
-    const requestData = {
-      title: formData.title,
-      content: formData.content,
-      currentMainPhotoUrl: mainPhotoData.url,
-      photoUrls: uploadedImages,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null, // 유효하지 않은 값은 null로 처리
-    };
 
-    console.log("Request Data:", requestData); // 디버깅용 로그
+      console.log("Request Data:", requestData); // 디버깅용 로그
 
-    try {
       const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
@@ -298,15 +290,6 @@ export default function CreatePostPage() {
           body: JSON.stringify(requestData),
         }
       );
-      // 백엔드 API 호출
-      const response = await fetch(`http://localhost:8090/api/v1/boards`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // 쿠키 포함
-        body: JSON.stringify(requestData),
-      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -318,6 +301,8 @@ export default function CreatePostPage() {
     } catch (error: any) {
       console.error("게시글 작성 오류:", error);
       alert(error.message || "게시글 작성 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false); // 제출 상태 초기화
     }
   };
 
@@ -582,24 +567,22 @@ export default function CreatePostPage() {
   };
 
   // 카테고리 삭제
-  const handleDeleteCategory = async (category: string) => {
-    if (!confirm(`"${category}" 카테고리를 삭제하시겠습니까?`)) {
+  const handleDeleteCategory = async (category: Category) => {
+    if (!confirm(`"${category.name}" 카테고리를 삭제하시겠습니까?`)) {
       return;
     }
 
     try {
-      // blogId 가져오기
       const blogId = loginMember.blogId;
       if (!blogId) {
         alert("블로그 ID를 찾을 수 없습니다.");
         return;
       }
 
-      // API 호출
       const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/v1/categories/${blogId}/${category}`,
+        }/api/v1/categories/${blogId}/${category.name}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -610,7 +593,7 @@ export default function CreatePostPage() {
       );
 
       if (response.ok) {
-        setCategories((prev) => prev.filter((cat) => cat.name !== category)); // 삭제된 카테고리를 목록에서 제거
+        setCategories((prev) => prev.filter((cat) => cat.id !== category.id)); // 삭제된 카테고리를 목록에서 제거
         alert("카테고리가 삭제되었습니다.");
       } else {
         const errorData = await response.json();
@@ -942,7 +925,7 @@ export default function CreatePostPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDeleteCategory(category.name)}
+                      onClick={() => handleDeleteCategory(category)}
                       className="text-sm text-red-500 hover:underline"
                     >
                       삭제

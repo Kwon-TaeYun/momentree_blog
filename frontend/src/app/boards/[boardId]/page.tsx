@@ -31,6 +31,7 @@ interface Comment {
   content: string;
   createdAt: string;
   updatedAt?: string;
+  author?: string; // author 속성 추가
 }
 
 interface User {
@@ -147,19 +148,11 @@ export default function BoardDetail() {
 
           if (commentsResponse.ok) {
             const commentsData = await commentsResponse.json();
-            const processedComments = commentsData
-              .map((comment: any) => ({
-                ...comment,
-                author: comment.userName || "알 수 없음",
-                createdAt: new Date(comment.createdAt).toLocaleString(),
-              }))
-              .sort((a: Comment, b: Comment) => {
-                // 최신 댓글이 아래에 오도록 정렬
-                return (
-                  new Date(a.createdAt).getTime() -
-                  new Date(b.createdAt).getTime()
-                );
-              });
+            const processedComments = commentsData.map((comment: any) => ({
+              ...comment,
+              author: comment.userName || "알 수 없음", // author 속성 추가
+              createdAt: new Date(comment.createdAt).toLocaleString(),
+            })) as Comment[]; // 타입 단언 추가
             setComments(processedComments);
           }
 
@@ -384,6 +377,7 @@ export default function BoardDetail() {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
+              ...(token && { Authorization: `Bearer ${token}` }),
             },
             credentials: "include",
           }
@@ -391,19 +385,18 @@ export default function BoardDetail() {
 
         if (response.ok) {
           alert("게시글이 성공적으로 삭제되었습니다.");
-          // 마이블로그 페이지로 이동
           router.push("/members/login/myblog");
         } else {
-          const errorData = await response.text();
-          if (response.status === 403) {
-            alert("게시글 삭제 권한이 없습니다.");
-          } else {
-            alert(errorData || "게시글 삭제에 실패했습니다.");
-          }
+          const errorData = await response.json().catch(() => null);
+          const errorMessage =
+            errorData?.message || "게시글 삭제에 실패했습니다.";
+          alert(errorMessage);
         }
       } catch (error) {
         console.error("게시글 삭제 오류:", error);
-        alert("게시글 삭제 중 오류가 발생했습니다.");
+        alert(
+          "게시글 삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요."
+        );
       }
     }
   };

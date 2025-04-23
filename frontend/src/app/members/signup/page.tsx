@@ -21,7 +21,7 @@ export default function SignUp() {
       setMessage("이메일을 입력해주세요.");
       return;
     }
-    
+
     try {
       const response = await fetch(
         `http://localhost:8090/api/v1/members/check-email`,
@@ -107,43 +107,8 @@ export default function SignUp() {
     } catch (error) {
       setIsError(true);
       setMessage("서버와의 통신 중 오류가 발생했습니다.");
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-  
-    try {
-      const response = await fetch('http://localhost:8090/api/v1/members/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-          blogName: name + '의 블로그', // 또는 사용자가 입력하게 만들 수도 있음
-        }),
-      });
-  
-      const message = await response.text();
-  
-      if (response.ok) {
-        alert(message); // 회원가입 성공 메시지
-        // 로그인 페이지로 이동
-        window.location.href = '/members/login';
-      } else {
-        alert(`회원가입 실패: ${message}`);
-      }
-    } catch (error) {
-      console.error('회원가입 오류:', error);
-      alert('서버 오류가 발생했습니다.');
     }
   };
-  
 
   return (
     <div className="min-h-screen flex flex-col items-center py-8 px-4">
