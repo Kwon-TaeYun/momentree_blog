@@ -1,6 +1,5 @@
 package com.likelion.momentreeblog.domain.board.board.dto;
 
-import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

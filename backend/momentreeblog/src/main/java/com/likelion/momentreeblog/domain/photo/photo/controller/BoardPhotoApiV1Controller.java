@@ -110,6 +110,14 @@ public class BoardPhotoApiV1Controller {
         return ResponseEntity.ok(photoService.getPhotoUrl(PhotoType.MAIN, boardId));
     }
 
+    //게시글의 대표 사진들 조회
+    @GetMapping("/main/all")
+    public ResponseEntity<List<PreSignedUrlResponseDto>> getBoardsCurrentMainPhotos(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUserId();
+        return ResponseEntity.ok(photoService.getProfileOrMainPhotos(PhotoType.MAIN, userId));
+    }
+
 
     // 게시글의 현재 메인 사진들 조회
     @GetMapping("/current-main-photos")

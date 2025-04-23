@@ -283,30 +283,27 @@ export default function BoardDetail() {
 
     if (confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       try {
+        const headers: HeadersInit = {};
+
+        // 토큰이 있으면 헤더에 추가
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-          }/api/v1/boards/${boardIdNumber}`,
+          `http://localhost:8090/api/v1/boards/${boardIdNumber}`,
           {
             method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers,
             credentials: "include",
           }
         );
 
         if (response.ok) {
-          alert("게시글이 성공적으로 삭제되었습니다.");
-          // 마이블로그 페이지로 이동
-          router.push("/members/login/myblog");
+          alert("게시글이 삭제되었습니다.");
+          router.push("/boards"); // 게시글 목록으로 이동
         } else {
-          const errorData = await response.text();
-          if (response.status === 403) {
-            alert("게시글 삭제 권한이 없습니다.");
-          } else {
-            alert(errorData || "게시글 삭제에 실패했습니다.");
-          }
+          alert("게시글 삭제에 실패했습니다.");
         }
       } catch (error) {
         console.error("게시글 삭제 오류:", error);
@@ -341,153 +338,228 @@ export default function BoardDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-md">
-      <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
-      <div className="flex justify-between text-gray-500 text-sm mb-6">
-        <span>작성자: {post.authorName}</span>
-        <div className="flex items-center space-x-4">
-          <span>{new Date(post.createdAt).toLocaleString()}</span>
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* 메인 콘텐츠 */}
+      <main className="flex-grow">
+        <div className="max-w-screen-lg mx-auto px-4 py-12">
+          {/* 제목 및 메타 정보 */}
+          <div className="mb-12">
+            <div className="flex justify-between items-start mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 leading-tight">
+                {post.title}
+              </h1>
 
-          {/* 수정/삭제 버튼 - 작성자에게만 표시 */}
-          {isAuthenticated && isAuthor && (
-            <div className="flex space-x-3">
-              <Link
-                href={`/boards/edit/${boardIdNumber}`}
-                className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
-              >
-                수정
-              </Link>
-              <button
-                onClick={handleDelete}
-                className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* photos 배열이 null이 아닐 때만 렌더링 */}
-      {post.photos && post.photos.length > 0 && (
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {post.photos.map((photoUrl, index) => (
-            <img
-              key={index}
-              src={photoUrl}
-              alt={`게시글 이미지 ${index + 1}`}
-              className="rounded-xl w-full h-auto object-cover"
-            />
-          ))}
-        </div>
-      )}
-      <p className="text-lg text-gray-800 whitespace-pre-line">
-        {post.content}
-      </p>
-
-      {/* 좋아요 버튼 및 카운트 */}
-      <div className="mt-6 flex justify-end items-center space-x-2">
-        <button
-          onClick={handleLikeToggle}
-          className={`flex items-center space-x-1 px-4 py-2 rounded-full transition-colors ${
-            isLiked
-              ? "bg-red-50 text-red-600 hover:bg-red-100"
-              : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill={isLiked ? "currentColor" : "none"}
-            stroke="currentColor"
-            strokeWidth={isLiked ? "0" : "1.5"}
-          >
-            <path
-              fillRule="evenodd"
-              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{isLiked ? "좋아요 취소" : "좋아요"}</span>
-        </button>
-
-        {/* 좋아요 개수 버튼 - 클릭하면 좋아요 리스트 표시 */}
-        <button
-          onClick={toggleLikeList}
-          className="text-sm text-gray-600 hover:text-gray-800 transition-colors flex items-center"
-        >
-          <span className="mr-1">❤️</span>
-          <span>{likeCount}</span>
-        </button>
-      </div>
-
-      {/* 좋아요 리스트 모달 */}
-      {isLikeListOpen && (
-        <LikeList
-          isOpen={isLikeListOpen}
-          onClose={() => setIsLikeListOpen(false)}
-          postId={boardIdNumber.toString()}
-        />
-      )}
-
-      {/* 댓글 섹션 */}
-      <div className="mt-16">
-        <h3 className="text-xl font-bold mb-6">
-          댓글 <span className="text-gray-500">({comments.length})</span>
-        </h3>
-        <div className="space-y-6 mb-8">
-          {comments.map((comment, index) => (
-            <div key={index} className="pt-4 pb-5 border-b border-gray-200">
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full mr-3"></div>
-                  <span className="font-medium">{comment.author}</span>
+              {/* 작성자인 경우 수정/삭제 버튼 */}
+              {isAuthor && (
+                <div className="flex gap-3 ml-4">
+                  <Link
+                    href={`/boards/${boardId}/edit`}
+                    className="flex items-center px-4 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 active:shadow-inner transition-colors"
+                  >
+                    <HiOutlinePencilAlt className="mr-1.5 text-lg" />
+                    수정
+                  </Link>
+                  <button
+                    onClick={handleDelete}
+                    className="flex items-center px-4 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 active:shadow-inner transition-colors"
+                  >
+                    <HiOutlineTrash className="mr-1.5 text-lg" />
+                    삭제
+                  </button>
                 </div>
-                <div className="text-sm text-gray-400 flex items-center">
-                  <span>{comment.createdAt}</span>
+              )}
+            </div>
+
+            <div className="flex items-center text-gray-500 mb-8">
+              <Link
+                href={`/users/${post.authorId || ""}`}
+                className="flex items-center justify-center border border-gray-200 rounded-full w-9 h-9 mr-2 hover:border-gray-300 transition-colors"
+              >
+                <IoPersonOutline className="text-gray-500" />
+              </Link>
+              <Link
+                href={`/users/${post.authorId || ""}`}
+                className="bg-gradient-to-r from-[#2c714c]/10 to-[#2c714c]/5 px-3 py-1 rounded-md font-medium text-[#2c714c] hover:from-[#2c714c]/20 hover:to-[#2c714c]/10 transition-all mr-4"
+              >
+                {post.blogName || post.authorName}
+              </Link>
+              <span className="flex items-center mr-4">
+                <MdOutlineDateRange className="mr-1" />
+                {post.date || new Date(post.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+
+            {/* 상단 액션 버튼 */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <span className="flex items-center">
+                  <MdOutlineRemoveRedEye className="mr-1" />
+                  {post.views || post.viewCount || 0}
+                </span>
+                <span className="flex items-center">
+                  <FaRegComment className="mr-1" />
+                  {comments.length}
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                {/* 좋아요 버튼 */}
+                <button
+                  onClick={handleLikeToggle}
+                  className="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors active:scale-90 active:shadow-inner hover:shadow-md"
+                  style={{
+                    borderColor: isLiked ? "#ff6b6b" : "#e9ecef",
+                    color: isLiked ? "#ff6b6b" : "#868e96",
+                    backgroundColor: isLiked ? "#fff5f5" : "white",
+                  }}
+                >
+                  {isLiked ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                      />
+                    </svg>
+                  )}
+                </button>
+                <span className="text-gray-600">{likeCount}</span>
+
+                {/* 게시글/사진 뷰 선택 */}
+                <div className="flex rounded-md overflow-hidden border border-gray-200 ml-2 shadow-sm">
+                  <button
+                    className="flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 text-sm border-0 active:bg-gray-200 transition-colors"
+                    disabled
+                  >
+                    <HiOutlineDocumentText className="text-lg" />
+                    <span>게시글</span>
+                  </button>
+                  <Link
+                    href={`/boards/${boardId}/photos`}
+                    className="flex items-center gap-1 bg-white text-gray-600 hover:bg-gray-50 active:bg-gray-100 px-3 py-1.5 text-sm border-0 transition-colors"
+                  >
+                    <IoImagesOutline className="text-lg" />
+                    <span>사진</span>
+                  </Link>
                 </div>
               </div>
-              <p className="text-gray-800 pl-11">{comment.content}</p>
             </div>
-          ))}
-        </div>
-
-        {/* 댓글 입력 */}
-        {isAuthenticated ? (
-          <form onSubmit={handleCommentSubmit}>
-            <div className="border border-gray-300 rounded-md overflow-hidden">
-              <textarea
-                placeholder="댓글을 입력하세요..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="w-full p-4 outline-none resize-none text-gray-800"
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end mt-3">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-[#2c714c] text-white text-sm font-medium rounded-md hover:bg-[#225c3d] transition-colors"
-              >
-                댓글 작성
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="bg-gray-50 p-4 rounded-lg text-center">
-            <p className="text-gray-600">
-              댓글을 작성하려면{" "}
-              <a
-                href="/members/login"
-                className="text-[#2c714c] hover:underline"
-              >
-                로그인
-              </a>{" "}
-              이 필요합니다.
-            </p>
           </div>
-        )}
-      </div>
+
+          {/* 구분선 */}
+          <div className="w-full h-px bg-gray-200 mb-8"></div>
+
+          {/* 게시물 내용 */}
+          <div className="prose max-w-none mb-12">
+            <p className="text-lg leading-relaxed text-gray-800 mb-8">
+              {post.content}
+            </p>
+
+            {post.image && (
+              <div className="mb-10">
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="w-full rounded-lg"
+                />
+              </div>
+            )}
+
+            {post.keyFeatures && post.keyFeatures.length > 0 && (
+              <div className="mb-8">
+                <p className="font-medium text-lg mb-4">주요 특징:</p>
+                <ul className="list-disc pl-6 space-y-2 text-gray-800">
+                  {post.keyFeatures.map((feature, index) => (
+                    <li key={index} className="text-lg">
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="text-sm text-gray-500 mt-10 pt-4 border-t border-gray-200">
+              최초 등록일:{" "}
+              {post.date || new Date(post.createdAt).toLocaleDateString()}
+            </div>
+          </div>
+
+          {/* 댓글 섹션 */}
+          <div className="mt-16">
+            <h3 className="text-xl font-bold mb-6">
+              댓글 <span className="text-gray-500">({comments.length})</span>
+            </h3>
+            <div className="space-y-6 mb-8">
+              {comments.map((comment, index) => (
+                <div key={index} className="pt-4 pb-5 border-b border-gray-200">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-300 rounded-full mr-3"></div>
+                      <span className="font-medium">{comment.author}</span>
+                    </div>
+                    <div className="text-sm text-gray-400 flex items-center">
+                      <span>{comment.createdAt}</span>
+                    </div>
+                  </div>
+                  <p className="text-gray-800 pl-11">{comment.content}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 댓글 입력 */}
+            {isAuthenticated ? (
+              <form onSubmit={handleCommentSubmit}>
+                <div className="border border-gray-300 rounded-md overflow-hidden">
+                  <textarea
+                    placeholder="댓글을 입력하세요..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className="w-full p-4 outline-none resize-none text-gray-800"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end mt-3">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-[#2c714c] text-white text-sm font-medium rounded-md hover:bg-[#225c3d] transition-colors"
+                  >
+                    댓글 작성
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-gray-600">
+                  댓글을 작성하려면{" "}
+                  <a
+                    href="/members/login"
+                    className="text-[#2c714c] hover:underline"
+                  >
+                    로그인
+                  </a>{" "}
+                  이 필요합니다.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

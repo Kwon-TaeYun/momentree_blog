@@ -139,6 +139,7 @@ public class UserService {
 
     }
 
+
     public List<UserResponse> getTop5Bloggers() {
         List<User> topUsers = userRepository.findTop5ByOrderByViewCountDescCreatedAtDesc((Pageable) PageRequest.of(0, 5));
         return topUsers.stream()
@@ -170,8 +171,6 @@ public class UserService {
             user.setCurrentProfilePhoto(profilePhoto);
         }
     }
-
-
 
 
     public String genAccessToken(User member) {

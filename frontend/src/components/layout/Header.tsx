@@ -1,4 +1,4 @@
-import Link from "next/link";
+mport Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { BiSearch } from "react-icons/bi";

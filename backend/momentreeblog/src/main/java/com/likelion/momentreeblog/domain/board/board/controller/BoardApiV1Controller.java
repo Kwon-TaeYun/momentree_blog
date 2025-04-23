@@ -2,6 +2,7 @@ package com.likelion.momentreeblog.domain.board.board.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardEditResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
@@ -14,18 +15,16 @@ import com.likelion.momentreeblog.domain.board.like.dto.BoardLikeInfoDto;
 import com.likelion.momentreeblog.domain.board.like.service.LikeService;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.hibernate.Hibernate;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,30 +40,11 @@ public class BoardApiV1Controller {
     private final CommentService commentService;
     private final BoardRepository boardRepository;
 
-//    @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
-//    @PostMapping
-//    public ResponseEntity<String> createBoard(
-//            @RequestHeader(value = "Authorization") String authorization,
-//            @Valid @RequestBody BoardRequestDto requestDto) {
-//        try {
-//            Long userId = jwtTokenizer.getUserIdFromToken(authorization);
-//
-//            String message = boardService.createBoard(requestDto, userId);
-//            return ResponseEntity.ok(message);
-//
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.status(401).body("인증 정보가 잘못되었습니다.");
-//        } catch (Exception e) {
-//            return ResponseEntity.status(500).body("게시글 작성 실패! " + e.getMessage());
-//        }
-//    }
-
     @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
     @PostMapping
     public ResponseEntity<String> createBoard(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @Valid @RequestBody BoardRequestDto requestDto)
-    {
+            @Valid @RequestBody BoardRequestDto requestDto) {
         try {
             Long userId = customUserDetails.getUserId();
             log.info("▶️ createBoard 에 진입! userId = {}", customUserDetails.getUserId());
@@ -82,25 +62,48 @@ public class BoardApiV1Controller {
     }
 
     @GetMapping("/{id}")
-    @Transactional(readOnly = true)
     public ResponseEntity<?> getBoard(@PathVariable Long id) {
         try {
             Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-        
-        // 필요한 컬렉션들을 모두 초기화
-        Hibernate.initialize(board.getPhotos());
-        Hibernate.initialize(board.getLikes());
-        
-        BoardDetailResponseDto responseDto = BoardDetailResponseDto.from(board);
-        return ResponseEntity.ok(responseDto);
-    } catch (IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body("게시글 조회 실패! " + e.getMessage());
+                    .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+            // 필요한 컬렉션들을 모두 초기화
+            Hibernate.initialize(board.getPhotos());
+            Hibernate.initialize(board.getLikes());
+
+            BoardDetailResponseDto responseDto = BoardDetailResponseDto.from(board);
+            return ResponseEntity.ok(responseDto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 조회 실패! " + e.getMessage());
+        }
     }
-}
+
+    @GetMapping("/{id}/edit")
+    public ResponseEntity<BoardEditResponseDto> getBoardForEdit(
+            @PathVariable(name = "id") Long boardId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUserId();
+
+        try {
+            BoardEditResponseDto dto = boardService.getBoardEdit(boardId, userId);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException e) {
+            // 게시글이 없거나 잘못된 요청
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        } catch (SecurityException e) {
+            // 권한이 없는 사용자
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
+    }
+
+
+
 
     @GetMapping("/{id}/edit")
     public ResponseEntity<BoardEditResponseDto> getBoardForEdit(
@@ -158,9 +161,9 @@ public class BoardApiV1Controller {
     @GetMapping
     public ResponseEntity<?> getBoards() {
         Page<BoardListResponseDto> boards = boardService.getBoardList();
-        if(boards.isEmpty()){
+        if (boards.isEmpty()) {
             return ResponseEntity.ok("게시판이 없습니다.");
-        }else {
+        } else {
             return ResponseEntity.ok(boards);
         }
     }
@@ -241,7 +244,6 @@ public class BoardApiV1Controller {
     }
 
 
-
     @PostMapping("/{boardId}/likes")
     public ResponseEntity<String> likeBoard(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -285,9 +287,9 @@ public class BoardApiV1Controller {
     ) {
         try {
             Page<CommentDto> comments = commentService.getCommentsByBoardId(boardId, page);
-            if(comments.isEmpty()){
+            if (comments.isEmpty()) {
                 return ResponseEntity.ok("댓글이 없습니다.");
-            }else {
+            } else {
                 return ResponseEntity.ok(comments);
             }
         } catch (IllegalArgumentException e) {
@@ -353,10 +355,6 @@ public class BoardApiV1Controller {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 삭제 실패: " + e.getMessage());
         }
     }
-
-
-
-
 
 
 }

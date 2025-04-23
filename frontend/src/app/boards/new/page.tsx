@@ -99,8 +99,7 @@ export default function CreatePostPage() {
     checkLoginStatus();
   }, [router]);
 
-  // 에디터에 이미지 삽입 핸들러 - S3 업로드 구현
-   // 에디터에 이미지 삽입 핸들러 - 하이브리드 방식
+  // 에디터에 이미지 삽입 핸들러 - 하이브리드 방식
   const handleEditorImageUpload = (
     blob: File,
     callback: (url: string, alt: string) => void
@@ -187,7 +186,7 @@ export default function CreatePostPage() {
       console.error("S3 이미지 업로드 오류:", error);
     }
   };
-  
+
   // 에디터 내용 변경 핸들러
   const handleEditorChange = () => {
     if (editorRef.current) {
@@ -229,11 +228,6 @@ export default function CreatePostPage() {
 
     if (!formData.content.trim()) {
       alert("내용을 입력해주세요.");
-      return;
-    }
-
-    if (!mainPhotoData) {
-      alert("대표 이미지를 업로드해주세요.");
       return;
     }
 
@@ -345,7 +339,7 @@ export default function CreatePostPage() {
           }
 
           // 업로드된 이미지 목록에 추가
-          setUploadedImages((prev) => [...prev, key]);
+          setUploadedImages((prev) => [...prev, url]); // URL은 프리뷰용
           setAdditionalKeys((prev) => [...prev, key]); // 키는 백엔드 전송용
         } catch (error) {
           console.error("추가 이미지 업로드 오류:", error);
@@ -416,10 +410,10 @@ export default function CreatePostPage() {
         throw new Error("대표 이미지 업로드에 실패했습니다.");
       }
 
-       // 업로드 성공한 이미지 정보 저장 (키 값 저장)
+      // 업로드 성공한 이미지 정보 저장 (키 값 저장)
       setMainPhotoKey(key);
 
-      // 업로드 성공한 이미지 정보 저장
+      // mainPhotoData는 호환성을 위해 유지
       setMainPhotoData({
         url: key,
         type: PhotoType.MAIN,
@@ -451,20 +445,19 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-        <div className="flex gap-6 py-8">
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* 메인 콘텐츠 */}
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex gap-6 py-4">
           <div className="flex-1">
             <div className="bg-white rounded-lg p-6">
-              <h1 className="text-xl font-normal text-black mb-6">
-                새 글 작성
-              </h1>
+              <h1 className="text-4xl font-bold mb-6">새 글 작성</h1>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* 제목 입력 */}
                 <div>
                   <label
                     htmlFor="title"
-                    className="block text-sm font-medium text-black mb-2"
+                    className="block text-lg font-medium text-black mb-2"
                   >
                     제목
                   </label>
@@ -483,7 +476,7 @@ export default function CreatePostPage() {
 
                 {/* 대표 이미지 업로드 */}
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">
+                  <label className="block text-lg font-medium text-black mb-2">
                     대표 이미지
                   </label>
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -552,16 +545,15 @@ export default function CreatePostPage() {
                 <div>
                   <label
                     htmlFor="content"
-                    className="block text-sm font-medium text-black mb-2"
+                    className="block text-lg font-medium text-black mb-2"
                   >
                     내용
                   </label>
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
                     <div className="toast-ui-editor-container">
                       <Editor
-                        initialValue=""
-                        previewStyle="tab"
-                        height="400px"
+                        initialValue=" "
+                        height="900px"
                         initialEditType="wysiwyg"
                         useCommandShortcut={true}
                         usageStatistics={false}
@@ -578,7 +570,7 @@ export default function CreatePostPage() {
                           addImageBlobHook: handleEditorImageUpload,
                         }}
                         language="ko-KR"
-                        placeholder="내용을 입력하세요..."
+                        placeholder=""
                         hideModeSwitch={true}
                       />
                     </div>
@@ -587,6 +579,9 @@ export default function CreatePostPage() {
                     * 이미지를 삽입하려면 툴바의 이미지 아이콘을 클릭하세요.
                   </p>
                 </div>
+              </form>
+            </div>
+          </div>
 
           <div className="w-72 flex-shrink-0">
             <div className="bg-white rounded-lg p-6">

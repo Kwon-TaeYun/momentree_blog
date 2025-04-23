@@ -40,7 +40,6 @@ public class User extends BaseEntity {
     @Column(name = "refresh_token")
     private String refreshToken;
 
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_roles", 
@@ -54,10 +53,6 @@ public class User extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "blog_id")
     private Blog blog;
-
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
-
 
     public void setBlog(Blog blog) {
         this.blog = blog;

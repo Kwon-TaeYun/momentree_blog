@@ -9,11 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tiptap/core": "^2.11.7",
+    "@tiptap/extension-image": "^2.11.7",
+    "@tiptap/pm": "^2.11.2",
+    "@tiptap/react": "^2.11.7",
+    "@tiptap/starter-kit": "^2.11.7",
     "@toast-ui/editor": "^3.2.2",
     "@toast-ui/react-editor": "^3.2.3",
     "@types/styled-components": "^5.1.34",
     "axios": "^1.8.4",
     "next": "15.2.4",
+    "novel": "^0.1.22",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
@@ -27,6 +33,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
