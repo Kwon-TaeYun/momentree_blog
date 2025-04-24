@@ -66,7 +66,9 @@ export default function SearchPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      router.push(`/boards/search?keyword=${encodeURIComponent(searchInput.trim())}`);
+      router.push(
+        `/boards/search?keyword=${encodeURIComponent(searchInput.trim())}`
+      );
     }
   };
 
@@ -81,7 +83,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 네비게이션 바 */}
-      <nav className="bg-white border-b border-gray-200">
+      {/* <nav className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center h-16">
             <Link href="/" className="flex-shrink-0">
@@ -95,7 +97,7 @@ export default function SearchPage() {
             </Link>
           </div>
         </div>
-      </nav>
+      </nav> */}
 
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* 검색 헤더 */}
@@ -147,11 +149,14 @@ export default function SearchPage() {
                         <span>{result.authorName}</span>
                         <span className="mx-2 text-black">•</span>
                         <span>
-                          {new Date(result.createdAt).toLocaleDateString("ko-KR", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                          })}
+                          {new Date(result.createdAt).toLocaleDateString(
+                            "ko-KR",
+                            {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            }
+                          )}
                         </span>
                       </div>
                     </div>
