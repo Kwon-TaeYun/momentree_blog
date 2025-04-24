@@ -7,6 +7,7 @@ import { FaImage, FaTimes } from "react-icons/fa";
 import { BsTag } from "react-icons/bs";
 import dynamic from "next/dynamic";
 import type { EditorInstance } from "@toast-ui/react-editor";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // Toast UI Editor 동적 임포트
 const Editor = dynamic(
@@ -32,12 +33,27 @@ enum PhotoType {
   PROFILE = "PROFILE",
 }
 
+// formData의 타입 정의
+interface FormDataType {
+  title: string;
+  content: string;
+  tags: string;
+  categoryId: string | null; // categoryId를 string | null로 설정
+}
+
+type Category = {
+  id: number;
+  name: string;
+};
+
 export default function CreatePostPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const { loginMember } = useGlobalLoginMember(); // 전역 상태에서 사용자 정보 가져오기
+  const [formData, setFormData] = useState<FormDataType>({
     title: "",
     content: "",
     tags: "",
+    categoryId: null, // 초기값은 null
   });
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
@@ -59,6 +75,11 @@ export default function CreatePostPage() {
   // 이미지 키를 관리하기 위한 상태 추가
   const [mainPhotoKey, setMainPhotoKey] = useState<string>("");
   const [additionalKeys, setAdditionalKeys] = useState<string[]>([]);
+
+  // 카테고리 관련 상태값 추가
+  const [categories, setCategories] = useState<Category[]>([]); // 카테고리 목록
+  const [newCategory, setNewCategory] = useState(""); // 새 카테고리 입력값
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false); // 모달 상태
 
   // Editor 참조
   const editorRef = useRef<EditorInstance>(null);
@@ -121,14 +142,14 @@ export default function CreatePostPage() {
   };
 
   // S3 업로드 처리 함수 (별도 함수로 분리)
-  const uploadToS3 = (file: File, previewUrl: string) => {
+  const uploadToS3 = async (file: File, previewUrl: string) => {
     try {
       // 파일 정보 추출
       const filename = file.name;
       const contentType = file.type;
 
       // S3 프리사인드 URL 요청
-      fetch(
+      const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
         }/api/s3/presigned-url`,
@@ -145,43 +166,43 @@ export default function CreatePostPage() {
             userId: userId,
           }),
         }
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("프리사인드 URL 생성에 실패했습니다.");
-          }
-          return response.json();
-        })
-        .then(({ url, key }) => {
-          // S3에 직접 파일 업로드
-          return fetch(url, {
-            method: "PUT",
-            headers: {
-              "Content-Type": contentType,
-            },
-            body: file,
-          }).then((uploadResponse) => {
-            if (!uploadResponse.ok) {
-              throw new Error("이미지 업로드에 실패했습니다.");
-            }
+      );
 
-            // 프리뷰 URL과 실제 S3 키 저장
-            // 화면에 보여줄 URL과 백엔드에 전송할 키를 별도로 관리
-            setUploadedImages((prev) => {
-              if (prev.includes(previewUrl)) return prev;
-              return [...prev, previewUrl];
-            });
+      if (!response.ok) {
+        throw new Error("프리사인드 URL 생성에 실패했습니다.");
+      }
 
-            // 키값 저장 (백엔드 전송용)
-            setAdditionalKeys((prev) => {
-              if (prev.includes(key)) return prev;
-              return [...prev, key];
-            });
-          });
-        })
-        .catch((error) => {
-          console.error("S3 이미지 업로드 오류:", error);
-        });
+      // PUT용 URL, key, publicUrl 응답 받기
+      const { url: uploadUrl, key, publicUrl } = await response.json();
+
+      // S3에 직접 파일 업로드
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("이미지 업로드에 실패했습니다.");
+      }
+
+      // 에디터에서 base64 → publicUrl로 직접 교체 (URL 조합하지 않음)
+      if (editorRef.current) {
+        const editor = editorRef.current.getInstance();
+        const md = editor.getMarkdown();
+        // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
+        const newMd = md.split(previewUrl).join(publicUrl);
+        // 두 번째 인자(false)는 undo stack에 남기지 않음
+        editor.setMarkdown(newMd, false);
+      }
+
+      // 키값만 저장 (백엔드 전송용)
+      setAdditionalKeys((prev) => {
+        if (prev.includes(key)) return prev;
+        return [...prev, key];
+      });
     } catch (error) {
       console.error("S3 이미지 업로드 오류:", error);
     }
@@ -231,48 +252,66 @@ export default function CreatePostPage() {
       return;
     }
 
+    // 대표 이미지 유효성 검사 제거
+    // 대표 이미지는 선택 사항으로 변경
+
     try {
       setSubmitting(true);
 
+      // S3 기본 URL 정의 (환경 변수에서 가져오기)
+      const S3_BASE =
+        process.env.NEXT_PUBLIC_S3_BASE_URL ||
+        "https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com";
+
+      // 콘텐츠에서 절대 경로(publicUrl)를 상대 경로(key)로 치환
+      const submitContent = formData.content.replace(
+        new RegExp(`${S3_BASE}/(uploads/[^)\\s]+)`, "g"),
+        "/$1" // 또는 key 값만 남기려면 '$1'
+      );
+
       console.log("제출 데이터:");
       console.log("- 제목:", formData.title);
-      console.log("- 내용:", formData.content.substring(0, 100) + "...");
-      console.log("- 대표 이미지 키:", mainPhotoKey);
+      console.log("- 내용:", submitContent.substring(0, 100) + "...");
+      console.log("- 대표 이미지 키:", mainPhotoKey || "없음");
       console.log("- 추가 이미지 키들:", additionalKeys);
 
       // 요청 데이터 생성 - BoardRequestDto와 일치하는 형식
       const requestData = {
         title: formData.title,
-        content: formData.content,
-        currentMainPhotoUrl: mainPhotoKey, // 백엔드에서는 url 필드명을 사용하지만 실제로는 키 전송
-        photoUrls: additionalKeys, // 배열 형태로 키 전송
-        categoryId: null, // 카테고리 기능 구현 시 추가
+        content: submitContent, // 치환된 콘텐츠 사용
+        currentMainPhotoUrl: mainPhotoKey || null, // 대표 이미지가 없으면 null 전송
+        photoUrls: additionalKeys, // ADDITIONAL 키들
+        categoryId: formData.categoryId ? parseInt(formData.categoryId) : null, // 유효하지 않은 값은 null로 처리
       };
 
-      // 백엔드 API 호출
-      const response = await fetch(`http://localhost:8090/api/v1/boards`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // 쿠키 포함
-        body: JSON.stringify(requestData),
-      });
+      console.log("Request Data:", requestData); // 디버깅용 로그
+
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/boards`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(requestData),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("게시글 작성에 실패했습니다.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "게시글 작성에 실패했습니다.");
       }
 
-      const result = await response.text();
       alert("게시글이 성공적으로 작성되었습니다.");
-
-      // 게시글 목록 페이지로 이동
-      router.push("/boards");
-    } catch (error) {
+      router.push("/members/login/myblog");
+    } catch (error: any) {
       console.error("게시글 작성 오류:", error);
-      alert("게시글 작성 중 오류가 발생했습니다.");
+      alert(error.message || "게시글 작성 중 오류가 발생했습니다.");
     } finally {
-      setSubmitting(false);
+      setSubmitting(false); // 제출 상태 초기화
     }
   };
 
@@ -395,7 +434,7 @@ export default function CreatePostPage() {
         throw new Error("프리사인드 URL 생성에 실패했습니다.");
       }
 
-      const { url, key } = await presignedUrlResponse.json();
+      const { url, key, publicUrl } = await presignedUrlResponse.json();
 
       // S3에 직접 파일 업로드
       const uploadResponse = await fetch(url, {
@@ -410,12 +449,13 @@ export default function CreatePostPage() {
         throw new Error("대표 이미지 업로드에 실패했습니다.");
       }
 
-      // 업로드 성공한 이미지 정보 저장 (키 값 저장)
+      // 업로드 성공한 이미지 정보 저장 - 키 값만 저장 (DB 용)
       setMainPhotoKey(key);
 
-      // mainPhotoData는 호환성을 위해 유지
+      // mainPhotoData에는 url 및 타입 정보 저장
       setMainPhotoData({
-        url: key,
+        url: key, // DB에 저장될 값은 key만
+        publicUrl: publicUrl, // 브라우저에서 표시용
         type: PhotoType.MAIN,
       });
     } catch (error) {
@@ -433,6 +473,147 @@ export default function CreatePostPage() {
     setMainImageFile(null);
     setMainPhotoData(null);
     setMainPhotoKey("");
+  };
+
+  // 카테고리 모달 열기
+  const openCategoryModal = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  // 카테고리 모달 닫기
+  const closeCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+  };
+
+  // 카테고리 조회 함수
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 인증 정보 포함
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.map((category: Category) => category)); // 카테고리 객체로 설정
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 조회 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 조회 중 오류:", error);
+      alert("카테고리 조회 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 페이지 로드 시 카테고리 조회
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // 카테고리 추가
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      alert("카테고리 이름을 입력하세요.");
+      return;
+    }
+    console.log("loginMember:", loginMember);
+    try {
+      // blogId 가져오기
+
+      const blogId = loginMember.blogId;
+      if (!blogId) {
+        alert("블로그 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      // API 호출
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${blogId}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newCategory.trim(), // 카테고리 이름
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories((prev) => [...prev, data]); // 새 카테고리를 목록에 추가
+        setNewCategory(""); // 입력 필드 초기화
+        alert("카테고리가 추가되었습니다.");
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 추가 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 추가 중 오류:", error);
+      alert("카테고리 추가 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 카테고리 선택
+  const handleSelectCategory = (category: Category) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryId: category.id.toString(), // 카테고리 ID를 문자열로 설정
+    }));
+    closeCategoryModal();
+  };
+
+  // 카테고리 삭제
+  const handleDeleteCategory = async (category: Category) => {
+    if (!confirm(`"${category.name}" 카테고리를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const blogId = loginMember.blogId;
+      if (!blogId) {
+        alert("블로그 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${blogId}/${category.name}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        setCategories((prev) => prev.filter((cat) => cat.id !== category.id)); // 삭제된 카테고리를 목록에서 제거
+        alert("카테고리가 삭제되었습니다.");
+      } else {
+        const errorData = await response.json();
+        const errorMessage = errorData.message || "카테고리 삭제 실패";
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error("카테고리 삭제 중 오류:", error);
+      alert("카테고리 삭제 중 오류가 발생했습니다.");
+    }
   };
 
   // 로딩 중이면 로딩 상태 표시
@@ -541,6 +722,28 @@ export default function CreatePostPage() {
                   </div>
                 </div>
 
+                {/* 카테고리 선택 */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">
+                    카테고리
+                  </label>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      {categories.find(
+                        (category) =>
+                          category.id.toString() === formData.categoryId
+                      )?.name || "카테고리를 선택하세요"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={openCategoryModal}
+                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                    >
+                      카테고리 선택
+                    </button>
+                  </div>
+                </div>
+
                 {/* 내용 입력 - Toast UI Editor */}
                 <div>
                   <label
@@ -601,7 +804,11 @@ export default function CreatePostPage() {
                 <div>
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-medium text-black">카테고리</h3>
-                    <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
+                    <button
+                      type="button"
+                      onClick={openCategoryModal}
+                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                    >
                       카테고리 선택
                     </button>
                   </div>
@@ -702,6 +909,81 @@ export default function CreatePostPage() {
           </div>
         </div>
       </div>
+
+      {/* 카테고리 모달 */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-lg font-medium text-black mb-4">
+              카테고리 선택
+            </h2>
+            <div className="space-y-4">
+              {/* 기존 카테고리 목록 */}
+              {categories.map((category: Category, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between border-b pb-2"
+                >
+                  <span className="text-sm text-gray-700">{category.name}</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory(category)}
+                      className="text-sm text-blue-500 hover:underline"
+                    >
+                      선택
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(category)}
+                      className="text-sm text-red-500 hover:underline"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* 새 카테고리 추가 */}
+              <div>
+                <label
+                  htmlFor="new-category"
+                  className="block text-sm font-medium text-black mb-2"
+                >
+                  새 카테고리 추가
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    id="new-category"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 모달 닫기 버튼 */}
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={closeCategoryModal}
+                className="px-4 py-2 text-sm text-black border border-gray-300 rounded-md hover:bg-gray-100"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast UI Editor 스타일 */}
       <style jsx global>{`

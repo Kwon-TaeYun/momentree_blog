@@ -1,10 +1,7 @@
 package com.likelion.momentreeblog.domain.board.board.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardEditResponseDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
+import com.likelion.momentreeblog.domain.board.board.dto.*;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.board.service.BoardService;
@@ -62,17 +59,19 @@ public class BoardApiV1Controller {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBoard(@PathVariable Long id) {
+    public ResponseEntity<?> getBoard(@PathVariable(name = "id") Long id) {
         try {
             Board board = boardRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
 
             // 필요한 컬렉션들을 모두 초기화
             Hibernate.initialize(board.getPhotos());
             Hibernate.initialize(board.getLikes());
 
-            BoardDetailResponseDto responseDto = BoardDetailResponseDto.from(board);
-            return ResponseEntity.ok(responseDto);
+            BoardDetailResponseDto dto = boardService.getBoard(id);
+
+            return ResponseEntity.ok(dto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
@@ -137,7 +136,10 @@ public class BoardApiV1Controller {
     }
 
     @GetMapping
-    public ResponseEntity<?> getBoards() {
+    public ResponseEntity<?> getBoards(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        Long userId = customUserDetails.getUserId();
         Page<BoardListResponseDto> boards = boardService.getBoardList();
         if (boards.isEmpty()) {
             return ResponseEntity.ok("게시판이 없습니다.");
@@ -146,18 +148,7 @@ public class BoardApiV1Controller {
         }
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<?> searchBoards(@RequestParam("keyword") String keyword) {
-        Page<BoardListResponseDto> result = boardService.searchBoardsByContent(keyword);
 
-        if (result.isEmpty()) {
-            return ResponseEntity
-                    .status(200)
-                    .body("검색 결과가 없습니다.");
-        }
-
-        return ResponseEntity.ok(result);
-    }
 
     //사용자별 게시글 조회
     @Operation(summary = "사용자별 게시글 조회")
@@ -172,6 +163,21 @@ public class BoardApiV1Controller {
 //        return ResponseEntity.ok(result);
 //    }
 
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchBoards(@RequestParam("keyword") String keyword) {
+        Page<BoardListResponseDto> result = boardService.searchBoardsByContent(keyword);
+
+        if (result.isEmpty()) {
+            return ResponseEntity
+                    .status(200)
+                    .body("검색 결과가 없습니다.");
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+
     @GetMapping("/searchById")
     public ResponseEntity<?> searchBoardsByUserId(Authentication authentication) {
         if (authentication == null) {
@@ -181,7 +187,7 @@ public class BoardApiV1Controller {
         try {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             Long userId = userDetails.getUserId();
-            Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
+            Page<BoardMyBlogResponseDto> result = boardService.searchBoardsByUserId(userId);
 
             if (result.isEmpty()) {
                 return ResponseEntity.ok(Collections.singletonMap("message", "해당 사용자의 게시글이 없습니다."));

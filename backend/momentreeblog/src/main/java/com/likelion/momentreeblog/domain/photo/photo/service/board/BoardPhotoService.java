@@ -287,6 +287,11 @@ public class BoardPhotoService {
         // 게시글과 사용자의 관계 검증
         verifyBoardAndUser(boardId, user.getId());
 
+        // 기존 Photo 조회
+        Photo existing = photoRepository.findByBoardIdAndType(boardId, PhotoType.MAIN)
+                .stream().findFirst().orElse(null);
+
+
         // S3 업로드 완료 후, 클라이언트가 전달한 s3Key를 사용하여 새 Photo 엔티티 생성
         Photo newMainPhoto = Photo.builder()
                 .type(PhotoType.MAIN)

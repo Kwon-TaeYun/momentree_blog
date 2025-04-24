@@ -2,21 +2,19 @@ package com.likelion.momentreeblog.domain.board.board.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardEditResponseDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
-import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
+import com.likelion.momentreeblog.domain.board.board.dto.*;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
 import com.likelion.momentreeblog.domain.board.category.repository.CategoryRepository;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
+import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
-import com.likelion.momentreeblog.domain.photo.photo.service.board.BoardPhotoService;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,20 +24,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoardService {
     private final BoardRepository boardRepository;
     private final BlogRepository blogRepository;
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
-    private final BoardPhotoService boardPhotoService;
+    private final PhotoRepository photoRepository;
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
-//    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
+
+    //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
 //
@@ -71,6 +75,7 @@ public class BoardService {
                             new IllegalArgumentException("해당 카테고리가 없습니다. id=" + categoryId));
         }
 
+
         Board board = Board.builder()
                 .blog(blog)
                 .category(category)
@@ -82,9 +87,7 @@ public class BoardService {
         boardRepository.save(board);
 
 
-
         // 대표 사진(Photo) 먼저 저장
-
         // 대표 사진 업로드 안했을때와 했을때 구별
         String mainPhotoKey = (requestDto.getCurrentMainPhotoUrl() == null
                 || requestDto.getCurrentMainPhotoUrl().isBlank())
@@ -101,8 +104,13 @@ public class BoardService {
         board.setCurrentMainPhoto(mainPhoto);
 
 
+
+
         //추가 이미지가 있다면, 같은 순서로 추가 Photo도 저장
         for (String additionalUrl : requestDto.getPhotoUrls()) {
+            // data:로 시작하는 임시 preview URL 이면 건너뛰기
+            if (additionalUrl.startsWith("data:")) continue;
+
             board.getPhotos().add(
                     Photo.builder()
                             .type(PhotoType.ADDITIONAL)
@@ -131,45 +139,71 @@ public class BoardService {
             throw new SecurityException("게시글 수정 권한이 없습니다.");
         }
 
-        // 3) 대표 사진 S3 → DB
-        photoV1Service.updatePhotoWithS3Key(
-                PhotoType.MAIN,
-                userId,
-                board.getId(),
-                requestDto.getCurrentMainPhotoUrl(),
-                PhotoUploadRequestDto.builder()
-                        .photoType(PhotoType.MAIN)
-                        .filename(null)
-                        .contentType(null)
-                        .boardId(id)
-                        .userId(userId)
-                        .build()
-        );
+        // Markdown img 구문에서 key 집합 추출
+        String markdown = requestDto.getContent();
 
-        boardPhotoService.updateBoardAdditionalPhotosWithS3Keys(
-                id,
-                requestDto.getPhotoUrls(),
-                PhotoUploadRequestDto.builder()
-                        .photoType(PhotoType.ADDITIONAL)
-                        .boardId(board.getId())
-                        .contentType(null)
-                        .filename(null)
-                        .boardId(id)
-                        .userId(userId)
-                        .build()
-        );
+        Pattern p = Pattern.compile("!\\[[^\\]]*\\]\\(([^)]+)\\)");
+        Matcher m = p.matcher(markdown);
+        Set<String> contentKeys = new HashSet<>();
+        while (m.find()) {
+            contentKeys.add(m.group(1));  // group(1)이 (  ) 안의 key
+        }
 
 
+        // 대표 사진(diff) 처리
+        String newMainKey = requestDto.getCurrentMainPhotoUrl();
+        Photo existingMain = photoRepository
+                .findFirstByBoardIdAndTypeOrderByCreatedAtDesc(id, PhotoType.MAIN)
+                .orElse(null);
+        if (existingMain == null || !existingMain.getUrl().equals(newMainKey)) {
+            photoV1Service.updatePhotoWithS3Key(
+                    PhotoType.MAIN,
+                    userId,
+                    id,
+                    newMainKey,
+                    PhotoUploadRequestDto.builder()
+                            .photoType(PhotoType.MAIN)
+                            .boardId(id)
+                            .userId(userId)
+                            .build()
+            );
+        }
+
+        // 추가 사진(diff) 처리
+        List<Photo> existingAdditional =
+                photoRepository.findByBoardIdAndType(id, PhotoType.ADDITIONAL);
+
+        // 삭제
+        existingAdditional .stream()
+                .filter(photo -> !contentKeys.contains(photo.getUrl()))
+                .forEach(photo -> {
+                    board.getPhotos().remove(photo);
+//                    photoV1Service.deletePhoto(PhotoType.ADDITIONAL,userId,id);
+                    photoRepository.delete(photo);
+                });
+
+        // 추가
+        Set<String> oldKeys = existingAdditional .stream().map(Photo::getUrl).collect(Collectors.toSet());
+        for (String key : contentKeys) {
+            if (!oldKeys.contains(key)) {
+                photoRepository.save(Photo.builder()
+                        .type(PhotoType.ADDITIONAL)
+                        .url(key)
+                        .user(board.getBlog().getUser())
+                        .board(board)
+                        .build());
+            }
+        }
+
+        // 게시글 내용 업데이트
         board.setTitle(requestDto.getTitle());
         board.setContent(requestDto.getContent());
+        Board updated = boardRepository.save(board);
 
-
-        Board updatedBoard = boardRepository.save(board);
-        return "게시글 수정 완료 (" + updatedBoard.getTitle() + ")";
+        return "게시글 수정 완료 (" + updated.getTitle() + ")";
     }
 
-
-
+    
     //게시글 수정할때 게시글의 정보 받아오기
     @Transactional(readOnly = true)
     public BoardEditResponseDto getBoardEdit(Long boardId, Long userId) {
@@ -180,20 +214,22 @@ public class BoardService {
             throw new SecurityException("수정할 권한이 없습니다");
         }
 
-        // 2) 메인 사진 URL (GET presigned URL)
+        //순수 Markdown 콘텐츠 (키 포함)
+        String markdown = board.getContent();
+
+        // 메인 사진 URL (GET presigned URL)
         PreSignedUrlResponseDto mainPhotoDto =
                 photoV1Service.getPhotoUrl(PhotoType.MAIN, boardId);
 
+        // 추가 사진 presigned URL 리스트
         List<PreSignedUrlResponseDto> additionalDtos =
                 photoV1Service.getBoardAdditionalPhotos(PhotoType.ADDITIONAL, boardId);
 
-
-
-        // 4) BoardEditResponseDto 빌드
+        // BoardEditResponseDto 빌드
         BoardEditResponseDto dto = new BoardEditResponseDto();
         dto.setId(board.getId());
         dto.setTitle(board.getTitle());
-        dto.setContent(board.getContent());
+        dto.setContent((markdown));
         dto.setCurrentMainPhotoUrl(mainPhotoDto.getUrl());
         dto.setCurrentMainPhotoKey(mainPhotoDto.getKey());
         dto.setAdditionalPhotoUrls(
@@ -227,6 +263,26 @@ public class BoardService {
     }
 
 
+    //게시글 상세 조회
+    @Transactional(readOnly = true)
+    public BoardDetailResponseDto getBoard(Long boardId) {
+
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다"));
+
+        log.info("유저 아이디" + board.getBlog().getUser().getId());
+        PreSignedUrlResponseDto mainDto =
+                photoV1Service.getPhotoUrl(PhotoType.MAIN, boardId);
+        List<PreSignedUrlResponseDto> additionalDtos =
+                photoV1Service.getBoardAdditionalPhotos(PhotoType.ADDITIONAL, boardId);
+        PreSignedUrlResponseDto profileDto =
+                photoV1Service.getPhotoUrl(PhotoType.PROFILE, board.getBlog().getUser().getId());
+
+        return BoardDetailResponseDto.from(board, mainDto, additionalDtos, profileDto);
+    }
+
+
+
     //게시글 목록 조회 (타이틀과 블로그 ID만 반환)
     @Transactional
     public Page<BoardListResponseDto> getBoardList() {
@@ -255,27 +311,48 @@ public class BoardService {
         ));
     }
 
-    @Transactional(readOnly = true)
-    public BoardDetailResponseDto getBoardDetail(Long id) {
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
-        return BoardDetailResponseDto.from(board);
-    }
+//    @Transactional(readOnly = true)
+//    public BoardDetailResponseDto getBoardDetail(Long id) {
+//        Board board = boardRepository.findById(id)
+//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
+//        return BoardDetailResponseDto.from(board);
+//    }
 
 
     @Transactional(readOnly = true)
-    public Page<BoardListResponseDto> searchBoardsByUserId(Long userId) {
+    public Page<BoardMyBlogResponseDto> searchBoardsByUserId(Long userId) {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Board> boards = boardRepository.findByBlog_User_Id(userId, pageable);
 
-        return boards.map(board -> new BoardListResponseDto(
-                board.getId(),
-                board.getTitle(),
-                board.getBlog().getId(),
-                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
-                board.getLikes().stream().count()
-        ));
+        return boards.map(board -> {
+
+            //board 단위의 메인 사진 presigned URL
+            PreSignedUrlResponseDto mainPhotoDto = board.getCurrentMainPhoto() != null
+                    ? photoV1Service.getPhotoUrl(PhotoType.MAIN, board.getId())
+                    : null;
+
+            // 프로필 사진 presigned URL
+            PreSignedUrlResponseDto profilePhotoDto =
+                    photoV1Service.getPhotoUrl(PhotoType.PROFILE, userId);
+
+            // DTO 필드 타입에 맞게 리스트로 래핑
+            List<PreSignedUrlResponseDto> mainPhotoList = mainPhotoDto != null
+                    ? List.of(mainPhotoDto)
+                    : List.of();
+
+            return new BoardMyBlogResponseDto(
+                    board.getId(),
+                    board.getTitle(),
+                    board.getBlog().getId(),
+                    board.getLikes().stream().count(),
+                    mainPhotoList,
+                    profilePhotoDto
+            );
+
+        });
     }
+
+
     @Transactional(readOnly = true)
     public List<BoardListResponseDto> getLatestPosts() {
         List<Board> boards = boardRepository.findTop3ByOrderByCreatedAtDesc();
@@ -290,6 +367,7 @@ public class BoardService {
                 ))
                 .collect(Collectors.toList());
     }
+
     @Transactional(readOnly = true)
     public List<BoardListResponseDto> getPopularPosts() {
         Pageable pageable = PageRequest.of(0, 5);
@@ -306,7 +384,6 @@ public class BoardService {
                 ))
                 .collect(Collectors.toList());
     }
-
-
-
 }
+
+

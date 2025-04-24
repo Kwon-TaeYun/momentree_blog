@@ -61,4 +61,12 @@ public class S3ApiV1Controller {
         return ResponseEntity.ok(response);
     }
 
+
+    // 기존 POST /api/s3/presigned-url (PUT 용) 과 별개로
+    @GetMapping("/api/s3/presigned-url/{key:.+}")
+    public PreSignedUrlResponseDto getPresignedUrl(@PathVariable("key") String key) {
+        return s3V1Service.generateGetPresignedUrl(key);
+    }
+
 }
+

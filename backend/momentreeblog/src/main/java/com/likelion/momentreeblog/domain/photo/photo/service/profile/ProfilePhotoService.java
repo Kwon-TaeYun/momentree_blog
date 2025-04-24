@@ -26,7 +26,7 @@ public class ProfilePhotoService {
     private final UserRepository userRepository;
 
     // 기본 프로필 이미지 URL (S3에 미리 업로드된 기본 이미지 URL)
-    @Value("${custom.default-image-url}")
+    @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
 
 
@@ -165,6 +165,7 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
         // 사용자 존재 여부 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다."));
+
 
         // S3 업로드 완료 후, 클라이언트가 전달한 s3Key를 사용하여 새 Photo 엔티티 생성
         Photo newProfilePhoto = Photo.builder()
