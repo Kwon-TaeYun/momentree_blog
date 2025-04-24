@@ -41,6 +41,14 @@ type Category = {
   name: string;
 };
 
+interface Board {
+  id: number;
+  title: string;
+  content: string;
+  categoryName?: string; // 선택적 필드
+  currentMainPhotoUrl?: string;
+}
+
 // 언어 패키지는 Editor 컴포넌트의 language prop으로 처리
 
 export default function EditPostPage() {
@@ -54,6 +62,7 @@ export default function EditPostPage() {
     tags: "",
     categoryId: null, // 초기값은 null
   });
+  const [board, setBoard] = useState<Board | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -880,7 +889,9 @@ export default function EditPostPage() {
                     현재 카테고리
                   </h3>
                   <p className="text-sm text-gray-700">
-                    {currentCategoryName || "카테고리가 설정되지 않았습니다."}
+                    {currentCategoryName ||
+                      board?.categoryName ||
+                      "카테고리 없음"}
                   </p>
                 </div>
 
