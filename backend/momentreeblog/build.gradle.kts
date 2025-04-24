@@ -64,6 +64,9 @@ dependencies {
 	//s3을 위한 설정
 	implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
 	implementation("software.amazon.awssdk:s3:2.20.16")
+
+	//내용편집기에 대한 의존성 추가
+	implementation("org.jsoup:jsoup:1.16.1")
 }
 
 tasks.withType<Test> {
