@@ -32,4 +32,7 @@ public interface BoardRepository extends JpaRepository<Board, Long>{
     List<Board> findTop5ByLikeCount(Pageable pageable);
     boolean existsByCategory(Category category);
 
+    // BoardRepository 인터페이스에 추가
+    Page<Board> findByBlogId(Long blogId, Pageable pageable);
+
 }
