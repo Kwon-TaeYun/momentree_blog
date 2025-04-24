@@ -8,6 +8,7 @@ type Member = {
   name: string;
   email: string;
   blogName: string;
+  blogId: number;
   // profileImage?: string;
 };
 
@@ -35,6 +36,7 @@ function createEmptyMember(): Member {
     email: "",
     name: "",
     blogName: "",
+    blogId: 0,
     // profileImage: "",
   };
 }

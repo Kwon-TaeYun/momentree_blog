@@ -40,6 +40,7 @@ public class User extends BaseEntity {
     @Column(name = "refresh_token")
     private String refreshToken;
 
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_roles", 

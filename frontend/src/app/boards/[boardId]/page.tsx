@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // Toast UI Viewer 동적 임포트
 const Viewer = dynamic(
@@ -41,9 +42,14 @@ interface Post {
 }
 
 interface Comment {
-  author: string;
+  id: number;
+  userId: number;
+  userName: string; // userName 필드 추가
+  boardId: number;
   content: string;
   createdAt: string;
+  updatedAt?: string;
+  author?: string; // author 속성 추가
 }
 
 interface User {
@@ -54,6 +60,7 @@ interface User {
 }
 
 export default function BoardDetail() {
+  const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
   const router = useRouter();
   const { boardId } = useParams(); // boardId는 string 타입으로 반환됩니다.
   const [post, setPost] = useState<Post | null>(null);
@@ -69,6 +76,10 @@ export default function BoardDetail() {
   const [token, setToken] = useState<string | null>(null);
   const [isLikeListOpen, setIsLikeListOpen] = useState<boolean>(false);
   const viewerRef = useRef(null);
+
+  // 상태 추가
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editCommentText, setEditCommentText] = useState<string>("");
 
   // boardId를 숫자 타입으로 변환합니다.
   const boardIdNumber = Number(boardId); // boardId를 숫자로 변환
@@ -125,13 +136,12 @@ export default function BoardDetail() {
         setLoading(true);
         try {
           const headers: HeadersInit = {};
-
-          // 토큰이 있으면 헤더에 추가
           if (token) {
             headers["Authorization"] = `Bearer ${token}`;
           }
 
-          const response = await fetch(
+          // 게시글 데이터 가져오기
+          const postResponse = await fetch(
             `http://localhost:8090/api/v1/boards/${boardIdNumber}`,
             {
               credentials: "include",
@@ -139,11 +149,11 @@ export default function BoardDetail() {
             }
           );
 
-          if (!response.ok) {
+          if (!postResponse.ok) {
             throw new Error("게시글 조회 실패");
           }
 
-          const data = await response.json();
+          const data = await postResponse.json();
 
           // 마크다운 내의 이미지 키를 URL로 변환
           if (data.content) {
@@ -201,22 +211,34 @@ export default function BoardDetail() {
           setPost(data);
           setLikeCount(data.likeCount || 0);
 
-          // 작성자 확인 로그 출력 및 타입 변환 비교
-          console.log("data.authorId:", data.authorId);
-          console.log("currentUser?.id:", currentUser?.id);
+          // 댓글 데이터 따로 가져오기
+          const commentsResponse = await fetch(
+            `http://localhost:8090/api/v1/boards/${boardIdNumber}/comments`,
+            {
+              credentials: "include",
+              headers,
+            }
+          );
 
-          if (currentUser && Number(data.authorId) === Number(currentUser.id)) {
+          if (commentsResponse.ok) {
+            const commentsData = await commentsResponse.json();
+            const processedComments = commentsData.map((comment: any) => ({
+              ...comment,
+              author: comment.userName || "알 수 없음", // author 속성 추가
+              createdAt: new Date(comment.createdAt).toLocaleString(),
+            })) as Comment[]; // 타입 단언 추가
+            setComments(processedComments);
+          }
+
+          if (currentUser && Number(data.userId) === Number(currentUser.id)) {
             setIsAuthor(true);
           }
 
-          // 현재 사용자가 좋아요를 눌렀는지 확인
+          // 좋아요 상태 확인
           if (currentUser && data.likeUsers && Array.isArray(data.likeUsers)) {
-            // 문자열 배열인 경우 현재 사용자의 이름이 포함되어 있는지 확인
             if (typeof data.likeUsers[0] === "string") {
               setIsLiked(data.likeUsers.includes(currentUser.name));
-            }
-            // 객체 배열인 경우 현재 사용자의 ID가 포함되어 있는지 확인
-            else {
+            } else {
               setIsLiked(
                 data.likeUsers.some(
                   (user: any) => Number(user.id) === Number(currentUser.id)
@@ -224,8 +246,6 @@ export default function BoardDetail() {
               );
             }
           }
-
-          setComments(data.comments || []);
         } catch (error) {
           setError(
             error instanceof Error
@@ -296,18 +316,11 @@ export default function BoardDetail() {
       return;
     }
 
-    const newComment = {
-      author: currentUser?.name || "알 수 없음",
-      content: commentText,
-      createdAt: new Date().toLocaleString(),
-    };
-
     try {
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
 
-      // 토큰이 있으면 헤더에 추가
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -318,11 +331,21 @@ export default function BoardDetail() {
           method: "POST",
           headers,
           credentials: "include",
-          body: JSON.stringify(newComment),
+          body: JSON.stringify({
+            content: commentText,
+          }),
         }
       );
 
       if (res.ok) {
+        const savedComment = await res.json();
+        const newComment = {
+          ...savedComment,
+          author: savedComment.userName || currentUser?.name || "알 수 없음",
+          userId: currentUser?.id,
+          createdAt: new Date().toLocaleString(),
+        };
+        // 새 댓글을 배열 끝에 추가
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
       } else {
@@ -330,6 +353,77 @@ export default function BoardDetail() {
       }
     } catch (error) {
       console.error("댓글 작성 실패:", error);
+    }
+  };
+
+  // 댓글 수정 핸들러
+  const handleCommentEdit = async (commentId: number) => {
+    if (!editCommentText.trim()) return;
+
+    try {
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(
+        `http://localhost:8090/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
+        {
+          method: "PUT",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({ content: editCommentText }),
+        }
+      );
+
+      if (res.ok) {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === commentId
+              ? { ...comment, content: editCommentText }
+              : comment
+          )
+        );
+        setEditingCommentId(null);
+        setEditCommentText("");
+      } else {
+        alert("댓글 수정에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("댓글 수정 실패:", error);
+    }
+  };
+
+  // 댓글 삭제 핸들러
+  const handleCommentDelete = async (commentId: number) => {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+
+    try {
+      const headers: HeadersInit = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(
+        `http://localhost:8090/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers,
+          credentials: "include",
+        }
+      );
+
+      if (res.ok) {
+        setComments((prev) =>
+          prev.filter((comment) => comment.id !== commentId)
+        );
+      } else {
+        alert("댓글 삭제에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("댓글 삭제 실패:", error);
     }
   };
 
@@ -350,6 +444,7 @@ export default function BoardDetail() {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
+              ...(token && { Authorization: `Bearer ${token}` }),
             },
             credentials: "include",
           }
@@ -357,19 +452,18 @@ export default function BoardDetail() {
 
         if (response.ok) {
           alert("게시글이 성공적으로 삭제되었습니다.");
-          // 마이블로그 페이지로 이동
           router.push("/members/login/myblog");
         } else {
-          const errorData = await response.text();
-          if (response.status === 403) {
-            alert("게시글 삭제 권한이 없습니다.");
-          } else {
-            alert(errorData || "게시글 삭제에 실패했습니다.");
-          }
+          const errorData = await response.json().catch(() => null);
+          const errorMessage =
+            errorData?.message || "게시글 삭제에 실패했습니다.";
+          alert(errorMessage);
         }
       } catch (error) {
         console.error("게시글 삭제 오류:", error);
-        alert("게시글 삭제 중 오류가 발생했습니다.");
+        alert(
+          "게시글 삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요."
+        );
       }
     }
   };
@@ -438,8 +532,8 @@ export default function BoardDetail() {
           </div>
 
           {/* 수정/삭제 버튼 - 작성자에게만 표시 */}
-          {isAuthenticated && isAuthor && (
-            <div className="flex space-x-2">
+          {loginMember.name === post.authorName && (
+            <div className="flex space-x-3">
               <Link
                 href={`/boards/${boardId}/edit`}
                 className="px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors font-medium"
@@ -535,23 +629,74 @@ export default function BoardDetail() {
         <div className="space-y-6 mb-8">
           {comments.length > 0 ? (
             comments.map((comment, index) => (
-              <div key={index} className="p-4 bg-white rounded-lg shadow-sm">
+              <div key={index} className="pt-4 pb-5 border-b border-gray-200">
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-xs font-medium">
-                        {comment.author && comment.author[0]}
-                      </span>
-                    </div>
-                    <span className="font-medium text-gray-800">
-                      {comment.author}
+                    <div className="w-8 h-8 bg-gray-300 rounded-full mr-3"></div>
+                    <span className="font-medium">
+                      {comment.userName || comment.author || "알 수 없음"}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-400">
+                  <div className="text-sm text-gray-400 flex items-center space-x-4">
                     <span>{comment.createdAt}</span>
+                    {currentUser?.id === comment.userId && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditCommentText(comment.content);
+                          }}
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleCommentDelete(comment.id)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <p className="text-gray-700 pl-11">{comment.content}</p>
+
+                {editingCommentId === comment.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleCommentEdit(comment.id);
+                    }}
+                    className="pl-11"
+                  >
+                    <textarea
+                      value={editCommentText}
+                      onChange={(e) => setEditCommentText(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      rows={3}
+                    />
+                    <div className="flex justify-end space-x-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditCommentText("");
+                        }}
+                        className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                      >
+                        저장
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="text-gray-700 pl-11">{comment.content}</p>
+                )}
               </div>
             ))
           ) : (

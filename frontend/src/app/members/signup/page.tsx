@@ -21,7 +21,7 @@ export default function SignUp() {
       setMessage("이메일을 입력해주세요.");
       return;
     }
-    
+
     try {
       const response = await fetch(
         `http://localhost:8090/api/v1/members/check-email`,

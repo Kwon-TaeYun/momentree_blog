@@ -134,7 +134,6 @@ public class BoardService {
         Blog blog = blogRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저의 블로그가 존재하지 않습니다."));
 
-        // 게시글의 주인인지 확인
         if (!board.getBlog().getId().equals(blog.getId())) {
             throw new SecurityException("게시글 수정 권한이 없습니다.");
         }
@@ -198,50 +197,19 @@ public class BoardService {
         // 게시글 내용 업데이트
         board.setTitle(requestDto.getTitle());
         board.setContent(requestDto.getContent());
-        Board updated = boardRepository.save(board);
 
+
+        // ✅ 카테고리 업데이트 추가
+        if (requestDto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(requestDto.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다."));
+            board.setCategory(category);
+        }
+
+        Board updated = boardRepository.save(board);
         return "게시글 수정 완료 (" + updated.getTitle() + ")";
     }
 
-    
-    //게시글 수정할때 게시글의 정보 받아오기
-    @Transactional(readOnly = true)
-    public BoardEditResponseDto getBoardEdit(Long boardId, Long userId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 id의 게시물이 없습니다"));
-
-        if (!userId.equals(board.getBlog().getUser().getId())) {
-            throw new SecurityException("수정할 권한이 없습니다");
-        }
-
-        //순수 Markdown 콘텐츠 (키 포함)
-        String markdown = board.getContent();
-
-        // 메인 사진 URL (GET presigned URL)
-        PreSignedUrlResponseDto mainPhotoDto =
-                photoV1Service.getPhotoUrl(PhotoType.MAIN, boardId);
-
-        // 추가 사진 presigned URL 리스트
-        List<PreSignedUrlResponseDto> additionalDtos =
-                photoV1Service.getBoardAdditionalPhotos(PhotoType.ADDITIONAL, boardId);
-
-        // BoardEditResponseDto 빌드
-        BoardEditResponseDto dto = new BoardEditResponseDto();
-        dto.setId(board.getId());
-        dto.setTitle(board.getTitle());
-        dto.setContent((markdown));
-        dto.setCurrentMainPhotoUrl(mainPhotoDto.getUrl());
-        dto.setCurrentMainPhotoKey(mainPhotoDto.getKey());
-        dto.setAdditionalPhotoUrls(
-                additionalDtos.stream()
-                        .map(PreSignedUrlResponseDto::getUrl)
-                        .collect(Collectors.toList()));
-        dto.setAdditionalPhotoKeys(
-                additionalDtos.stream()
-                        .map(PreSignedUrlResponseDto::getKey)
-                        .collect(Collectors.toList()));
-        return dto;
-    }
 
 
 
@@ -355,7 +323,7 @@ public class BoardService {
 
     @Transactional(readOnly = true)
     public List<BoardListResponseDto> getLatestPosts() {
-        List<Board> boards = boardRepository.findTop3ByOrderByCreatedAtDesc();
+        List<Board> boards = boardRepository.findTopBoards(PageRequest.of(0, 3));
 
         return boards.stream()
                 .map(board -> new BoardListResponseDto(
@@ -384,6 +352,22 @@ public class BoardService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public Page<BoardListResponseDto> getBoardsByBlogId(Long blogId, Pageable pageable) {
+        Page<Board> boards = boardRepository.findByBlogId(blogId, pageable);
+        return boards.map(board -> new BoardListResponseDto(
+                board.getId(),
+                board.getTitle(),
+                board.getBlog().getId(),
+                board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
+                board.getLikes().stream().count() // likeCount
+        ));
+    }
 }
+
+
+
+
 
 

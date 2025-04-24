@@ -1,11 +1,19 @@
 package com.likelion.momentreeblog.domain.blog.blog.controller;
 
+import com.likelion.momentreeblog.domain.blog.blog.dto.BlogDetailResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogUpdateRequestDto;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.service.BlogService;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -111,4 +119,27 @@ public class BlogApiV1Controller {
         blogService.deleteBlog(id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
+
+    /**
+     * 블로그 상세 조회 (게시물 목록 포함)
+     */
+    @GetMapping("/{id}/details")
+    public ResponseEntity<?> getBlogDetails(
+            @PathVariable(name = "id") Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            BlogDetailResponseDto details = blogService.getBlogDetails(id, page, size);
+            return ResponseEntity.ok(details);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "블로그 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+
 }
+

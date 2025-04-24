@@ -38,12 +38,24 @@ public class UserFindServiceImpl implements UserFindService{
 
     @Override
     public Long getFollowingCount(User user) {
-        return followRepository.countByFollowing(user);
+        // 팔로잉 수 (내가 팔로우하는 사람 수)를 가져오려면 followRepository.countByFollower를 호출해야 함
+        return followRepository.countByFollower(user);
     }
 
     @Override
     public Long getFollowerCount(User user) {
-        return followRepository.countByFollower(user);
+        // 팔로워 수 (나를 팔로우하는 사람 수)를 가져오려면 followRepository.countByFollowing를 호출해야 함
+        return followRepository.countByFollowing(user);
     }
+
+    // @Override
+    // public Long getFollowingCount(User user) {
+    //     return followRepository.countByFollowing(user);
+    // }
+
+    // @Override
+    // public Long getFollowerCount(User user) {
+    //     return followRepository.countByFollower(user);
+    // }
 
 }

@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -27,6 +28,8 @@ public class BoardDetailResponseDto {
     private String authorName;
     private String[] likeUsers;
     private Long authorId;
+    private List<String> additionalPhotoKeys;
+    private String currentMainPhotoKey;
     public static BoardDetailResponseDto from(Board board,
                                               PreSignedUrlResponseDto mainDto,
                                               List<PreSignedUrlResponseDto> additionalDtos,
@@ -36,6 +39,11 @@ public class BoardDetailResponseDto {
                 board.getLikes().stream()
                         .map(like -> like.getUser().getName()) // 좋아요 누른 사용자들의 이름
                         .toArray(String[]::new) : new String[0];
+
+        // 추가 사진들의 key 리스트
+        List<String> additionalKeys = additionalDtos.stream()
+                .map(PreSignedUrlResponseDto::getKey)
+                .collect(Collectors.toList());
 
         return BoardDetailResponseDto.builder()
                 .id(board.getId())
@@ -52,6 +60,8 @@ public class BoardDetailResponseDto {
                 .likeCount((long) board.getLikes().size())
                 .likeUsers(likeUsersArray)
                 .profilePhoto(profilePhoto)
+                .additionalPhotoKeys(additionalKeys)
+                .currentMainPhotoKey(mainDto.getKey())
                 .build();
     }
 }

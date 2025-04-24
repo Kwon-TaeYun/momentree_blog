@@ -167,6 +167,7 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다."));
 
 
+
         // S3 업로드 완료 후, 클라이언트가 전달한 s3Key를 사용하여 새 Photo 엔티티 생성
         Photo newProfilePhoto = Photo.builder()
                 .type(PhotoType.PROFILE)
