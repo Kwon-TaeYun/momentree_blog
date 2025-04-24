@@ -555,12 +555,34 @@ export default function BoardDetail() {
       <div className="bg-white rounded-xl overflow-hidden shadow-sm">
         {/* 대표 이미지 */}
         {post.photos && post.photos.length > 0 && (
-          <div className="mb-8 flex justify-center">
+          <div className="mb-8 flex justify-center relative">
             <img
               src={post.photos[0]}
               alt="대표 이미지"
               className="rounded-xl max-h-[500px] object-contain"
             />
+            {post.photos.length > 1 && (
+              <div className="absolute bottom-4 right-4">
+                <Link
+                  href={`/boards/${boardId}/photos`}
+                  className="bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg text-sm hover:bg-opacity-80 transition flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  전체보기 ({post.photos.length}장)
+                </Link>
+              </div>
+            )}
           </div>
         )}
 

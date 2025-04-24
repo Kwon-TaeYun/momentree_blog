@@ -22,4 +22,5 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
 
     Optional<Photo> findFirstByBoardIdAndTypeOrderByCreatedAtDesc(Long boardId, PhotoType type);
 
+    List<Photo> findByUser_Id(Long userId);
 }
