@@ -10,7 +10,6 @@ import dynamic from "next/dynamic";
 import { FaImage, FaTimes } from "react-icons/fa";
 import type { EditorInstance } from "@toast-ui/react-editor";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
-
 // Toast UI Editor를 클라이언트 사이드에서만 로드 (SSR 없이)
 const Editor = dynamic(
   () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
@@ -895,75 +894,7 @@ export default function EditPostPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-black">댓글 허용</h3>
-                  <button
-                    type="button"
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1`}
-                    />
-                  </button>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-black mb-2">
-                    태그 추가
-                  </h3>
-                  <div className="mb-2">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {tags.map((tag, index) => (
-                        <div
-                          key={index}
-                          className="inline-flex items-center bg-[#edf7f2] text-[#2c714c] px-3 py-1.5 rounded-full"
-                        >
-                          <span className="mr-1">#{tag}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            className="text-[#2c714c] hover:text-[#225c3d]"
-                          >
-                            <FaTimes size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="#태그 입력 (쉼표로 구분)"
-                        className="block w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black placeholder-gray-900 pr-14"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddTag}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 hover:text-black px-2 py-1"
-                      >
-                        추가
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-md p-4">
-                  <div className="flex items-center justify-center">
-                    <p className="text-sm text-gray-500 whitespace-nowrap">
-                      작성 중인 글은 1분마다 자동저장됩니다.
-                    </p>
-                  </div>
-                </div>
-
                 <div className="flex justify-end space-x-2 pt-4">
-                  <button
-                    type="button"
-                    className="px-4 py-2 text-sm rounded-md border border-gray-200 hover:bg-gray-50 text-black"
-                  >
-                    임시저장
-                  </button>
                   <button
                     type="button"
                     onClick={() => router.back()}
