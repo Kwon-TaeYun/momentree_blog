@@ -203,6 +203,7 @@ public class BoardService {
                 additionalDtos.stream()
                         .map(PreSignedUrlResponseDto::getKey)
                         .collect(Collectors.toList()));
+        dto.setCategory(board.getCategory());
         return dto;
     }
 
