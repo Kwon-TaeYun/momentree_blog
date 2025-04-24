@@ -95,11 +95,12 @@ export default function EditPostPage() {
   useEffect(() => {
     const fetchPostData = async () => {
       setIsLoading(true);
+      console.log("게시글 ID:", boardId); // 디버깅용 로그
       try {
         const response = await fetch(
-          `http://localhost:8090/api/v1/boards/${boardId}/edit`,
+          `http://localhost:8090/api/v1/boards/${boardId}`,
           {
-            method: "PUT",
+            method: "GET",
             credentials: "include",
           }
         );
@@ -411,9 +412,14 @@ export default function EditPostPage() {
       }
 
       // 카테고리 ID가 문자열이면 숫자로 변환, 아니면 null
-      const categoryIdValue = selectedCategoryId
-        ? parseInt(selectedCategoryId)
-        : null;
+      let categoryIdValue = null;
+      if (
+        selectedCategoryId &&
+        selectedCategoryId !== "null" &&
+        selectedCategoryId !== ""
+      ) {
+        categoryIdValue = parseInt(selectedCategoryId);
+      }
 
       console.log("선택된 카테고리 ID:", selectedCategoryId);
       console.log("변환된 카테고리 ID 값:", categoryIdValue);
@@ -426,13 +432,13 @@ export default function EditPostPage() {
         content: markdownContent,
         currentMainPhotoUrl: representativeImage || "", // 메인 사진 URL
         photoUrls: uploadedImages || [], // 추가 사진 URL 목록
-        category: category, // 서버 형식에 맞게 category 객체로 전송
+        categoryId: categoryIdValue, // 서버 형식에 맞게 category 객체로 전송
       };
 
       console.log("서버로 전송되는 데이터:", requestData); // 디버깅용 로그
 
       const response = await fetch(
-        `http://localhost:8090/api/v1/boards/${boardId}/edit`,
+        `http://localhost:8090/api/v1/boards/${boardId}`,
         {
           method: "PUT",
           headers: {
@@ -611,7 +617,7 @@ export default function EditPostPage() {
 
   // 카테고리 선택 함수 수정
   const handleSelectCategory = (category: Category) => {
-    if (!category || !category.id) {
+    if (!category || category.id === undefined) {
       console.error("유효하지 않은 카테고리:", category);
       return;
     }
