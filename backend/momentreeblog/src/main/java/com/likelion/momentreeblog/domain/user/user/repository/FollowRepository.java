@@ -3,6 +3,8 @@ package com.likelion.momentreeblog.domain.user.user.repository;
 import com.likelion.momentreeblog.domain.user.follower.entity.FollowManagement;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,9 +24,11 @@ public interface FollowRepository extends JpaRepository<FollowManagement, Long> 
     // 언팔로우 (삭제 메소드)
     void deleteByFollowerAndFollowing(User follower, User following);
 
-    // followerId로 검색
-    List<FollowManagement> findAllByFollowerId(Long followerId);
+    // followerId로 검색 (내가 팔로우하는 사람들)
+    @Query("SELECT fm FROM FollowManagement fm WHERE fm.follower.id = :followerId")
+    List<FollowManagement> findAllByFollowerId(@Param("followerId") Long followerId);
 
-    // followingId로 검색
-    List<FollowManagement> findAllByFollowingId(Long followingId);
+    // followingId로 검색 (나를 팔로우하는 사람들)
+    @Query("SELECT fm FROM FollowManagement fm WHERE fm.following.id = :followingId")
+    List<FollowManagement> findAllByFollowingId(@Param("followingId") Long followingId);
 }

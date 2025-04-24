@@ -44,12 +44,9 @@ public class FollowServiceImpl implements FollowService {
             throw new IllegalArgumentException("팔로워나 팔로잉이 null입니다.");
         }
 
-        Optional<FollowManagement> follow = followRepository.findByFollowerAndFollowing(follower, following);
-        if (follow.isPresent()) {
-            followRepository.delete(follow.get());
-        } else {
-            log.warn("팔로우 관계가 존재하지 않습니다: follower={}, following={}", follower.getId(), following.getId());
-        }
+        // 단방향 관계만 삭제하도록 deleteByFollowerAndFollowing 사용
+        followRepository.deleteByFollowerAndFollowing(follower, following);
+        log.info("언팔로우 성공: follower={}, following={}", follower.getId(), following.getId());
     }
 
     @Override
@@ -59,42 +56,37 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserFollowDto> getFollowings(Long myUserId) {
-
-        // 내 팔로잉 목록 가져오기
-        List<FollowManagement> following =
-                followRepository.findAllByFollowerId(myUserId);
-
-        // 삭제 필터를 거쳐서 팔로윙 가져오기
-        return following.stream()
-                .map(FollowManagement::getFollowing)         // User 객체
-                .filter(u -> u.getStatus() != UserStatus.DELETED)
-                .map(u -> new UserFollowDto(
-                        u.getId(),
-                        u.getName(),
-                        u.getStatus(),
-                        u.getCurrentProfilePhoto()
-
+        // 내가 팔로우하는 사람들 목록을 가져옴 (followerId가 myUserId)
+        List<FollowManagement> followings = followRepository.findAllByFollowerId(myUserId);
+        
+        return followings.stream()
+                .map(FollowManagement::getFollowing)
+                .filter(user -> user.getStatus() != UserStatus.DELETED)
+                .map(user -> new UserFollowDto(
+                        user.getId(),
+                        user.getName(),
+                        user.getStatus(),
+                        user.getCurrentProfilePhoto()
                 ))
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserFollowDto> getFollowers(Long myUserId) {
-
-        // 나를 팔로우 한 사람들의 목록 가져오기
-        List<FollowManagement> followers =
-                followRepository.findAllByFollowingId(myUserId);
-
-        // 삭제 필터를 거쳐서 나를 팔로우한 사람들 가져오기
+        // 나를 팔로우하는 사람들 목록을 가져옴 (followingId가 myUserId)
+        List<FollowManagement> followers = followRepository.findAllByFollowingId(myUserId);
+        
         return followers.stream()
                 .map(FollowManagement::getFollower)
-                .filter(u -> u.getStatus() != UserStatus.DELETED)
-                .map(u -> new UserFollowDto(
-                        u.getId(),
-                        u.getName(),
-                        u.getStatus(),
-                        u.getCurrentProfilePhoto()
+                .filter(user -> user.getStatus() != UserStatus.DELETED)
+                .map(user -> new UserFollowDto(
+                        user.getId(),
+                        user.getName(),
+                        user.getStatus(),
+                        user.getCurrentProfilePhoto()
                 ))
                 .collect(Collectors.toList());
     }
