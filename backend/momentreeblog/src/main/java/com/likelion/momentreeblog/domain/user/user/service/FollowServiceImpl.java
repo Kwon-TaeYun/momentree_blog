@@ -44,12 +44,9 @@ public class FollowServiceImpl implements FollowService {
             throw new IllegalArgumentException("팔로워나 팔로잉이 null입니다.");
         }
 
-        Optional<FollowManagement> follow = followRepository.findByFollowerAndFollowing(follower, following);
-        if (follow.isPresent()) {
-            followRepository.delete(follow.get());
-        } else {
-            log.warn("팔로우 관계가 존재하지 않습니다: follower={}, following={}", follower.getId(), following.getId());
-        }
+        // 단방향 관계만 삭제하도록 deleteByFollowerAndFollowing 사용
+        followRepository.deleteByFollowerAndFollowing(follower, following);
+        log.info("언팔로우 성공: follower={}, following={}", follower.getId(), following.getId());
     }
 
     @Override
