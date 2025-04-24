@@ -25,7 +25,7 @@ public class Photo extends BaseEntity {
     @Column(name = "photo_type", nullable = false, length = 100)
     private PhotoType type; //PHOTO_TYPE: PROFILE, MAIN, ADDITIONAL
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String url; // 사진주소
 
     @ManyToOne

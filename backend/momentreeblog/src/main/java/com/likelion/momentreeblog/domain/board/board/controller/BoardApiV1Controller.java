@@ -83,26 +83,26 @@ public class BoardApiV1Controller {
 
 
 
-    @GetMapping("/{id}/edit")
-    public ResponseEntity<BoardEditResponseDto> getBoardForEdit(
-            @PathVariable(name = "id") Long boardId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        Long userId = userDetails.getUserId();
-
-        try {
-            BoardEditResponseDto dto = boardService.getBoardEdit(boardId, userId);
-            return ResponseEntity.ok(dto);
-        } catch (IllegalArgumentException e) {
-            // 게시글이 없거나 잘못된 요청
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(null);
-        } catch (SecurityException e) {
-            // 권한이 없는 사용자
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(null);
-        }
-    }
+//    @PutMapping("/{id}/edit")
+//    public ResponseEntity<BoardEditResponseDto> getBoardForEdit(
+//            @PathVariable(name = "id") Long boardId,
+//            @AuthenticationPrincipal CustomUserDetails userDetails
+//    ) {
+//        Long userId = userDetails.getUserId();
+//
+//        try {
+//            BoardEditResponseDto dto = boardService.getBoardEdit(boardId, userId);
+//            return ResponseEntity.ok(dto);
+//        } catch (IllegalArgumentException e) {
+//            // 게시글이 없거나 잘못된 요청
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(null);
+//        } catch (SecurityException e) {
+//            // 권한이 없는 사용자
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body(null);
+//        }
+//    }
 
 
    @PutMapping("/{id}")

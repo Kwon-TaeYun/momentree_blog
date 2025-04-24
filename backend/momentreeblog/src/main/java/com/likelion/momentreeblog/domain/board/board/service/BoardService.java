@@ -125,12 +125,11 @@ public class BoardService {
         Blog blog = blogRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저의 블로그가 존재하지 않습니다."));
 
-        // 게시글의 주인인지 확인
         if (!board.getBlog().getId().equals(blog.getId())) {
             throw new SecurityException("게시글 수정 권한이 없습니다.");
         }
 
-        // 3) 대표 사진 S3 → DB
+        // 대표 사진
         photoV1Service.updatePhotoWithS3Key(
                 PhotoType.MAIN,
                 userId,
@@ -145,27 +144,33 @@ public class BoardService {
                         .build()
         );
 
+        // 추가 사진
         boardPhotoService.updateBoardAdditionalPhotosWithS3Keys(
                 id,
                 requestDto.getPhotoUrls(),
                 PhotoUploadRequestDto.builder()
                         .photoType(PhotoType.ADDITIONAL)
-                        .boardId(board.getId())
+                        .boardId(id)
                         .contentType(null)
                         .filename(null)
-                        .boardId(id)
                         .userId(userId)
                         .build()
         );
 
-
         board.setTitle(requestDto.getTitle());
         board.setContent(requestDto.getContent());
 
+        // ✅ 카테고리 업데이트 추가
+        if (requestDto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(requestDto.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다."));
+            board.setCategory(category);
+        }
 
         Board updatedBoard = boardRepository.save(board);
         return "게시글 수정 완료 (" + updatedBoard.getTitle() + ")";
     }
+
 
 
 
@@ -203,6 +208,7 @@ public class BoardService {
                 additionalDtos.stream()
                         .map(PreSignedUrlResponseDto::getKey)
                         .collect(Collectors.toList()));
+        dto.setCategory(board.getCategory());
         return dto;
     }
 

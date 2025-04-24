@@ -9,6 +9,7 @@ import { BsImage, BsTag } from "react-icons/bs";
 import dynamic from "next/dynamic";
 import { FaImage, FaTimes } from "react-icons/fa";
 import type { EditorInstance } from "@toast-ui/react-editor";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // Toast UI Editor를 클라이언트 사이드에서만 로드 (SSR 없이)
 const Editor = dynamic(
@@ -27,12 +28,41 @@ const Editor = dynamic(
 import "@toast-ui/editor/dist/toastui-editor.css";
 import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
 
+// formData의 타입 정의
+interface FormDataType {
+  title: string;
+  content: string;
+  tags: string;
+  categoryId: string | null; // categoryId를 string | null로 설정
+}
+
+type Category = {
+  id: number;
+  name: string;
+};
+
+interface Board {
+  id: number;
+  title: string;
+  content: string;
+  categoryName?: string; // 선택적 필드
+  currentMainPhotoUrl?: string;
+}
+
 // 언어 패키지는 Editor 컴포넌트의 language prop으로 처리
 
 export default function EditPostPage() {
   const params = useParams();
   const router = useRouter();
   const boardId = params?.boardId as string;
+  const { loginMember } = useGlobalLoginMember(); // 전역 상태에서 사용자 정보 가져오기
+  const [formData, setFormData] = useState<FormDataType>({
+    title: "",
+    content: "",
+    tags: "",
+    categoryId: null, // 초기값은 null
+  });
+  const [board, setBoard] = useState<Board | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -51,6 +81,9 @@ export default function EditPostPage() {
   // 키 관리를 위한 상태 추가
   const [mainPhotoKey, setMainPhotoKey] = useState<string>("");
   const [additionalKeys, setAdditionalKeys] = useState<string[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
 
   // 에디터에 삽입된 이미지 목록 추적
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -59,15 +92,22 @@ export default function EditPostPage() {
   const editorRef = useRef<EditorInstance>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 인증 및 작성자 확인
+  // 카테고리 관련 상태값 추가
+  const [categories, setCategories] = useState<Category[]>([]); // 카테고리 목록
+  const [newCategory, setNewCategory] = useState(""); // 새 카테고리 입력값
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false); // 모달 상태
+  const [currentCategoryName, setCurrentCategoryName] = useState<string | null>(
+    ""
+  ); // 현재 게시글의 카테고리 이름
+
+  // 인증 및 작성자 확인 - 게시글 데이터 로드
   useEffect(() => {
-    // 백엔드에서 게시글 데이터를 실제로 불러오기
     const fetchPostData = async () => {
       setIsLoading(true);
+      console.log("게시글 ID:", boardId); // 디버깅용 로그
       try {
-        // 백엔드에서 게시글 데이터 불러오기 - 경로 변경
         const response = await fetch(
-          `http://localhost:8090/api/v1/boards/${boardId}/edit`,
+          `http://localhost:8090/api/v1/boards/${boardId}`,
           {
             method: "GET",
             credentials: "include",
@@ -79,82 +119,66 @@ export default function EditPostPage() {
         }
 
         const data = await response.json();
-        console.log("게시글 수정 데이터:", data);
+
+        console.log("게시글 데이터:", data); // 데이터 확인
 
         // 게시글 데이터 설정
         setTitle(data.title);
-
-        // 내용 설정 - 에디터에는 별도로 설정
         setContent(data.content);
 
-        // 이미지 키와 URL을 별도로 관리
-        if (data.currentMainPhotoKey) {
-          console.log("대표 이미지 키:", data.currentMainPhotoKey);
-          console.log("대표 이미지 URL:", data.currentMainPhotoUrl);
-
-          // S3 키는 별도 상태로 저장 (백엔드로 다시 전송될 때 사용)
-          setMainPhotoKey(data.currentMainPhotoKey);
-
-          // URL은 화면에 표시할 때만 사용
-          setRepresentativeImage(data.currentMainPhotoUrl);
+        // 메인 사진 URL 설정
+        if (data.currentMainPhotoUrl) {
+          setRepresentativeImage(data.currentMainPhotoUrl); // 상태에 메인 사진 URL 저장
         }
 
-        // 업로드된 이미지 목록 설정 (추가 이미지들)
-        if (data.additionalPhotoKeys && data.additionalPhotoKeys.length > 0) {
-          console.log("추가 이미지 키:", data.additionalPhotoKeys);
-          console.log("추가 이미지 URL:", data.additionalPhotoUrls);
+        // 카테고리 정보 설정 - 서버에서 category 객체로 오는 경우 처리
+        if (data.category) {
+          console.log("서버에서 받은 카테고리 정보:", data.category);
 
-          // S3 키는 별도 상태로 저장 (백엔드로 다시 전송될 때 사용)
-          setAdditionalKeys(data.additionalPhotoKeys);
-
-          // URL은 화면에 표시할 때만 사용
-          setUploadedImages(data.additionalPhotoUrls);
-        }
-
-        // 작성자 확인
-        if (data.id) {
-          // 현재 로그인한 사용자 정보 가져오기
-          const userResponse = await fetch(
-            `http://localhost:8090/api/v1/members/me`,
-            {
-              credentials: "include",
+          // 카테고리가 객체인 경우 (id와 name이 있는 경우)
+          if (typeof data.category === "object" && data.category !== null) {
+            if (data.category.id) {
+              const categoryIdString = data.category.id.toString();
+              setSelectedCategoryId(categoryIdString);
+              setFormData((prev) => ({
+                ...prev,
+                categoryId: categoryIdString,
+              }));
             }
-          );
 
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            setIsAuthenticated(true);
+            if (data.category.name) {
+              setCurrentCategoryName(data.category.name);
+            }
+          }
+          // 카테고리가 id만 있는 경우
+          else if (typeof data.category === "number") {
+            const categoryIdString = data.category.toString();
+            setSelectedCategoryId(categoryIdString);
+            setFormData((prev) => ({
+              ...prev,
+              categoryId: categoryIdString,
+            }));
+            // 카테고리 이름을 가져오기 위한 함수 호출
+            fetchCategoryById(data.category);
+          }
+        }
+        // 기존 categoryId 필드가 있는 경우를 위한 처리 유지
+        else if (data.categoryId) {
+          const categoryIdString = data.categoryId.toString();
+          console.log("서버에서 받은 카테고리 ID:", categoryIdString);
 
-            // 백엔드에서 이미 권한 확인을 했으므로, 여기에서는 바로 작성자로 처리
-            setIsAuthor(true);
+          setSelectedCategoryId(categoryIdString);
+          setFormData((prev) => ({
+            ...prev,
+            categoryId: categoryIdString,
+          }));
+
+          if (data.categoryName) {
+            setCurrentCategoryName(data.categoryName);
           } else {
-            setIsAuthenticated(false);
-            alert("로그인이 필요합니다.");
-            router.push("/members/login");
+            fetchCategoryById(data.categoryId);
           }
         }
-
-        // 에디터가 로드된 후 내용만 설정 (이미지는 별도로 추가하지 않음)
-        setTimeout(() => {
-          if (editorRef.current) {
-            try {
-              const editor = editorRef.current.getInstance();
-
-              // 내용 설정 방법 변경 - 특별한 처리 없이 단순하게 설정
-              if (data.content && data.content.trim() !== "") {
-                // 원본 내용 그대로 설정
-                editor.setMarkdown(data.content.trim());
-
-                // 에디터 포커스
-                editor.focus();
-
-                console.log("에디터 내용 설정 완료");
-              }
-            } catch (error) {
-              console.error("에디터 내용 설정 오류:", error);
-            }
-          }
-        }, 1500); // 시간을 조금 더 여유있게
 
         setIsLoading(false);
       } catch (error) {
@@ -383,41 +407,45 @@ export default function EditPostPage() {
     setIsLoading(true);
 
     try {
-      // 폼 제출 전 최종 내용 가져오기
       let markdownContent = "";
       if (editorRef.current) {
-        // 마크다운 콘텐츠 가져오기
         markdownContent = editorRef.current.getInstance().getMarkdown();
-
-        // 불필요한 엔터 제거 - 연속된 3개 이상의 줄바꿈을 2개로 제한
         markdownContent = markdownContent.replace(/\n{3,}/g, "\n\n");
-
         setContent(markdownContent);
       }
 
-      // 유효성 검사
       if (!title.trim() || !markdownContent.trim()) {
         alert("제목과 내용을 모두 입력해주세요.");
         setIsLoading(false);
         return;
       }
 
-      console.log("제출할 데이터:");
-      console.log("- 제목:", title);
-      console.log("- 내용 길이:", markdownContent.length);
-      console.log("- 대표 이미지 키:", mainPhotoKey);
-      console.log("- 업로드된 이미지 키들:", additionalKeys);
+      // 카테고리 ID가 문자열이면 숫자로 변환, 아니면 null
+      let categoryIdValue = null;
+      if (
+        selectedCategoryId &&
+        selectedCategoryId !== "null" &&
+        selectedCategoryId !== ""
+      ) {
+        categoryIdValue = parseInt(selectedCategoryId);
+      }
 
-      // 요청 데이터 생성 - BoardRequestDto와 일치하는 형식
+      console.log("선택된 카테고리 ID:", selectedCategoryId);
+      console.log("변환된 카테고리 ID 값:", categoryIdValue);
+
+      // 서버 요청 형식에 맞게 category 객체로 변환
+      const category = categoryIdValue ? { id: categoryIdValue } : null;
+
       const requestData = {
         title,
         content: markdownContent,
-        currentMainPhotoUrl: mainPhotoKey, // 백엔드에서는 여전히 url이란 이름을 사용하지만 실제로는 key 값을 전송
-        photoUrls: additionalKeys, // 배열 형태로 S3 키값만 전송
-        categoryId: null, // 카테고리 기능 구현 시 추가
+        currentMainPhotoUrl: representativeImage || "", // 메인 사진 URL
+        photoUrls: uploadedImages || [], // 추가 사진 URL 목록
+        categoryId: categoryIdValue, // 서버 형식에 맞게 category 객체로 전송
       };
 
-      // 백엔드 API 호출 - PUT 요청으로 게시글 수정
+      console.log("서버로 전송되는 데이터:", requestData); // 디버깅용 로그
+
       const response = await fetch(
         `http://localhost:8090/api/v1/boards/${boardId}`,
         {
@@ -425,7 +453,7 @@ export default function EditPostPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // 쿠키 포함
+          credentials: "include",
           body: JSON.stringify(requestData),
         }
       );
@@ -438,8 +466,6 @@ export default function EditPostPage() {
       }
 
       alert("게시글이 성공적으로 수정되었습니다.");
-
-      // 수정 완료 후 상세 페이지로 이동
       router.push(`/boards/${boardId}`);
     } catch (error) {
       console.error("게시글 수정 오류:", error);
@@ -453,27 +479,220 @@ export default function EditPostPage() {
     }
   };
 
+  // 카테고리 ID로 카테고리 정보를 가져오는 함수
+  const fetchCategoryById = async (categoryId) => {
+    try {
+      // 먼저 이미 로드된 카테고리 목록에서 찾기
+      if (categories.length > 0) {
+        const category = categories.find(
+          (c) => c.id.toString() === categoryId.toString()
+        );
+        if (category) {
+          setCurrentCategoryName(category.name);
+          console.log("로컬에서 찾은 카테고리:", category.name);
+          return;
+        }
+      }
+
+      // 서버에서 카테고리 정보 가져오기
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${categoryId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        const category = await response.json();
+        setCurrentCategoryName(category.name);
+        console.log("서버에서 가져온 카테고리:", category.name);
+      } else {
+        console.error("카테고리 정보 가져오기 실패");
+      }
+    } catch (error) {
+      console.error("카테고리 정보 가져오기 오류:", error);
+    }
+  };
+
+  // 카테고리 조회 함수
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 인증 정보 포함
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.map((category: Category) => category)); // 카테고리 객체로 설정
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 조회 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 조회 중 오류:", error);
+      alert("카테고리 조회 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 페이지 로드 시 카테고리 조회
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // 카테고리 정보가 categories가 로드된 후에 제대로 설정되도록 추가적인 useEffect 추가
+  useEffect(() => {
+    if (categories.length > 0 && selectedCategoryId) {
+      const category = categories.find(
+        (c) => c.id.toString() === selectedCategoryId
+      );
+      if (category) {
+        setCurrentCategoryName(category.name);
+        console.log("카테고리 목록 로드 후 카테고리 이름 설정:", category.name);
+      }
+    }
+  }, [categories, selectedCategoryId]);
+
+  // 카테고리 추가
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      alert("카테고리 이름을 입력하세요.");
+      return;
+    }
+    console.log("loginMember:", loginMember);
+    try {
+      // blogId 가져오기
+      const blogId = loginMember.blogId;
+      if (!blogId) {
+        alert("블로그 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      // API 호출
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${blogId}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newCategory.trim(), // 카테고리 이름
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories((prev) => [...prev, data]); // 새 카테고리를 목록에 추가
+        setNewCategory(""); // 입력 필드 초기화
+        alert("카테고리가 추가되었습니다.");
+      } else {
+        const errorMessage = await response.text();
+        alert(`카테고리 추가 실패: ${errorMessage}`);
+      }
+    } catch (error) {
+      console.error("카테고리 추가 중 오류:", error);
+      alert("카테고리 추가 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 카테고리 모달 열기
+  const openCategoryModal = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  // 카테고리 모달 닫기
+  const closeCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+  };
+
+  // 카테고리 선택 함수 수정
+  const handleSelectCategory = (category: Category) => {
+    if (!category || category.id === undefined) {
+      console.error("유효하지 않은 카테고리:", category);
+      return;
+    }
+
+    // categoryId를 문자열로 변환하여 저장
+    const categoryIdString = category.id.toString();
+
+    console.log("선택한 카테고리:", category);
+    console.log("카테고리 ID 설정:", categoryIdString);
+
+    // formData와 selectedCategoryId 업데이트
+    setFormData((prev) => ({
+      ...prev,
+      categoryId: categoryIdString,
+    }));
+
+    setSelectedCategoryId(categoryIdString); // 선택된 카테고리 ID 설정
+    setCurrentCategoryName(category.name); // 현재 카테고리 이름 설정
+
+    closeCategoryModal(); // 모달 닫기
+  };
+
+  // 카테고리 삭제
+  const handleDeleteCategory = async (category: Category) => {
+    if (!confirm(`"${category.name}" 카테고리를 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const blogId = loginMember.blogId;
+      if (!blogId) {
+        alert("블로그 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/v1/categories/${blogId}/${category.name}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        setCategories((prev) => prev.filter((cat) => cat.id !== category.id)); // 삭제된 카테고리를 목록에서 제거
+        alert("카테고리가 삭제되었습니다.");
+      } else {
+        const errorData = await response.json();
+        const errorMessage = errorData.message || "카테고리 삭제 실패";
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error("카테고리 삭제 중 오류:", error);
+      alert("카테고리 삭제 중 오류가 발생했습니다.");
+    }
+  };
   // 로딩 중이면 로딩 상태 표시
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-xl text-gray-600">로딩 중...</p>
-      </div>
-    );
-  }
-
-  // 인증되지 않았거나 작성자가 아닌 경우
-  if (!isAuthenticated || !isAuthor) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-2xl font-bold mb-4">접근 권한이 없습니다.</h1>
-        <p className="mb-6">게시글을 수정할 권한이 없습니다.</p>
-        <Link
-          href={`/boards/${boardId}`}
-          className="bg-[#2c714c] text-white px-4 py-2 rounded-md"
-        >
-          돌아가기
-        </Link>
       </div>
     );
   }
@@ -649,13 +868,31 @@ export default function EditPostPage() {
                   </div>
                 </div>
 
+                {/* 카테고리 선택 */}
                 <div>
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-medium text-black">카테고리</h3>
-                    <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
+                  <label className="block text-sm font-medium text-black mb-2">
+                    카테고리
+                  </label>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={openCategoryModal}
+                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                    >
                       카테고리 선택
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-black mb-2">
+                    현재 카테고리
+                  </h3>
+                  <p className="text-sm text-gray-700">
+                    {currentCategoryName ||
+                      board?.categoryName ||
+                      "카테고리 없음"}
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -747,6 +984,81 @@ export default function EditPostPage() {
           </div>
         </div>
       </div>
+
+      {/* 카테고리 모달 */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-lg font-medium text-black mb-4">
+              카테고리 선택
+            </h2>
+            <div className="space-y-4">
+              {/* 기존 카테고리 목록 */}
+              {categories.map((category: Category, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between border-b pb-2"
+                >
+                  <span className="text-sm text-gray-700">{category.name}</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory(category)}
+                      className="text-sm text-blue-500 hover:underline"
+                    >
+                      선택
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(category)}
+                      className="text-sm text-red-500 hover:underline"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* 새 카테고리 추가 */}
+              <div>
+                <label
+                  htmlFor="new-category"
+                  className="block text-sm font-medium text-black mb-2"
+                >
+                  새 카테고리 추가
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    id="new-category"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 모달 닫기 버튼 */}
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={closeCategoryModal}
+                className="px-4 py-2 text-sm text-black border border-gray-300 rounded-md hover:bg-gray-100"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast UI Editor 스타일 */}
       <style jsx global>{`
