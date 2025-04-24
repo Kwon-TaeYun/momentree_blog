@@ -283,7 +283,7 @@ public class BoardService {
     }
     @Transactional(readOnly = true)
     public List<BoardListResponseDto> getLatestPosts() {
-        List<Board> boards = boardRepository.findTop3ByOrderByCreatedAtDesc();
+        List<Board> boards = boardRepository.findTopBoards(PageRequest.of(0, 3));
 
         return boards.stream()
                 .map(board -> new BoardListResponseDto(

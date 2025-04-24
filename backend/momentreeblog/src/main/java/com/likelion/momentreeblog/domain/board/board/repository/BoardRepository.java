@@ -21,7 +21,7 @@ public interface BoardRepository extends JpaRepository<Board, Long>{
     // 페이징 처리용 사용자 ID로 게시글 조회
     Page<Board> findByBlog_User_Id(Long userId, Pageable pageable);
     @Query("SELECT b FROM Board b LEFT JOIN FETCH b.likes ORDER BY b.createdAt DESC")
-    List<Board> findTop3ByOrderByCreatedAtDesc();
+    List<Board> findTopBoards(Pageable pageable);
 
     @Query("""
     SELECT b FROM Board b
