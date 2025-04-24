@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // 동적 임포트로 LikeList 컴포넌트 가져오기
 const LikeList = dynamic(() => import("@/components/LikeList"), {
@@ -42,6 +43,7 @@ interface User {
 }
 
 export default function BoardDetail() {
+  const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
   const router = useRouter();
   const { boardId } = useParams(); // boardId는 string 타입으로 반환됩니다.
   const [post, setPost] = useState<Post | null>(null);
@@ -435,7 +437,7 @@ export default function BoardDetail() {
           <span>{new Date(post.createdAt).toLocaleString()}</span>
 
           {/* 수정/삭제 버튼 - 작성자에게만 표시 */}
-          {isAuthenticated && isAuthor && (
+          {loginMember.name == post.authorName && (
             <div className="flex space-x-3">
               <Link
                 href={`/boards/${boardId}/edit`}

@@ -300,7 +300,7 @@ export default function BlogDetailPage() {
                     <div
                       key={board.id}
                       className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/board/${board.id}`)}
+                      onClick={() => router.push(`/boards/${board.id}`)}
                     >
                       <div className="flex items-center space-x-4">
                         {board.mainPhotoUrl && (
