@@ -91,8 +91,6 @@ export default function MyBlogPage() {
           email: userData.email || "",
           profilePhoto: undefined, // fetchMyPosts에서 설정
           profileImage: userData.profileImage || "",
-
-
           posts: 0,
           visitors: 0,
           followers: 0,
@@ -178,7 +176,6 @@ export default function MyBlogPage() {
             ...prev,
             viewCount: (prev.viewCount || 0) + 1,
           }));
-
         } else {
           setErrorMsg("게시글이 존재하지 않습니다.");
         }
@@ -205,7 +202,7 @@ export default function MyBlogPage() {
           }/api/v1/follows/members/${userInfo.id}/followers/counts`,
           { credentials: "include" }
         );
-        
+
         // 팔로잉 수 가져오기
 
         const followingResponse = await fetch(
@@ -232,7 +229,6 @@ export default function MyBlogPage() {
 
     fetchFollowStats();
   }, [userInfo.id]);
-
 
   const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);
