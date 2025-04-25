@@ -85,6 +85,11 @@ export default function CreatePostPage() {
   const editorRef = useRef<EditorInstance>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 클라이언트에서만 한글 번역 모듈을 불러옵니다
+  useEffect(() => {
+    import("@toast-ui/editor/dist/i18n/ko-kr").catch(console.error);
+  }, []);
+
   // 로그인 여부 확인
   useEffect(() => {
     // 쿠키 확인으로 로그인 여부 체크
@@ -142,14 +147,14 @@ export default function CreatePostPage() {
   };
 
   // S3 업로드 처리 함수 (별도 함수로 분리)
-  const uploadToS3 = (file: File, previewUrl: string) => {
+  const uploadToS3 = async (file: File, previewUrl: string) => {
     try {
       // 파일 정보 추출
       const filename = file.name;
       const contentType = file.type;
 
       // S3 프리사인드 URL 요청
-      fetch(
+      const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
         }/api/s3/presigned-url`,
@@ -166,43 +171,42 @@ export default function CreatePostPage() {
             userId: userId,
           }),
         }
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("프리사인드 URL 생성에 실패했습니다.");
-          }
-          return response.json();
-        })
-        .then(({ url, key }) => {
-          // S3에 직접 파일 업로드
-          return fetch(url, {
-            method: "PUT",
-            headers: {
-              "Content-Type": contentType,
-            },
-            body: file,
-          }).then((uploadResponse) => {
-            if (!uploadResponse.ok) {
-              throw new Error("이미지 업로드에 실패했습니다.");
-            }
+      );
 
-            // 프리뷰 URL과 실제 S3 키 저장
-            // 화면에 보여줄 URL과 백엔드에 전송할 키를 별도로 관리
-            setUploadedImages((prev) => {
-              if (prev.includes(previewUrl)) return prev;
-              return [...prev, previewUrl];
-            });
+      if (!response.ok) {
+        throw new Error("프리사인드 URL 생성에 실패했습니다.");
+      }
 
-            // 키값 저장 (백엔드 전송용)
-            setAdditionalKeys((prev) => {
-              if (prev.includes(key)) return prev;
-              return [...prev, key];
-            });
-          });
-        })
-        .catch((error) => {
-          console.error("S3 이미지 업로드 오류:", error);
-        });
+      // PUT용 URL, key, publicUrl 응답 받기
+      const { url: uploadUrl, key, publicUrl } = await response.json();
+
+      // S3에 직접 파일 업로드
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("이미지 업로드에 실패했습니다.");
+      }
+
+      // 에디터에서 base64 → publicUrl로 직접 교체 (URL 조합하지 않음)
+      if (editorRef.current) {
+        const editor = editorRef.current.getInstance();
+        const md = editor.getMarkdown();
+        // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
+        const newMd = md.split(previewUrl).join(publicUrl);
+        editor.setMarkdown(newMd);
+      }
+
+      // 키값만 저장 (백엔드 전송용)
+      setAdditionalKeys((prev) => {
+        if (prev.includes(key)) return prev;
+        return [...prev, key];
+      });
     } catch (error) {
       console.error("S3 이미지 업로드 오류:", error);
     }
@@ -252,30 +256,39 @@ export default function CreatePostPage() {
       return;
     }
 
-    if (!mainPhotoData) {
-      alert("대표 이미지를 업로드해주세요.");
-      return;
-    }
+    // 대표 이미지 유효성 검사 제거
+    // 대표 이미지는 선택 사항으로 변경
 
     try {
       setSubmitting(true);
 
+      // S3 기본 URL 정의 (환경 변수에서 가져오기)
+      const S3_BASE =
+        process.env.NEXT_PUBLIC_S3_BASE_URL ||
+        "https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com";
+
+      // 콘텐츠에서 절대 경로(publicUrl)를 상대 경로(key)로 치환
+      const submitContent = formData.content.replace(
+        new RegExp(`${S3_BASE}/(uploads/[^)\\s]+)`, "g"),
+        "/$1" // 또는 key 값만 남기려면 '$1'
+      );
+
       console.log("제출 데이터:");
       console.log("- 제목:", formData.title);
-      console.log("- 내용:", formData.content.substring(0, 100) + "...");
-      console.log("- 대표 이미지 키:", mainPhotoKey);
+      console.log("- 내용:", submitContent.substring(0, 100) + "...");
+      console.log("- 대표 이미지 키:", mainPhotoKey || "없음");
       console.log("- 추가 이미지 키들:", additionalKeys);
 
       // 요청 데이터 생성 - BoardRequestDto와 일치하는 형식
       const requestData = {
         title: formData.title,
-        content: formData.content,
-        currentMainPhotoUrl: mainPhotoData.url,
-        photoUrls: uploadedImages,
+        content: submitContent, // 치환된 콘텐츠 사용
+        currentMainPhotoUrl: mainPhotoKey || null, // 대표 이미지가 없으면 null 전송
+        photoUrls: additionalKeys, // ADDITIONAL 키들
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : null, // 유효하지 않은 값은 null로 처리
       };
 
-      console.log("Request Data:", requestData); // 디버깅용 로그
+      // console.log("Request Data:", requestData); // 디버깅용 로그
 
       const response = await fetch(
         `${
@@ -425,7 +438,7 @@ export default function CreatePostPage() {
         throw new Error("프리사인드 URL 생성에 실패했습니다.");
       }
 
-      const { url, key } = await presignedUrlResponse.json();
+      const { url, key, publicUrl } = await presignedUrlResponse.json();
 
       // S3에 직접 파일 업로드
       const uploadResponse = await fetch(url, {
@@ -440,12 +453,13 @@ export default function CreatePostPage() {
         throw new Error("대표 이미지 업로드에 실패했습니다.");
       }
 
-      // 업로드 성공한 이미지 정보 저장 (키 값 저장)
+      // 업로드 성공한 이미지 정보 저장 - 키 값만 저장 (DB 용)
       setMainPhotoKey(key);
 
-      // mainPhotoData는 호환성을 위해 유지
+      // mainPhotoData에는 url 및 타입 정보 저장
       setMainPhotoData({
-        url: key,
+        url: key, // DB에 저장될 값은 key만
+        publicUrl: publicUrl, // 브라우저에서 표시용
         type: PhotoType.MAIN,
       });
     } catch (error) {
@@ -955,21 +969,12 @@ export default function CreatePostPage() {
           text-align: left !important;
         }
 
-        /* 이미지만 중앙 정렬 */
+        /* 이미지 정렬 옵션 */
         .toastui-editor-contents img {
-          max-width: 70% !important; /* 이미지 최대 너비를 70%로 제한 */
-          height: auto !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
+          max-width: 100% !important;
+          margin: 0 auto !important;
           display: block !important;
         }
-
-        /* 에디터 내용 전체 스타일링 */
-        .toastui-editor-contents {
-          font-size: 1.3em !important; /* 글씨 크기 30% 증가 */
-        }
-
-        /* 코드블록 등 다른 요소들도 동일하게 중앙 정렬 필요시 추가 */
       `}</style>
     </div>
   );

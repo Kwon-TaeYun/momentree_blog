@@ -55,7 +55,11 @@ public class User extends BaseEntity {
     @JoinColumn(name = "blog_id")
     private Blog blog;
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     private UserStatus status;
+
 
     public void setBlog(Blog blog) {
         this.blog = blog;

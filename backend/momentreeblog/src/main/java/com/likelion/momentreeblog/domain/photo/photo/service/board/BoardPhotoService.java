@@ -3,6 +3,7 @@ package com.likelion.momentreeblog.domain.photo.photo.service.board;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
+import com.likelion.momentreeblog.domain.photo.photo.dto.board.PhotoAlbumDto;
 import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
@@ -13,12 +14,11 @@ import com.likelion.momentreeblog.domain.s3.service.S3V1Service;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,7 +30,9 @@ public class BoardPhotoService {
     private final UserRepository userRepository;
 
     private static final int MAX_ADDITIONAL_PHOTOS = 10;
-    private static final String DEFAULT_BOARD_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
+
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
 
 
     // 게시글 대표 사진 업로드
@@ -79,7 +81,6 @@ public class BoardPhotoService {
         return result;
     }
 
-
     // 게시글의 모든 사진 조회 (대표 + 추가)
     @Transactional(readOnly = true)
     public BoardPhotoResponseDto getBoardPhotos(Long boardId) {
@@ -92,7 +93,7 @@ public class BoardPhotoService {
         // 메인 사진이 없는 경우 기본 이미지 URL 사용
         PreSignedUrlResponseDto mainPhotoUrl;
         if (mainPhoto == null) {
-            mainPhotoUrl = s3V1Service.generateGetPresignedUrl(DEFAULT_BOARD_IMAGE_URL);
+            mainPhotoUrl = s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
         } else {
             mainPhotoUrl = s3V1Service.generateGetPresignedUrl(mainPhoto.getUrl());
         }
@@ -106,6 +107,59 @@ public class BoardPhotoService {
                         .map(photo -> s3V1Service.generateGetPresignedUrl(photo.getUrl()))
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+
+    // 사진첩 메서드
+    @Transactional(readOnly = true)
+    public List<PhotoAlbumDto> getAlbumByUser(Long userId) {
+
+
+        // 사용자 별 MAIN 타입 사진을 가진 서로 다른 boardId 만 뽑는다
+        List<Long> boardIds = photoRepository
+                .findByUser_IdAndType(userId, PhotoType.MAIN)
+                .stream()
+                .map(photo -> photo.getBoard().getId())
+                .distinct()      // 중복 제거
+                .toList();
+
+        // (2) boardId별로 DTO 하나씩 생성
+        List<PhotoAlbumDto> album = new ArrayList<>();
+        for (Long boardId : boardIds) {
+            // 가장 최신 MAIN key
+            Photo recentMain = photoRepository
+                    .findFirstByBoardIdAndTypeOrderByCreatedAtDesc(boardId, PhotoType.MAIN)
+                    .orElse(null);
+            String mainKey = recentMain != null
+                    ? recentMain.getUrl()
+                    : DEFAULT_IMAGE_URL;
+            //프리사인키 만들기
+            String mainUrl = s3V1Service.generateGetPresignedUrl(mainKey).getUrl();
+
+
+            // ADDITIONAL key 모으기
+            List<Photo> adds = photoRepository.findByBoardIdAndType(boardId, PhotoType.ADDITIONAL);
+            List<String> addKeys = adds.stream()
+                    .map(Photo::getUrl)
+                    .filter(url -> !url.equals(mainKey))  // 메인 키 제외
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            //프리사인 키 만들기
+            List<String> addUrls = addKeys.stream()
+                    .map(k -> s3V1Service.generateGetPresignedUrl(k).getUrl())
+                    .collect(Collectors.toList());
+
+            album.add(new PhotoAlbumDto(
+                    userId,
+                    boardId,
+                    mainKey,
+                    mainUrl,
+                    addKeys,
+                    addUrls
+            ));
+        }
+        return album;
     }
 
 
@@ -136,7 +190,7 @@ public class BoardPhotoService {
 
         // 메인 사진이 없는 경우 기본 이미지 URL 반환
         if (mainPhoto == null) {
-            return s3V1Service.generateGetPresignedUrl(DEFAULT_BOARD_IMAGE_URL);
+            return s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
         }
 
         return s3V1Service.generateGetPresignedUrl(mainPhoto.getUrl());
@@ -158,7 +212,7 @@ public class BoardPhotoService {
 
             // 현재 대표 사진이 없는 경우 기본 이미지 사용
             if (currentMainPhoto == null) {
-                result.add(s3V1Service.generateGetPresignedUrl(DEFAULT_BOARD_IMAGE_URL));
+                result.add(s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL));
             } else {
                 result.add(s3V1Service.generateGetPresignedUrl(currentMainPhoto.getUrl()));
             }
@@ -283,6 +337,11 @@ public class BoardPhotoService {
 
         // 게시글과 사용자의 관계 검증
         verifyBoardAndUser(boardId, user.getId());
+
+        // 기존 Photo 조회
+        Photo existing = photoRepository.findByBoardIdAndType(boardId, PhotoType.MAIN)
+                .stream().findFirst().orElse(null);
+
 
         // S3 업로드 완료 후, 클라이언트가 전달한 s3Key를 사용하여 새 Photo 엔티티 생성
         Photo newMainPhoto = Photo.builder()
