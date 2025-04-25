@@ -60,13 +60,11 @@ export default function MyBlogPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // 팔로워/팔로잉 모달 상태 추가
   const [isFollowerModalOpen, setIsFollowerModalOpen] = useState(false);
   const [activeFollowTab, setActiveFollowTab] = useState<
     "followers" | "following"
   >("followers");
 
-  // 사용자 정보 가져오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -92,6 +90,9 @@ export default function MyBlogPage() {
           name: userData.name || "사용자",
           email: userData.email || "",
           profilePhoto: undefined, // fetchMyPosts에서 설정
+          profileImage: userData.profileImage || "",
+
+
           posts: 0,
           visitors: 0,
           followers: 0,
@@ -171,6 +172,13 @@ export default function MyBlogPage() {
               posts: processedPosts.length,
             }));
           }
+
+          // 조회수 증가
+          setUserInfo((prev) => ({
+            ...prev,
+            viewCount: (prev.viewCount || 0) + 1,
+          }));
+
         } else {
           setErrorMsg("게시글이 존재하지 않습니다.");
         }
@@ -178,7 +186,7 @@ export default function MyBlogPage() {
         console.error("게시글 로딩 오류:", err);
         setErrorMsg("서버 오류가 발생했습니다.");
       } finally {
-        setLoading(false); // 로딩 종료
+        setLoading(false);
       }
     };
 
@@ -191,7 +199,6 @@ export default function MyBlogPage() {
       if (userInfo.id === 0) return; // 사용자 정보가 로드되지 않았으면 스킵
 
       try {
-        // 팔로워 수 가져오기
         const followersResponse = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
@@ -200,6 +207,7 @@ export default function MyBlogPage() {
         );
         
         // 팔로잉 수 가져오기
+
         const followingResponse = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
@@ -225,18 +233,16 @@ export default function MyBlogPage() {
     fetchFollowStats();
   }, [userInfo.id]);
 
-  // 팔로워/팔로잉 클릭 핸들러
-  const handleFollowClick = (tab: 'followers' | 'following') => {
+
+  const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);
     setIsFollowerModalOpen(true);
   };
 
-  // 게시글 클릭 핸들러
   const handlePostClick = (postId: number) => {
     router.push(`/boards/${postId}`);
   };
 
-  // 아직 사용자 정보와 게시글을 로딩 중인 경우
   if (loading && userInfo.id === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -249,7 +255,6 @@ export default function MyBlogPage() {
     <div className="min-h-screen bg-white text-black">
       <main className="max-w-7xl mx-auto py-8 px-6">
         <div className="flex flex-col md:flex-row gap-8">
-          {/* 좌측 프로필 영역 */}
           <div className="w-full md:w-72 shrink-0">
             <div className="bg-white border border-gray-100 rounded-lg p-6 mb-6">
               <div className="flex flex-col items-center">
@@ -323,7 +328,6 @@ export default function MyBlogPage() {
             </div>
           </div>
 
-          {/* 우측 게시글 영역 */}
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-6">나의 순간들</h1>
 
@@ -369,7 +373,6 @@ export default function MyBlogPage() {
                       )}
                     </div>
 
-                    {/* 게시글 내용 */}
                     <div className="p-6">
                       <h2 className="text-xl font-bold mb-2">{post.title}</h2>
                       <p className="text-gray-800 mb-4">{post.content}</p>
@@ -391,7 +394,6 @@ export default function MyBlogPage() {
         </div>
       </main>
 
-      {/* 팔로워/팔로잉 모달 */}
       <UserFollower
         isOpen={isFollowerModalOpen}
         onClose={() => setIsFollowerModalOpen(false)}

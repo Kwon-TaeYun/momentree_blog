@@ -199,6 +199,7 @@ export default function CreatePostPage() {
         const md = editor.getMarkdown();
         // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
         const newMd = md.split(previewUrl).join(publicUrl);
+
         editor.setMarkdown(newMd);
       }
 

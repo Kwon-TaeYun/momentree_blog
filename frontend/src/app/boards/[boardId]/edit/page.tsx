@@ -233,7 +233,9 @@ export default function EditPostPage() {
               console.error("에디터 내용 설정 오류:", error);
             }
           }
-        }, 500); // 시간을 조금 더 여유있게
+
+        }, 1500); // 시간을 조금 더 여유있게
+
 
         setIsLoading(false);
       } catch (error) {
@@ -338,8 +340,8 @@ export default function EditPostPage() {
         const md = editor.getMarkdown();
         // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
         const newMd = md.split(previewUrl).join(publicUrl);
-        // 두 번째 인자 제거
         editor.setMarkdown(newMd);
+
       }
 
       // 키값만 저장 (백엔드 전송용)

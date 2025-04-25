@@ -24,7 +24,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,7 +42,9 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
     private final PhotoRepository photoRepository;
+
     private final S3V1Service s3V1Service;
+
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
 
@@ -342,7 +348,6 @@ public class BoardService {
                 })
                 .collect(Collectors.toList());
     }
-
 
     @Transactional(readOnly = true)
     public List<BoardListResponseDto> getPopularPosts() {
