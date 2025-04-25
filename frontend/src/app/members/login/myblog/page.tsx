@@ -171,14 +171,11 @@ export default function MyBlogPage() {
               posts: processedPosts.length,
             }));
           }
-        if (!res.ok) {
-          setErrorMsg(data.message || "게시글을 불러오는 데 실패했습니다.");
-        } else if (Array.isArray(data.content)) {
-          setPosts(data.content);
+
+          // 조회수 증가
           setUserInfo((prev) => ({
             ...prev,
-            posts: data.content.length,
-            viewCount: (prev.viewCount || 0) + 1, // 조회수 증가
+            viewCount: (prev.viewCount || 0) + 1,
           }));
         } else {
           setErrorMsg("게시글이 존재하지 않습니다.");
@@ -194,7 +191,6 @@ export default function MyBlogPage() {
     fetchMyPosts();
   }, [userInfo.id]);
 
-
   // 팔로워/팔로잉 정보를 가져오는 함수 추가
   useEffect(() => {
     const fetchFollowStats = async () => {
@@ -207,7 +203,6 @@ export default function MyBlogPage() {
           }/api/v1/follows/members/${userInfo.id}/followers/counts`,
           { credentials: "include" }
         );
-
 
         // 팔로잉 수 가져오기
 
@@ -235,7 +230,6 @@ export default function MyBlogPage() {
 
     fetchFollowStats();
   }, [userInfo.id]);
-
 
   const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);

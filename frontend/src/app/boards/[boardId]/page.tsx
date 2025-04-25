@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 // Toast UI Viewer 동적 임포트
 const Viewer = dynamic(
