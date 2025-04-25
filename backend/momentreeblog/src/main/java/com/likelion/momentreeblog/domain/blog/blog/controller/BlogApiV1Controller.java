@@ -18,9 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal; // @AuthenticationPrincipal 사용을 위한 임포트
-import com.likelion.momentreeblog.config.security.dto.CustomUserDetails; // CustomUserDetails 클래스 사용을 위한 임포트 (님의 프로젝트 패키지 경로에 맞게 확인 필요)
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal; 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails; 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -64,8 +63,6 @@ public class BlogApiV1Controller {
 
         return ResponseEntity.ok(dto);
     }
-
-    
 
     /**
      * 블로그 수정
@@ -129,12 +126,10 @@ public class BlogApiV1Controller {
      */
     @GetMapping("/{id}/details")
     public ResponseEntity<?> getBlogDetails(
-            @PathVariable(name = "id") Long id, // 여기서 id는 블로그 ID 입니다.
+            @PathVariable(name = "id") Long id, //블로그 ID
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            // --- @AuthenticationPrincipal 사용 ---
-            @AuthenticationPrincipal CustomUserDetails customUserDetails // <-- 이 부분이 핵심입니다.
-            // @RequestHeader(value = "Authorization", required = false) String authorization // <-- 이 라인은 필요 없습니다. 주석 처리하거나 삭제하세요.
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
             ) {
 
         Long loggedInUserId = null;

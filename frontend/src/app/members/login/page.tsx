@@ -37,7 +37,6 @@ export default function LoginPage() {
 
       if (!response.ok) {
         // 로그인 실패 시 에러 메시지 처리
-        // 백엔드에서 에러 응답 본문을 JSON으로 보낼 수도 있으므로 text() 대신 json() 시도
         const errorData = await response.json().catch(() => response.text()); // JSON 파싱 시도, 실패하면 text 파싱
         const errorMessage =
           typeof errorData === "object" &&
@@ -53,29 +52,18 @@ export default function LoginPage() {
         return;
       }
 
-      // --- 로그인 성공 시: 응답 본문에서 토큰을 읽어와 localStorage에 저장 ---
-      const data = await response.json(); // <-- 성공 시 응답 본문 JSON 파싱 // 백엔드 UserApiV1Controller의 @PostMapping("/login") 메소드에서
+      // 로그인 성공 시: 응답 본문에서 토큰을 읽어와 localStorage에 저장
+      const data = await response.json();
 
-      // UserLoginResponseDto의 어떤 필드 이름으로 Access Token을 담아주는지 확인합니다.
-      // 예를 들어 백엔드가 { "accessToken": "..." } 형태로 준다면: data.accessToken
-      // 백엔드가 { "token": "..." } 형태로 준다면: data.token
-      // 백엔드 UserLoginResponseDto에 맞춰 정확한 필드 이름을 사용해야 합니다.
-      const accessToken = data.accessToken; // <-- 백엔드 응답 JSON에서 Access Token 필드를 읽습니다. (필드 이름 확인 필수!)
+      const accessToken = data.accessToken;
 
       if (accessToken) {
         console.log("로그인 성공! Access token 수신 및 localStorage에 저장.");
-        localStorage.setItem("accessToken", accessToken); // <-- Access Token을 localStorage에 저장
+        localStorage.setItem("accessToken", accessToken);
 
-        // 백엔드가 Refresh Token도 응답 본문에 담아준다면 저장 (선택 사항, 보안 고려 필요)
-        // const refreshToken = data.refreshToken;
-        // if (refreshToken) {
-        //    localStorage.setItem('refreshToken', refreshToken); // Refresh Token 저장
-        // }
-
-        alert("로그인 성공!"); // 사용자에게 성공 알림 // 페이지 이동 (Next.js 라우터 사용 권장)
+        alert("로그인 성공!");
         router.push(redirectUrlAfterSocialLogin);
       } else {
-        // 응답은 성공(2xx)했지만, 응답 본문에 예상한 토큰 필드가 없는 경우
         console.warn(
           "로그인 성공 응답을 받았지만, Access Token 필드를 찾을 수 없습니다.",
           data
@@ -83,9 +71,6 @@ export default function LoginPage() {
         alert(
           "로그인은 성공했으나, 인증 정보를 받지 못했습니다. 다시 로그인해주세요."
         );
-        // 로그인 페이지에 머무르거나, 토큰 없이 접근 가능한 페이지로 리다이렉트
-        // router.push("/members/login"); // 또는 다른 페이지
-        // 현재는 경고 후 페이지 이동은 하지 않고 사용자가 직접 다시 시도하도록 유도
       }
     } catch (error) {
       // fetch 자체의 네트워크 오류 등

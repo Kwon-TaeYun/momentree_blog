@@ -5,11 +5,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 interface Blogger {
-  id: number; // 추가
+  id: number;
   name: string;
   followerCount: number;
   profileImageUrl: string;
-  blogId: number; // <-- 백엔드 UserResponse에서 받을 블로그 ID 필드를 여기에 추가
+  blogId: number;
 }
 
 interface Post {
@@ -41,7 +41,6 @@ export default function BlogPage() {
     // 최신 콘텐츠 가져오기
     const fetchTopPosts = async () => {
       try {
-        // 백엔드 BoardApiV1Controller.getLatestPosts()는 List<BoardListResponseDto>를 반환
         const res = await fetch("http://localhost:8090/api/v1/boards/latest");
         const data: Post[] = await res.json(); // 응답 데이터를 Post[] 타입으로 지정
         console.log("최신 콘텐츠 API 응답:", data); // 여기에 구조 확인 로그 추가 // 백엔드 응답 구조에 따라 설정. 만약 { data: Post[] } 형태가 아니라면 그냥 data를 setTopPosts로 설정
@@ -54,7 +53,6 @@ export default function BlogPage() {
 
     const fetchRealtimePosts = async () => {
       try {
-        // 백엔드 BoardApiV1Controller.getPopularBoards()는 List<BoardListResponseDto>를 반환
         const res = await fetch("http://localhost:8090/api/v1/boards/popular");
         const data: Post[] = await res.json(); // 응답 데이터를 Post[] 타입으로 지정
         console.log("실시간 인기글 API 응답:", data); // 응답 데이터 구조 확인 로그
@@ -78,20 +76,14 @@ export default function BlogPage() {
           <h2 className="text-xl font-bold mb-4">인기 블로거</h2>
           <div className="flex gap-6 overflow-x-auto pb-2">
             {bloggers.map((blogger: Blogger) => (
-              // --- 링크 수정 ---
               <Link
-                // ✅ blogger.id 대신 blogger.blogId 사용
-                // 백엔드 UserResponse DTO에 blogId 필드가 추가되었다면 이렇게 사용
                 href={`/blog/${blogger.blogId}`}
-                key={blogger.id} // key는 여전히 유저 ID 사용해도 무방합니다.
+                key={blogger.id}
                 className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer"
               >
                 {/* 프로필 이미지 렌더링 부분 */}
                 <div className="w-16 h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
                   <Image
-                    // 백엔드에서 보내주는 profileImageUrl 사용, 없으면 기본 이미지 사용
-                    // ✅ 기본 이미지 경로가 /logo.png로 되어 있습니다.
-                    //    /default-profile.png 등으로 바꾸는 것을 고려할 수 있습니다.
                     src={blogger.profileImageUrl || "/logo.png"}
                     alt={blogger.name}
                     width={64}
@@ -126,8 +118,7 @@ export default function BlogPage() {
                         // 게시글 이미지 URL 사용, 없으면 기본 이미지 사용
                         post.imageUrl && post.imageUrl.startsWith("http")
                           ? post.imageUrl
-                          : // ✅ /default-content.jpg 경로가 여기서 사용됩니다.
-                            "/default-content.jpg"
+                          : "/default-content.jpg"
                       }
                       alt={post.title}
                       fill
@@ -148,7 +139,6 @@ export default function BlogPage() {
         </section>
 
         {/* 실시간 인기글 */}
-        {/* ... (실시간 인기글 렌더링 부분 - 최신 콘텐츠 부분과 유사하게 /default-content.jpg 사용) ... */}
         <section className="mb-8">
           <h2 className="text-xl font-bold mb-4">실시간 인기글</h2>
           <div className="space-y-4">
@@ -160,8 +150,7 @@ export default function BlogPage() {
                       // 게시글 이미지 URL 사용, 없으면 기본 이미지 사용
                       post.imageUrl && post.imageUrl.startsWith("http")
                         ? post.imageUrl
-                        : // ✅ /default-content.jpg 경로가 여기서 사용됩니다.
-                          "/default-content.jpg"
+                        : "/default-content.jpg"
                     }
                     alt={post.title}
                     width={96}

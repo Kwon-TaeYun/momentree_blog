@@ -161,17 +161,6 @@ public class BoardApiV1Controller {
 
     //사용자별 게시글 조회
     @Operation(summary = "사용자별 게시글 조회")
-//    @GetMapping("/searchById")
-//    public ResponseEntity<?> searchBoardsByUserId(@CookieValue("accessToken") String token) {
-//        Long userId = jwtTokenizer.getUserIdFromToken(token);
-//        Page<BoardListResponseDto> result = boardService.searchBoardsByUserId(userId);
-//
-//        if(result.isEmpty()) {
-//            return ResponseEntity.status(200).body("해당 사용자의 게시글이 없습니다.");
-//        }
-//        return ResponseEntity.ok(result);
-//    }
-
     @GetMapping("/searchById")
     public ResponseEntity<?> searchBoardsByUserId(Authentication authentication) {
         if (authentication == null) {

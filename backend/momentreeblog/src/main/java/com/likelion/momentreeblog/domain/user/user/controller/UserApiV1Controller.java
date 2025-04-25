@@ -143,19 +143,13 @@ public class UserApiV1Controller {
         response.addCookie(cookie);
         response.addCookie(refreshCookie);
 
-        // --- UserLoginResponseDto 생성 시 "Bearer " 접두사 제거 ---
-        // 프론트엔드 localStorage에 저장할 때는 순수한 토큰 문자열만 필요합니다.
         UserLoginResponseDto userLoginResponseDto = UserLoginResponseDto.builder()
-                // .accessToken("Bearer " + accessToken) // <-- 이 부분을 아래와 같이 수정
-                .accessToken(accessToken) // <-- 순수한 Access Token 문자열만 담습니다.
-                // .refreshToken("Bearer " + refreshToken) // <-- 이 부분도 아래와 같이 수정
-                .refreshToken(refreshToken) // <-- 순수한 Refresh Token 문자열만 담습니다.
+                .accessToken(accessToken) // <-- 순수한 Access Token 문자열
+                .refreshToken(refreshToken) // <-- 순수한 Refresh Token 문자열
                 .email(user.getEmail())
                 .name(user.getName())
-                // .userId(user.getId()) // DTO에 userId 필드가 있다면 추가로 담을 수 있습니다.
                 .build();
 
-        // 응답 본문에 UserLoginResponseDto 객체를 담아 반환합니다.
         return ResponseEntity.ok(userLoginResponseDto);
     }
 //    @PostMapping("/logout")
