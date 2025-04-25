@@ -68,7 +68,6 @@ export default function MyBlogPage() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        // 현재 로그인한 사용자 정보 가져오기
         const userResponse = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
@@ -86,11 +85,14 @@ export default function MyBlogPage() {
 
         // 프로필 사진 호출 제거 - API 엔드포인트가 존재하지 않음
         // 대신 게시글 데이터에서 프로필 사진 정보를 가져와서 사용
+
         setUserInfo({
           id: userData.id,
           name: userData.name || "사용자",
           email: userData.email || "",
           profilePhoto: undefined, // fetchMyPosts에서 설정
+          profileImage: userData.profileImage || "",
+
           posts: 0,
           visitors: 0,
           followers: 0,
@@ -169,6 +171,15 @@ export default function MyBlogPage() {
               posts: processedPosts.length,
             }));
           }
+        if (!res.ok) {
+          setErrorMsg(data.message || "게시글을 불러오는 데 실패했습니다.");
+        } else if (Array.isArray(data.content)) {
+          setPosts(data.content);
+          setUserInfo((prev) => ({
+            ...prev,
+            posts: data.content.length,
+            viewCount: (prev.viewCount || 0) + 1, // 조회수 증가
+          }));
         } else {
           setErrorMsg("게시글이 존재하지 않습니다.");
         }
@@ -183,9 +194,11 @@ export default function MyBlogPage() {
     fetchMyPosts();
   }, [userInfo.id]);
 
+
+  // 팔로워/팔로잉 정보를 가져오는 함수 추가
   useEffect(() => {
     const fetchFollowStats = async () => {
-      if (userInfo.id === 0) return;
+      if (userInfo.id === 0) return; // 사용자 정보가 로드되지 않았으면 스킵
 
       try {
         const followersResponse = await fetch(
@@ -194,6 +207,9 @@ export default function MyBlogPage() {
           }/api/v1/follows/members/${userInfo.id}/followers/counts`,
           { credentials: "include" }
         );
+
+
+        // 팔로잉 수 가져오기
 
         const followingResponse = await fetch(
           `${
@@ -219,6 +235,7 @@ export default function MyBlogPage() {
 
     fetchFollowStats();
   }, [userInfo.id]);
+
 
   const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);
