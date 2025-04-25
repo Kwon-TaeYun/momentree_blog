@@ -85,13 +85,13 @@ export default function MyBlogPage() {
 
         // 프로필 사진 호출 제거 - API 엔드포인트가 존재하지 않음
         // 대신 게시글 데이터에서 프로필 사진 정보를 가져와서 사용
-
         setUserInfo({
           id: userData.id,
           name: userData.name || "사용자",
           email: userData.email || "",
           profilePhoto: undefined, // fetchMyPosts에서 설정
           profileImage: userData.profileImage || "",
+
 
           posts: 0,
           visitors: 0,
@@ -102,6 +102,7 @@ export default function MyBlogPage() {
         });
       } catch (err) {
         console.error("사용자 정보 로딩 오류:", err);
+        // 로그인 페이지로 리디렉션
         router.push("/members/login");
       }
     };
@@ -112,7 +113,7 @@ export default function MyBlogPage() {
   // 내 게시글 가져오기
   useEffect(() => {
     const fetchMyPosts = async () => {
-      if (userInfo.id === 0) return;
+      if (userInfo.id === 0) return; // 사용자 정보가 로드되지 않았으면 스킵
 
       try {
         console.log("게시글 데이터 요청 시작, 유저 ID:", userInfo.id);
@@ -177,6 +178,7 @@ export default function MyBlogPage() {
             ...prev,
             viewCount: (prev.viewCount || 0) + 1,
           }));
+
         } else {
           setErrorMsg("게시글이 존재하지 않습니다.");
         }
@@ -203,7 +205,7 @@ export default function MyBlogPage() {
           }/api/v1/follows/members/${userInfo.id}/followers/counts`,
           { credentials: "include" }
         );
-
+        
         // 팔로잉 수 가져오기
 
         const followingResponse = await fetch(
@@ -230,6 +232,7 @@ export default function MyBlogPage() {
 
     fetchFollowStats();
   }, [userInfo.id]);
+
 
   const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);

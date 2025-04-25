@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { FaImage, FaTimes } from "react-icons/fa";
 import type { EditorInstance } from "@toast-ui/react-editor";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+
 // Toast UI Editor를 클라이언트 사이드에서만 로드 (SSR 없이)
 const Editor = dynamic(
   () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
@@ -50,6 +51,9 @@ interface Board {
 // 언어 패키지는 Editor 컴포넌트의 language prop으로 처리
 
 export default function EditPostPage() {
+  useEffect(() => {
+    import("@toast-ui/editor/dist/i18n/ko-kr").catch(console.error);
+  }, []);
   const params = useParams();
   const router = useRouter();
   const boardId = params?.boardId as string;
@@ -229,7 +233,9 @@ export default function EditPostPage() {
               console.error("에디터 내용 설정 오류:", error);
             }
           }
+
         }, 1500); // 시간을 조금 더 여유있게
+
 
         setIsLoading(false);
       } catch (error) {
@@ -334,8 +340,8 @@ export default function EditPostPage() {
         const md = editor.getMarkdown();
         // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
         const newMd = md.split(previewUrl).join(publicUrl);
-        // 두 번째 인자(false)는 undo stack에 남기지 않음
-        editor.setMarkdown(newMd, false);
+        editor.setMarkdown(newMd);
+
       }
 
       // 키값만 저장 (백엔드 전송용)
@@ -556,7 +562,7 @@ export default function EditPostPage() {
   };
 
   // 카테고리 ID로 카테고리 정보를 가져오는 함수
-  const fetchCategoryById = async (categoryId) => {
+  const fetchCategoryById = async (categoryId: number | string) => {
     try {
       // 먼저 이미 로드된 카테고리 목록에서 찾기
       if (categories.length > 0) {

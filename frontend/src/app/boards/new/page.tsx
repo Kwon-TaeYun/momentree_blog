@@ -85,6 +85,11 @@ export default function CreatePostPage() {
   const editorRef = useRef<EditorInstance>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 클라이언트에서만 한글 번역 모듈을 불러옵니다
+  useEffect(() => {
+    import("@toast-ui/editor/dist/i18n/ko-kr").catch(console.error);
+  }, []);
+
   // 로그인 여부 확인
   useEffect(() => {
     // 쿠키 확인으로 로그인 여부 체크
@@ -194,8 +199,8 @@ export default function CreatePostPage() {
         const md = editor.getMarkdown();
         // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
         const newMd = md.split(previewUrl).join(publicUrl);
-        // 두 번째 인자(false)는 undo stack에 남기지 않음
-        editor.setMarkdown(newMd, false);
+
+        editor.setMarkdown(newMd);
       }
 
       // 키값만 저장 (백엔드 전송용)
@@ -965,21 +970,12 @@ export default function CreatePostPage() {
           text-align: left !important;
         }
 
-        /* 이미지만 중앙 정렬 */
+        /* 이미지 정렬 옵션 */
         .toastui-editor-contents img {
-          max-width: 70% !important; /* 이미지 최대 너비를 70%로 제한 */
-          height: auto !important;
-          margin-left: auto !important;
-          margin-right: auto !important;
+          max-width: 100% !important;
+          margin: 0 auto !important;
           display: block !important;
         }
-
-        /* 에디터 내용 전체 스타일링 */
-        .toastui-editor-contents {
-          font-size: 1.3em !important; /* 글씨 크기 30% 증가 */
-        }
-
-        /* 코드블록 등 다른 요소들도 동일하게 중앙 정렬 필요시 추가 */
       `}</style>
     </div>
   );

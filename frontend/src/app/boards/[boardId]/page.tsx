@@ -23,6 +23,22 @@ const Viewer = dynamic(
 // Toast UI Editor CSS
 import "@toast-ui/editor/dist/toastui-editor.css";
 
+// Toast UI Viewer 동적 임포트
+const Viewer = dynamic<import("@toast-ui/react-editor").ViewerProps>(
+  () => import("@toast-ui/react-editor").then((mod) => mod.Viewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-96 w-full flex items-center justify-center">
+        콘텐츠 로딩 중...
+      </div>
+    ),
+  }
+);
+
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
+
 // 동적 임포트로 LikeList 컴포넌트 가져오기
 const LikeList = dynamic(() => import("@/components/LikeList"), {
   ssr: false, // 클라이언트 사이드에서만 렌더링
@@ -171,7 +187,9 @@ export default function BoardDetail() {
             // 키를 공개 URL로 변환
             data.content = data.content.replace(
               relativePathPattern,
-              (match, alt, imageKey) => {
+
+              (match: string, alt: string, imageKey: string) => {
+
                 const imageUrl = `${S3_PUBLIC_BASE}/uploads/${imageKey}`;
                 console.log("이미지 URL로 변환:", imageKey, "->", imageUrl);
                 return `![${alt}](${imageUrl})`;
