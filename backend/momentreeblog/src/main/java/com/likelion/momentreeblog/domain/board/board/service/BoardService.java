@@ -322,9 +322,4 @@ public class BoardService {
                 board.getLikes().stream().count() // likeCount
         ));
     }
-
-
-
-
-
 }
