@@ -137,9 +137,17 @@ public class BlogService {
         // 필요한 연관 엔티티들을 명시적으로 초기화
         Hibernate.initialize(blog.getUser());
 
+        String profileImage = null;
+        if (blog.getUser() != null && blog.getUser().getCurrentProfilePhoto() != null) {
+            profileImage = blog.getUser().getCurrentProfilePhoto().getUrl();
+        }
+
         return BlogDetailResponseDto.builder()
                 .id(blog.getId())
                 .name(blog.getName())
+                .userName(blog.getUser() != null ? blog.getUser().getName() : "알 수 없음")
+                .userEmail(blog.getUser() != null ? blog.getUser().getEmail() : "알 수 없음")
+                .profileImage(profileImage)
                 .boards(boards)
                 .build();
     }

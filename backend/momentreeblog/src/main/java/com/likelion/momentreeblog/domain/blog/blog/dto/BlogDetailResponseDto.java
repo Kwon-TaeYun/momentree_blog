@@ -15,7 +15,7 @@ public class BlogDetailResponseDto {
     private String userName;
     private String userEmail;
     private String profileImage;
-    private Long postsCount;
+    private Long followerCount;
     private Page<BoardListResponseDto> boards;
 
     // 팔로우 관련 정보는 프론트엔드에서 별도로 조회

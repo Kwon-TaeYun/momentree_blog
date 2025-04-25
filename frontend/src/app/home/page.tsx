@@ -20,6 +20,20 @@ interface Post {
   likeCount: number;
 }
 
+// AWS S3 URL 생성 함수 추가
+const getS3ImageUrl = (imageKey: string) => {
+  const bucket = process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+  const region = process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+  const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+  if (!imageKey) return "/default-content.jpg";
+  if (imageKey.startsWith("http")) return imageKey;
+  if (imageKey.startsWith("uploads/")) {
+    return `${S3_PUBLIC_BASE}/${imageKey}`;
+  }
+  return `${S3_PUBLIC_BASE}/uploads/${imageKey}`;
+};
+
 export default function BlogPage() {
   const [bloggers, setBloggers] = useState<Blogger[]>([]);
   const [topPosts, setTopPosts] = useState<Post[]>([]);
@@ -103,31 +117,27 @@ export default function BlogPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {Array.isArray(topPosts) &&
               topPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="rounded-lg overflow-hidden shadow-sm border border-gray-100"
-                >
-                  <div className="h-48 bg-gray-100 relative">
-                    <Image
-                      src={
-                        post.imageUrl && post.imageUrl.startsWith("http")
-                          ? post.imageUrl
-                          : "/default-content.jpg"
-                      }
-                      alt={post.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium mb-2">{post.title}</h3>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span className="flex items-center mr-3">
-                        ❤️ {post.likeCount?.toLocaleString() || 0}
-                      </span>
+                <Link href={`/boards/${post.id}`} key={post.id}>
+                  <div className="rounded-lg overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div className="h-48 bg-gray-100 relative">
+                      <Image
+                        src={getS3ImageUrl(post.imageUrl)}
+                        alt={post.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-medium mb-2">{post.title}</h3>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span className="flex items-center mr-3">
+                          ❤️ {post.likeCount?.toLocaleString() || 0}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
           </div>
         </section>
@@ -137,68 +147,66 @@ export default function BlogPage() {
           <h2 className="text-xl font-bold mb-4">실시간 인기글</h2>
           <div className="space-y-4">
             {realtimePosts.map((post) => (
-              <div key={post.id} className="flex gap-4 border-b pb-4">
-                <div className="w-24 h-24 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                  <Image
-                    src={
-                      post.imageUrl && post.imageUrl.startsWith("http")
-                        ? post.imageUrl
-                        : "/default-content.jpg"
-                    }
-                    alt={post.title}
-                    width={96}
-                    height={96}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium mb-1">{post.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{post.excerpt}</p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <span className="mr-2">{post.authorName}</span>
-                    <span className="flex items-center mr-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                      </svg>
-                      {/* 댓글 수는 데이터 구조에 따라 수정 */}
-                    </span>
-                    <span className="flex items-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
-                      {post.likeCount?.toLocaleString() || 0}
-                    </span>
+              <Link href={`/boards/${post.id}`} key={post.id} className="block">
+                <div className="flex gap-4 border-b pb-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-24 h-24 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                    <Image
+                      src={getS3ImageUrl(post.imageUrl)}
+                      alt={post.title}
+                      width={96}
+                      height={96}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-1">{post.title}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{post.excerpt}</p>
+                    <div className="flex items-center text-xs text-gray-500">
+                      <span className="mr-2">{post.authorName}</span>
+                      <span className="flex items-center mr-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                          />
+                        </svg>
+                        {/* 댓글 수는 데이터 구조에 따라 수정 */}
+                      </span>
+                      <span className="flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                        {post.likeCount?.toLocaleString() || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
