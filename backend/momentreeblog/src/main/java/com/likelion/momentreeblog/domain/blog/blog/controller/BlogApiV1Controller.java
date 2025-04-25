@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal; // @AuthenticationPrincipal 사용을 위한 임포트
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails; // CustomUserDetails 클래스 사용을 위한 임포트 (님의 프로젝트 패키지 경로에 맞게 확인 필요)
 
 import java.util.HashMap;
 import java.util.Map;
@@ -127,39 +129,33 @@ public class BlogApiV1Controller {
      */
     @GetMapping("/{id}/details")
     public ResponseEntity<?> getBlogDetails(
-            @PathVariable(name = "id") Long id,
+            @PathVariable(name = "id") Long id, // 여기서 id는 블로그 ID 입니다.
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestHeader(value = "Authorization", required = false) String authorization) {
-        Long loggedInUserId = null;
+            // --- @AuthenticationPrincipal 사용 ---
+            @AuthenticationPrincipal CustomUserDetails customUserDetails // <-- 이 부분이 핵심입니다.
+            // @RequestHeader(value = "Authorization", required = false) String authorization // <-- 이 라인은 필요 없습니다. 주석 처리하거나 삭제하세요.
+            ) {
 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            try {
-                loggedInUserId = jwtTokenizer.getUserIdFromToken(authorization);
-                log.info("✅ Blog Details Requested by User ID: {}", loggedInUserId); // 로깅 추가
-            } catch (Exception e) {
-                 // 토큰이 유효하지 않은 경우
-                 log.warn("⚠️ Invalid JWT token for blog details: {}", e.getMessage()); // 로깅 수정
-                 // 여기서는 401 에러를 반환하는 대신 loggedInUserId를 null로 유지합니다.
-                 // 필요하다면 여기서 401 에러를 명시적으로 반환하도록 정책을 바꿀 수 있습니다.
-                 // return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "유효하지 않은 인증 정보입니다."));
-            }
+        Long loggedInUserId = null;
+        if (customUserDetails != null) {
+            loggedInUserId = customUserDetails.getUserId(); // CustomUserDetails에서 유저 ID 가져옴
+            log.info("✅ Blog Details Requested by Authenticated User ID: {}", loggedInUserId); // 인증된 유저 로그
         } else {
-             log.info("✅ Blog Details Requested by Anonymous User"); // 로깅 추가
+            log.info("✅ Blog Details Requested by Anonymous User (No Principal)"); // 인증되지 않은 유저 로그
         }
 
         try {
             // blogService 메소드에 로그인된 유저 ID 전달
-            BlogDetailResponseDto details = blogService.getBlogDetails(id, page, size, loggedInUserId); // <-- loggedInUserId 인자 전달
+            BlogDetailResponseDto details = blogService.getBlogDetails(id, page, size, loggedInUserId); // <-- 블로그 ID(id)와 로그인 유저 ID 전달
 
             return ResponseEntity.ok(details);
         } catch (IllegalArgumentException e) {
-            log.warn("⚠️ Blog not found: {}", e.getMessage()); // 로깅 수정
+            log.warn("⚠️ Blog not found: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            log.error("❌ Error fetching blog details: {}", e.getMessage()); // 로깅 수정
-            e.printStackTrace(); // 스택 트레이스 로깅 (개발 중 유용)
+            log.error("❌ Error fetching blog details:", e); // 예외 스택 트레이스 로깅
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "블로그 조회 중 오류가 발생했습니다."));
         }
