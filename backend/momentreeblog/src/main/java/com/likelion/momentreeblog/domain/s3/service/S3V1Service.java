@@ -52,9 +52,9 @@ public class S3V1Service {
                 .build();
 
 
-        // 프리사인 URL 생성: 5분간 유효
+        // 프리사인 URL 생성: 20분간 유효
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
+                .signatureDuration(Duration.ofMinutes(20))
                 .putObjectRequest(putObjectRequest)
                 .build();
 
@@ -72,7 +72,6 @@ public class S3V1Service {
         return PreSignedUrlResponseDto.builder()
                 .url(url)
                 .key(key)
-                .publicUrl(publicUrl)
                 .build();
     }
 
@@ -96,7 +95,7 @@ public class S3V1Service {
         // GET 요청용 presigned URL
         PresignedGetObjectRequest presignedGet = s3Presigner.presignGetObject(
                 GetObjectPresignRequest.builder()
-                        .signatureDuration(Duration.ofMinutes(5))
+                        .signatureDuration(Duration.ofMinutes(20))
                         .getObjectRequest(r -> r.bucket(bucketName).key(key))
                         .build()
         );
@@ -110,7 +109,6 @@ public class S3V1Service {
         return PreSignedUrlResponseDto.builder()
                 .url(url)
                 .key(key)
-                .publicUrl(publicUrl)
                 .build();
     }
 

@@ -112,7 +112,7 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
 
     // 프로필 사진 기본 사진으로 변경
     @Transactional
-    public void changeToDefaultProfilePhoto(Long userId) {
+    public PreSignedUrlResponseDto changeToDefaultProfilePhoto(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다. (ID: " + userId + ")"));
         
@@ -121,15 +121,14 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
         
         // 현재 프로필 사진이 이미 null이라면 아무 작업도 수행하지 않음
         if (currentPhoto == null) {
-            return;
+            return s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
         }
         
         // 현재 프로필 사진 null로 설정 (기본 이미지로 표시됨)
         user.setCurrentProfilePhoto(null);
         userRepository.save(user);
-        
-        // 기본 이미지로 변경되었음을 로그로 남기거나 이벤트 발행 가능
-        // logger.info("User {} changed to default profile image", userId);
+
+        return s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
     }
 
 
@@ -143,15 +142,7 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
         Photo newProfilePhoto = photoRepository.findById(photoId)
                 .orElseThrow(() -> new NoSuchElementException("사진을 찾을 수 없습니다. (ID: " + photoId + ")"));
         
-        // 본인 소유의 사진인지 확인
-        if (!newProfilePhoto.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("해당 사진을 프로필로 설정할 권한이 없습니다.");
-        }
-        
-        // 프로필 타입의 사진인지 확인
-        if (!newProfilePhoto.getType().equals(PhotoType.PROFILE)) {
-            throw new IllegalArgumentException("프로필 사진 타입이 아닙니다.");
-        }
+
         
         // 현재 프로필 사진 업데이트
         user.setCurrentProfilePhoto(newProfilePhoto);
@@ -161,11 +152,10 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
 
     // S3 키를 이용하여 프로필 사진 업데이트
     @Transactional
-    public PhotoUploadResponseDto updateProfilePhotoWithS3Key(Long userId, String s3Key, PhotoUploadRequestDto request) {
+    public PhotoUploadResponseDto updateProfilePhotoWithS3Key(Long userId, String s3Key) {
         // 사용자 존재 여부 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다."));
-
 
 
         // S3 업로드 완료 후, 클라이언트가 전달한 s3Key를 사용하여 새 Photo 엔티티 생성
@@ -184,6 +174,7 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
 
         // 업데이트된 사진의 GET presigned URL 생성
         PreSignedUrlResponseDto urlDto = s3V1Service.generateGetPresignedUrl(savedProfilePhoto.getUrl());
+
 
         // PhotoUploadResponseDto 형태로 결과 반환
         return PhotoUploadResponseDto.builder()

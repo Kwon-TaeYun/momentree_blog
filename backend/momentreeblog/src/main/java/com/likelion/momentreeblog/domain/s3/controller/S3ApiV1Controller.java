@@ -62,9 +62,9 @@ public class S3ApiV1Controller {
     }
 
 
-    // 기존 POST /api/s3/presigned-url (PUT 용) 과 별개로
-    @GetMapping("/api/s3/presigned-url/{key:.+}")
-    public PreSignedUrlResponseDto getPresignedUrl(@PathVariable("key") String key) {
+    // 사진 업로드 후 보여지기 위한 사진 get용
+    @GetMapping("/presigned-url")
+    public PreSignedUrlResponseDto getPresignedUrl( @RequestParam("key") String key) {
         return s3V1Service.generateGetPresignedUrl(key);
     }
 

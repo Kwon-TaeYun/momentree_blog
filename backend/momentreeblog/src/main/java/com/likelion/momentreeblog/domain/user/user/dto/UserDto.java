@@ -27,7 +27,9 @@ public class UserDto {
     private final Long viewCount;
     private final Long blogId;
 
-    public UserDto(User member) {
+    private String profilePhotoUrl;
+
+    public UserDto(User member,String profilePhotoUrl) {
         this.id = member.getId();
         this.createDate = member.getCreatedAt();
         this.modifyDate = member.getUpdatedAt();
@@ -36,5 +38,6 @@ public class UserDto {
         this.blogName = member.getBlog().getName();
         this.blogId = member.getBlog().getId();
         this.viewCount = member.getBlog().getViewCount();
+        this.profilePhotoUrl = profilePhotoUrl;
     }
 }

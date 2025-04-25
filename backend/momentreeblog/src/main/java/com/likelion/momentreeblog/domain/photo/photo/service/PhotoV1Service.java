@@ -60,7 +60,7 @@ public class PhotoV1Service {
             if (request.getPhotoType() != PhotoType.PROFILE) {
                 throw new IllegalArgumentException("프로필 사진 타입이 아닙니다.");
             }
-            return profilePhotoService.updateProfilePhotoWithS3Key(userId, s3Key, request);
+            return profilePhotoService.updateProfilePhotoWithS3Key(userId, s3Key);
         } else if (type == PhotoType.MAIN) {
             if (request.getPhotoType() != PhotoType.MAIN) {
                 throw new IllegalArgumentException("게시글의 메인 사진 타입이 아닙니다.");
@@ -138,11 +138,11 @@ public class PhotoV1Service {
 
     // 사진을 기본 이미지로 변경 - 타입에 따라 적절한 서비스로 위임
     @Transactional
-    public void changeToDefaultPhoto(PhotoType type, Long userId, Long boardId) {
+    public PreSignedUrlResponseDto changeToDefaultPhoto(PhotoType type, Long userId, Long boardId) {
         if (type == PhotoType.PROFILE) {
-            profilePhotoService.changeToDefaultProfilePhoto(userId);
+            return profilePhotoService.changeToDefaultProfilePhoto(userId);
         } else if (type == PhotoType.MAIN) {
-            boardPhotoService.changeToDefaultBoardPhoto(userId, boardId);
+            return boardPhotoService.changeToDefaultBoardPhoto(userId, boardId);
         } else {
             throw new IllegalArgumentException("지원되지 않는 사진 타입입니다.");
         }
