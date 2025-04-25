@@ -51,13 +51,14 @@ export default function MyBlogPage() {
 
   // 팔로워/팔로잉 모달 상태 추가
   const [isFollowerModalOpen, setIsFollowerModalOpen] = useState(false);
-  const [activeFollowTab, setActiveFollowTab] = useState<'followers' | 'following'>('followers');
+  const [activeFollowTab, setActiveFollowTab] = useState<
+    "followers" | "following"
+  >("followers");
 
   // 사용자 정보 가져오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        // 현재 로그인한 사용자 정보 가져오기
         const userResponse = await fetch(
           `${
             process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
@@ -72,15 +73,12 @@ export default function MyBlogPage() {
         }
 
         const userData = await userResponse.json();
-
-        // 기본 통계 정보는 임시로 설정
-        // 실제로는 API에서 이 정보를 제공하거나 별도로 요청해야 함
         setUserInfo({
           id: userData.id,
           name: userData.name || "사용자",
           email: userData.email || "",
           profileImage: userData.profileImage || "",
-          posts: 0, // fetchMyPosts에서 업데이트됨
+          posts: 0,
           visitors: 0,
           followers: 0,
           following: 0,
@@ -89,7 +87,6 @@ export default function MyBlogPage() {
         });
       } catch (err) {
         console.error("사용자 정보 로딩 오류:", err);
-        // 로그인 페이지로 리디렉션
         router.push("/members/login");
       }
     };
@@ -100,7 +97,7 @@ export default function MyBlogPage() {
   // 내 게시글 가져오기
   useEffect(() => {
     const fetchMyPosts = async () => {
-      if (userInfo.id === 0) return; // 사용자 정보가 로드되지 않았으면 스킵
+      if (userInfo.id === 0) return;
 
       try {
         const res = await fetch(
@@ -114,8 +111,6 @@ export default function MyBlogPage() {
         );
 
         const data = await res.json();
-        console.log("응답 데이터:", data); // 데이터 확인
-
         if (!res.ok) {
           setErrorMsg(data.message || "게시글을 불러오는 데 실패했습니다.");
         } else if (Array.isArray(data.content)) {
@@ -123,6 +118,7 @@ export default function MyBlogPage() {
           setUserInfo((prev) => ({
             ...prev,
             posts: data.content.length,
+            viewCount: (prev.viewCount || 0) + 1, // 조회수 증가
           }));
         } else {
           setErrorMsg("게시글이 존재하지 않습니다.");
@@ -137,33 +133,37 @@ export default function MyBlogPage() {
 
     fetchMyPosts();
   }, [userInfo.id]);
-  
+
   // 팔로워/팔로잉 정보를 가져오는 함수 추가
   useEffect(() => {
     const fetchFollowStats = async () => {
       if (userInfo.id === 0) return; // 사용자 정보가 로드되지 않았으면 스킵
-      
+
       try {
         // 팔로워 수 가져오기
         const followersResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/follows/members/${userInfo.id}/followers/counts`,
+          `${
+            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/follows/members/${userInfo.id}/followers/counts`,
           { credentials: "include" }
         );
-        
+
         // 팔로잉 수 가져오기
         const followingResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8090'}/api/v1/follows/members/${userInfo.id}/followings/counts`,
+          `${
+            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/follows/members/${userInfo.id}/followings/counts`,
           { credentials: "include" }
         );
 
         if (followersResponse.ok && followingResponse.ok) {
           const followersCount = await followersResponse.json();
           const followingCount = await followingResponse.json();
-          
-          setUserInfo(prev => ({
+
+          setUserInfo((prev) => ({
             ...prev,
             followers: followersCount,
-            following: followingCount
+            following: followingCount,
           }));
         }
       } catch (error) {
@@ -175,7 +175,7 @@ export default function MyBlogPage() {
   }, [userInfo.id]);
 
   // 팔로워/팔로잉 클릭 핸들러
-  const handleFollowClick = (tab: 'followers' | 'following') => {
+  const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);
     setIsFollowerModalOpen(true);
   };
@@ -228,16 +228,16 @@ export default function MyBlogPage() {
                 <div className="w-full flex flex-col space-y-3 mb-4">
                   <InfoRow label="게시글" value={userInfo.posts} />
                   <InfoRow label="조회수" value={userInfo.viewCount || 0} />
-                  <InfoRow 
-                    label="팔로워" 
-                    value={userInfo.followers} 
-                    onClick={() => handleFollowClick('followers')}
+                  <InfoRow
+                    label="팔로워"
+                    value={userInfo.followers}
+                    onClick={() => handleFollowClick("followers")}
                     isClickable={true}
                   />
-                  <InfoRow 
-                    label="팔로잉" 
-                    value={userInfo.following} 
-                    onClick={() => handleFollowClick('following')}
+                  <InfoRow
+                    label="팔로잉"
+                    value={userInfo.following}
+                    onClick={() => handleFollowClick("following")}
                     isClickable={true}
                   />
                 </div>
@@ -333,9 +333,9 @@ export default function MyBlogPage() {
       </main>
 
       {/* 팔로워/팔로잉 모달 */}
-      <UserFollower 
-        isOpen={isFollowerModalOpen} 
-        onClose={() => setIsFollowerModalOpen(false)} 
+      <UserFollower
+        isOpen={isFollowerModalOpen}
+        onClose={() => setIsFollowerModalOpen(false)}
         userId={userInfo.id.toString()}
         initialTab={activeFollowTab}
       />
@@ -343,20 +343,22 @@ export default function MyBlogPage() {
   );
 }
 
-function InfoRow({ 
-  label, 
-  value, 
-  onClick, 
-  isClickable = false 
-}: { 
-  label: string; 
-  value: string | number; 
+function InfoRow({
+  label,
+  value,
+  onClick,
+  isClickable = false,
+}: {
+  label: string;
+  value: string | number;
   onClick?: () => void;
   isClickable?: boolean;
 }) {
   return (
-    <div 
-      className={`flex justify-between ${isClickable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+    <div
+      className={`flex justify-between ${
+        isClickable ? "cursor-pointer hover:bg-gray-50" : ""
+      }`}
       onClick={onClick}
     >
       <p className="text-black">{label}</p>
