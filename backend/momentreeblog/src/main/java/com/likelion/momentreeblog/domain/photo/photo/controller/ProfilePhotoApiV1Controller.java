@@ -1,10 +1,8 @@
 package com.likelion.momentreeblog.domain.photo.photo.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
-import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
-import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,38 +18,6 @@ public class ProfilePhotoApiV1Controller {
 
     private final PhotoV1Service photoService;
 
-
-    // 프로필 사진 업로드용 presigned URL 생성
-    @PostMapping("/upload")
-    public ResponseEntity<PreSignedUrlResponseDto> getProfileUploadUrl(
-            @RequestBody PhotoUploadRequestDto request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        if (request.getPhotoType() != PhotoType.PROFILE) {
-            return ResponseEntity.badRequest().build();
-        }
-        
-        Long userId = userDetails.getUserId();
-        return ResponseEntity.ok(photoService.uploadPhoto(request, userId, null));
-    }
-
-
-    // 프로필 사진 S3 업로드 완료 후 DB 저장
-    @PutMapping("/update")
-    public ResponseEntity<PhotoUploadResponseDto> updateProfilePhoto(
-            @RequestParam("s3Key") String s3Key,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        
-        Long userId = userDetails.getUserId();
-        
-        // Builder 패턴으로 DTO 생성
-        PhotoUploadRequestDto request = PhotoUploadRequestDto.builder()
-                .userId(userId)
-                .photoType(PhotoType.PROFILE)
-                .build();
-        
-        return ResponseEntity.ok(photoService.updatePhotoWithS3Key(PhotoType.PROFILE, userId, null, s3Key, request));
-    }
 
     // 현재 프로필 사진 조회
     @GetMapping

@@ -26,6 +26,10 @@ public class UserResponse {
     //             .build();
     // }
 
+    private String profilePhotoUrl;
+    private String profilePhotoKey;
+
+
     public static UserResponse from(User user) {
         // user.getBlog() 호출 시 NullPointerException 방지
         Long blogId = null;

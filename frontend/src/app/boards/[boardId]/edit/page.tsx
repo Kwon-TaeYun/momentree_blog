@@ -5,11 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { BiSearch, BiArrowBack, BiX } from "react-icons/bi";
-import { BsImage, BsTag } from "react-icons/bs";
 import dynamic from "next/dynamic";
 import { FaImage, FaTimes } from "react-icons/fa";
 import type { EditorInstance } from "@toast-ui/react-editor";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+
 // Toast UI Editor를 클라이언트 사이드에서만 로드 (SSR 없이)
 const Editor = dynamic(
   () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
@@ -51,6 +51,9 @@ interface Board {
 // 언어 패키지는 Editor 컴포넌트의 language prop으로 처리
 
 export default function EditPostPage() {
+  useEffect(() => {
+    import("@toast-ui/editor/dist/i18n/ko-kr").catch(console.error);
+  }, []);
   const params = useParams();
   const router = useRouter();
   const boardId = params?.boardId as string;
@@ -91,6 +94,23 @@ export default function EditPostPage() {
   const editorRef = useRef<EditorInstance>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 상대 경로를 절대 경로로 변환하는 함수
+  const convertKeysToPublicUrls = (content: string) => {
+    // S3 기본 URL 정의
+    const S3_BASE =
+      process.env.NEXT_PUBLIC_S3_BASE_URL ||
+      "https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com";
+
+    // 정규 표현식으로 /uploads/xxx-yyy.png 형태의 경로를 찾아서 변환
+    return content.replace(
+      /!\[([^\]]*)\]\(\/uploads\/([^)]+)\)/g,
+      (match, alt, fileName) => {
+        return `![${alt}](${S3_BASE}/uploads/${fileName})`;
+      }
+    );
+  };
+
+  // 인증 및 작성자 확인
   // 카테고리 관련 상태값 추가
   const [categories, setCategories] = useState<Category[]>([]); // 카테고리 목록
   const [newCategory, setNewCategory] = useState(""); // 새 카테고리 입력값
@@ -103,7 +123,6 @@ export default function EditPostPage() {
   useEffect(() => {
     const fetchPostData = async () => {
       setIsLoading(true);
-      console.log("게시글 ID:", boardId); // 디버깅용 로그
       try {
         const response = await fetch(
           `http://localhost:8090/api/v1/boards/${boardId}`,
@@ -125,9 +144,22 @@ export default function EditPostPage() {
         setTitle(data.title);
         setContent(data.content);
 
-        // 메인 사진 URL 설정
-        if (data.currentMainPhotoUrl) {
-          setRepresentativeImage(data.currentMainPhotoUrl); // 상태에 메인 사진 URL 저장
+        // 이미지 키와 URL을 별도로 관리
+        if (data.currentMainPhotoKey) {
+          // S3 키는 별도 상태로 저장 (백엔드로 다시 전송될 때 사용)
+          setMainPhotoKey(data.currentMainPhotoKey);
+
+          // URL은 화면에 표시할 때만 사용
+          setRepresentativeImage(data.currentMainPhotoUrl);
+        }
+
+        // 업로드된 이미지 목록 설정 (추가 이미지들)
+        if (data.additionalPhotoKeys && data.additionalPhotoKeys.length > 0) {
+          // S3 키는 별도 상태로 저장 (백엔드로 다시 전송될 때 사용)
+          setAdditionalKeys(data.additionalPhotoKeys);
+
+          // URL은 화면에 표시할 때만 사용
+          setUploadedImages(data.additionalPhotoUrls);
         }
 
         // 카테고리 정보 설정 - 서버에서 category 객체로 오는 경우 처리
@@ -144,7 +176,6 @@ export default function EditPostPage() {
                 categoryId: categoryIdString,
               }));
             }
-
             if (data.category.name) {
               setCurrentCategoryName(data.category.name);
             }
@@ -179,6 +210,33 @@ export default function EditPostPage() {
           }
         }
 
+        // 에디터가 로드된 후 내용만 설정 (이미지는 별도로 추가하지 않음)
+        setTimeout(() => {
+          if (editorRef.current) {
+            try {
+              const editor = editorRef.current.getInstance();
+
+              // 내용 설정 방법 변경 - 상대 경로를 절대 경로로 변환
+              if (data.content && data.content.trim() !== "") {
+                // 상대 경로를 절대 경로로 변환하여 에디터에 설정
+                const convertedContent = convertKeysToPublicUrls(
+                  data.content.trim()
+                );
+                editor.setMarkdown(convertedContent);
+
+                // 에디터 포커스
+                editor.focus();
+
+                console.log("에디터 내용 설정 완료");
+              }
+            } catch (error) {
+              console.error("에디터 내용 설정 오류:", error);
+            }
+          }
+
+        }, 1500); // 시간을 조금 더 여유있게
+
+
         setIsLoading(false);
       } catch (error) {
         console.error("게시글 불러오기 오류:", error);
@@ -209,79 +267,91 @@ export default function EditPostPage() {
   };
 
   // 에디터에 이미지 삽입 핸들러
-  const handleEditorImageUpload = async (
+  const handleEditorImageUpload = (
     blob: File,
     callback: (url: string, alt: string) => void
   ) => {
-    try {
-      // 1. 먼저 즉시 화면에 보여주기 위해 FileReader로 미리보기 이미지 생성
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const previewImageUrl = e.target?.result as string;
-        // 2. 에디터에 미리보기 이미지 표시 (사용자에게 보이는 부분)
-        callback(previewImageUrl, blob.name);
+    // 1. 먼저 즉시 화면에 보여주기 위해 FileReader로 미리보기 이미지 생성
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const previewImageUrl = e.target?.result as string;
 
-        try {
-          // 3. S3에 이미지 업로드
-          // 파일 정보 추출
-          const filename = blob.name;
-          const contentType = blob.type;
+      // 2. 에디터에 미리보기 이미지 표시 (사용자에게 보이는 부분)
+      callback(previewImageUrl, blob.name);
 
-          // S3 프리사인드 URL 요청
-          const presignedUrlResponse = await fetch(
-            `${
-              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-            }/api/s3/presigned-url`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify({
-                filename,
-                contentType,
-                photoType: "ADDITIONAL",
-                boardId: boardId,
-              }),
-            }
-          );
+      // 3. 동시에 백엔드에 실제 업로드 처리 시작
+      uploadToS3(blob, previewImageUrl);
+    };
 
-          if (!presignedUrlResponse.ok) {
-            throw new Error("프리사인드 URL 생성에 실패했습니다.");
-          }
-
-          const { url, key } = await presignedUrlResponse.json();
-
-          // S3에 직접 파일 업로드
-          const uploadResponse = await fetch(url, {
-            method: "PUT",
-            headers: {
-              "Content-Type": contentType,
-            },
-            body: blob,
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error("이미지 업로드에 실패했습니다.");
-          }
-
-          // 업로드된 이미지의 키를 additionalKeys 상태에 추가
-          console.log("S3에 업로드된 이미지 키:", key);
-          setAdditionalKeys((prev) => [...prev, key]);
-
-          // 미리보기용 URL도 uploadedImages에 추가
-          setUploadedImages((prev) => [...prev, url]);
-        } catch (error) {
-          console.error("이미지 업로드 오류:", error);
-        }
-      };
-      reader.readAsDataURL(blob);
-    } catch (error) {
-      console.error("에디터 이미지 업로드 오류:", error);
-      callback("", "");
-    }
+    reader.readAsDataURL(blob);
     return false; // 기본 업로드 동작 방지
+  };
+
+  // S3 업로드 처리 함수 (별도 함수로 분리)
+  const uploadToS3 = async (file: File, previewUrl: string) => {
+    try {
+      // 파일 정보 추출
+      const filename = file.name;
+      const contentType = file.type;
+
+      // S3 프리사인드 URL 요청
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+        }/api/s3/presigned-url`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            filename,
+            contentType,
+            photoType: "ADDITIONAL",
+            boardId: boardId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("프리사인드 URL 생성에 실패했습니다.");
+      }
+
+      // PUT용 URL, key, publicUrl 응답 받기
+      const { url: uploadUrl, key, publicUrl } = await response.json();
+
+      // S3에 직접 파일 업로드
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("이미지 업로드에 실패했습니다.");
+      }
+
+      // 에디터에서 base64 → publicUrl로 직접 교체 (URL 조합하지 않음)
+      if (editorRef.current) {
+        const editor = editorRef.current.getInstance();
+        const md = editor.getMarkdown();
+        // previewUrl이 포함된 마크다운을 찾아서 publicUrl로 교체
+        const newMd = md.split(previewUrl).join(publicUrl);
+        editor.setMarkdown(newMd);
+
+      }
+
+      // 키값만 저장 (백엔드 전송용)
+      setAdditionalKeys((prev) => {
+        if (prev.includes(key)) return prev;
+        return [...prev, key];
+      });
+    } catch (error) {
+      console.error("S3 이미지 업로드 오류:", error);
+    }
   };
 
   // 에디터 내용 변경 핸들러
@@ -409,6 +479,19 @@ export default function EditPostPage() {
       let markdownContent = "";
       if (editorRef.current) {
         markdownContent = editorRef.current.getInstance().getMarkdown();
+
+        // S3 기본 URL 정의 (환경 변수에서 가져오기)
+        const S3_BASE =
+          process.env.NEXT_PUBLIC_S3_BASE_URL ||
+          "https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com";
+
+        // 콘텐츠에서 절대 경로(publicUrl)를 상대 경로(key)로 치환
+        markdownContent = markdownContent.replace(
+          new RegExp(`${S3_BASE}/(uploads/[^)\\s]+)`, "g"),
+          "/$1" // 또는 key 값만 남기려면 '$1'
+        );
+
+        // 불필요한 엔터 제거 - 연속된 3개 이상의 줄바꿈을 2개로 제한
         markdownContent = markdownContent.replace(/\n{3,}/g, "\n\n");
         setContent(markdownContent);
       }
@@ -438,9 +521,9 @@ export default function EditPostPage() {
       const requestData = {
         title,
         content: markdownContent,
-        currentMainPhotoUrl: representativeImage || "", // 메인 사진 URL
-        photoUrls: uploadedImages || [], // 추가 사진 URL 목록
-        categoryId: categoryIdValue, // 서버 형식에 맞게 category 객체로 전송
+        currentMainPhotoUrl: mainPhotoKey, // 백엔드에서는 여전히 url이란 이름을 사용하지만 실제로는 key 값을 전송
+        photoUrls: additionalKeys, // 배열 형태로 S3 키값만 전송
+        categoryId: categoryIdValue, // 카테고리 기능 구현 시 추가
       };
 
       console.log("서버로 전송되는 데이터:", requestData); // 디버깅용 로그
@@ -479,7 +562,7 @@ export default function EditPostPage() {
   };
 
   // 카테고리 ID로 카테고리 정보를 가져오는 함수
-  const fetchCategoryById = async (categoryId) => {
+  const fetchCategoryById = async (categoryId: number | string) => {
     try {
       // 먼저 이미 로드된 카테고리 목록에서 찾기
       if (categories.length > 0) {
@@ -971,7 +1054,7 @@ export default function EditPostPage() {
                     onClick={handleAddCategory}
                     className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800"
                   >
-                    추가
+                    저장
                   </button>
                 </div>
               </div>
