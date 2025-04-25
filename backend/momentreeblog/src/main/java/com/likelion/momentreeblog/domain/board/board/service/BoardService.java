@@ -13,6 +13,7 @@ import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
 import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
+import com.likelion.momentreeblog.domain.s3.service.S3V1Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,10 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,6 +38,7 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
     private final PhotoRepository photoRepository;
+    private final S3V1Service s3V1Service;
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
 
@@ -326,15 +325,24 @@ public class BoardService {
         List<Board> boards = boardRepository.findTopBoards(PageRequest.of(0, 3));
 
         return boards.stream()
-                .map(board -> new BoardListResponseDto(
-                        board.getId(),
-                        board.getTitle(),
-                        board.getBlog().getId(),
-                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
-                        board.getLikes().stream().count()
-                ))
+                .map(board -> {
+                    String key = Optional.ofNullable(board.getCurrentMainPhoto())
+                            .map(photo -> photo.getUrl())
+                            .orElse(DEFAULT_IMAGE_URL);
+
+                    String publicUrl = s3V1Service.generateGetPresignedUrl(key).getPublicUrl();
+
+                    return new BoardListResponseDto(
+                            board.getId(),
+                            board.getTitle(),
+                            board.getBlog().getId(),
+                            publicUrl,
+                            board.getLikes().stream().count()
+                    );
+                })
                 .collect(Collectors.toList());
     }
+
 
     @Transactional(readOnly = true)
     public List<BoardListResponseDto> getPopularPosts() {
@@ -343,13 +351,20 @@ public class BoardService {
         List<Board> boards = boardRepository.findTop5ByLikeCount(pageable);
 
         return boards.stream()
-                .map(board -> new BoardListResponseDto(
-                        board.getId(),
-                        board.getTitle(),
-                        board.getBlog().getId(),
-                        board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
-                        board.getLikes().stream().count()
-                ))
+                .map(board -> {
+                    String key = Optional.ofNullable(board.getCurrentMainPhoto())
+                            .map(photo -> photo.getUrl())
+                            .orElse(DEFAULT_IMAGE_URL);
+
+                    String publicUrl = s3V1Service.generateGetPresignedUrl(key).getPublicUrl();
+                            return new BoardListResponseDto(
+                                    board.getId(),
+                                    board.getTitle(),
+                                    board.getBlog().getId(),
+                                    publicUrl,
+                                    board.getLikes().stream().count()
+                            );
+                })
                 .collect(Collectors.toList());
     }
 
