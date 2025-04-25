@@ -72,6 +72,7 @@ public class S3V1Service {
         return PreSignedUrlResponseDto.builder()
                 .url(url)
                 .key(key)
+                .publicUrl(publicUrl)
                 .build();
     }
 
@@ -109,6 +110,7 @@ public class S3V1Service {
         return PreSignedUrlResponseDto.builder()
                 .url(url)
                 .key(key)
+                .publicUrl(publicUrl)
                 .build();
     }
 
