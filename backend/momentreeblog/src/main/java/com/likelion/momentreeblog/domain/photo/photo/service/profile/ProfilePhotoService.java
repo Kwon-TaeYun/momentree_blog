@@ -10,6 +10,7 @@ import com.likelion.momentreeblog.domain.s3.service.S3V1Service;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +26,10 @@ public class ProfilePhotoService {
     private final UserRepository userRepository;
 
     // 기본 프로필 이미지 URL (S3에 미리 업로드된 기본 이미지 URL)
-    private static final String DEFAULT_PROFILE_IMAGE_URL = "uploads/2976687f-037d-4907-a5a2-d7528a6eefd8-zammanbo.jpg";
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
 
-    
+
     // 프로필 사진 업로드
     @Transactional
     public PreSignedUrlResponseDto uploadProfilePhoto(PhotoUploadRequestDto request) {
@@ -52,7 +54,7 @@ public class ProfilePhotoService {
         Photo currentProfilePhoto = user.getCurrentProfilePhoto();
         if (currentProfilePhoto == null) {
             // 현재 프로필 사진이 없는 경우 기본 이미지 URL 반환
-            return s3V1Service.generateGetPresignedUrl(DEFAULT_PROFILE_IMAGE_URL);
+            return s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
         }
         
         return s3V1Service.generateGetPresignedUrl(currentProfilePhoto.getUrl());
@@ -68,7 +70,7 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
     
     // 프로필 사진이 없는 경우 기본 이미지 추가
     if (profilePhotos.isEmpty()) {
-        result.add(s3V1Service.generateGetPresignedUrl(DEFAULT_PROFILE_IMAGE_URL));
+        result.add(s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL));
     } else {
         for (Photo photo : profilePhotos) {
             result.add(s3V1Service.generateGetPresignedUrl(photo.getUrl()));
@@ -163,6 +165,8 @@ public List<PreSignedUrlResponseDto> getAllProfilePhotos(Long userId) {
         // 사용자 존재 여부 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("해당 사용자를 찾을 수 없습니다."));
+
+
 
         // S3 업로드 완료 후, 클라이언트가 전달한 s3Key를 사용하여 새 Photo 엔티티 생성
         Photo newProfilePhoto = Photo.builder()

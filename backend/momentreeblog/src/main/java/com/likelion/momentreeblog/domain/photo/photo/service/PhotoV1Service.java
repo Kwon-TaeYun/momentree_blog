@@ -116,6 +116,7 @@ public class PhotoV1Service {
     // 게시글 사진 조회 - 타입에 따라 적절한 서비스로 위임
     @Transactional(readOnly = true)
     public BoardPhotoResponseDto getBoardPhotos(PhotoType type, Long boardId) {
+        //메인으로 해도 상관없이 다 가져옴
         if (type == PhotoType.MAIN || type == PhotoType.ADDITIONAL) {
             return boardPhotoService.getBoardPhotos(boardId);
         } else {

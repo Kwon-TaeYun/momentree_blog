@@ -1,245 +1,220 @@
 "use client";
 
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MdKeyboardArrowDown, MdClose } from "react-icons/md";
-import { HiOutlineDocumentText } from "react-icons/hi";
-import { IoImagesOutline } from "react-icons/io5";
-import { useParams } from "next/navigation";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { BiSearch } from "react-icons/bi";
-import { getBoardMainPhoto, getBoardPhotos } from "@/lib/api";
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaTimes,
+  FaImages,
+  FaShareAlt,
+  FaDownload,
+} from "react-icons/fa";
 
-// 사진 데이터를 위한 인터페이스 정의
+// API 응답 타입 정의
+interface PresignedUrl {
+  url: string;
+  key: string;
+  publicUrl: string;
+}
+
+interface BoardPhotoResponseDto {
+  boardId: number;
+  mainPhotoUrl: PresignedUrl;
+  additionalPhotoUrls: PresignedUrl[];
+  title?: string;
+}
+
+// 내부에서 사용할 사진 타입 정의
 interface Photo {
-  id: number;
-  src: string;
-  title: string;
-  totalImages: number;
-  isMain: boolean;
-  isDefault?: boolean;
+  id: string;
+  url: string;
+  alt?: string;
+  type?: string;
 }
 
 export default function PhotosPage() {
-  const params = useParams();
-  const boardId = Number(params?.boardId as string);
-  const [photoFilter, setPhotoFilter] = useState<string>("전체사진");
-  const [showFilterDropdown, setShowFilterDropdown] = useState<boolean>(false);
-  const filterRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState<number>(16); // 초기에 보여질 사진 개수
-  const [loading, setLoading] = useState<boolean>(true);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // 임시로 인증 상태 설정
+  const { boardId } = useParams();
+  const router = useRouter();
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [visiblePhotos, setVisiblePhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // 팝업 상태 관리
+  const [showModal, setShowModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [boardTitle, setBoardTitle] = useState<string>("");
 
-  // 사진 더미 데이터 생성 함수 (무한 스크롤 시연용)
-  const generateDummyPhotos = (count: number): Photo[] => {
-    const dummyImages = [
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace",
-      "https://images.unsplash.com/photo-1556911220-bff31c812dba",
-      "https://images.unsplash.com/photo-1559599238-308793637427",
-      "https://images.unsplash.com/photo-1617104678098-de229db51175",
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7",
-      "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe",
-      "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6",
-      "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92",
-    ];
+  // 무한 스크롤 관련 상태
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-    // 첫 24개 생성 (16개 초기 표시 + 스크롤 추가 8개)
-    return Array.from({ length: Math.min(count, 24) }, (_, i) => ({
-      id: i + 1,
-      src: dummyImages[i % dummyImages.length],
-      title: `사진 ${i + 1}`,
-      totalImages: 4,
-      isMain: i === 0, // 첫번째 사진만 메인으로 설정
-    }));
-  };
+  // 새로운 UI 관련 상태
+  const [filter, setFilter] = useState<"all" | "main" | "additional">("all");
 
-  // API에서 사진 데이터 가져오기
+  // API 기본 URL
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+
+  // 사진 가져오기
   useEffect(() => {
     const fetchPhotos = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
-        // 대표 이미지 가져오기
-        let mainPhotoData = null;
-        try {
-          mainPhotoData = await getBoardMainPhoto(boardId);
-        } catch (mainError) {
-          console.error("대표 이미지 로드 실패:", mainError);
+        setLoading(true);
+        const token = localStorage.getItem("accessToken");
+        const res = await fetch(
+          `${API_BASE}/api/v1/albums/boards/${boardId}/photos`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            credentials: "include",
+          }
+        );
+
+        if (!res.ok) throw new Error("사진을 가져오는데 실패했습니다.");
+        const data: BoardPhotoResponseDto = await res.json();
+
+        // 게시글 제목 설정
+        setBoardTitle(data.title || `게시글 ${boardId}`);
+
+        // mainPhotoUrl과 additionalPhotoUrls에서 url 필드만 꺼내서 하나의 배열로 병합
+        const all: Photo[] = [];
+
+        if (data.mainPhotoUrl) {
+          all.push({
+            id: "main",
+            url: data.mainPhotoUrl.publicUrl,
+            type: "MAIN",
+            alt: "대표 사진",
+          });
         }
 
-        // 모든 사진 가져오기
-        const photosData = await getBoardPhotos(boardId);
-
-        if (photosData && photosData.length > 0) {
-          // API 응답 데이터를 Photo 형식으로 변환
-          const transformedPhotos: Photo[] = photosData.map(
-            (photo: { url: string; key: string }, index: number) => ({
-              id: index + 1,
-              src: photo.url,
-              title: `사진 ${index + 1}`,
-              totalImages: photosData.length,
-              isMain: mainPhotoData && photo.key === mainPhotoData.key, // 대표 이미지인지 확인
-            })
-          );
-
-          setAllPhotos(transformedPhotos);
-        } else {
-          // 사진이 없으면 예시 데이터 사용
-          setAllPhotos(generateDummyPhotos(8));
+        if (data.additionalPhotoUrls && data.additionalPhotoUrls.length > 0) {
+          data.additionalPhotoUrls.forEach((p, i) => {
+            all.push({
+              id: `add-${i}`,
+              url: p.publicUrl, // ← presigned URL
+              type: "ADDITIONAL",
+              alt: `추가 사진 ${i + 1}`,
+            });
+          });
         }
-      } catch (error) {
-        console.error("사진 로드 실패:", error);
-        setError("사진을 불러오는데 실패했습니다.");
-        // 에러 발생 시 예시 데이터 사용
-        setAllPhotos(generateDummyPhotos(8));
+
+        setPhotos(all);
+
+        // 초기 페이지 로드 시 첫 8개만 표시
+        setVisiblePhotos(all.slice(0, 8));
+        setHasMore(all.length > 8);
+        setPage(2); // 다음 페이지는 2
+      } catch (err) {
+        console.error("사진 로딩 오류:", err);
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
       }
     };
 
     fetchPhotos();
-  }, [boardId]);
+  }, [boardId, API_BASE]);
 
-  // 예시 데이터 (API 로드 전 또는 로드 실패 시 사용)
-  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+  // 필터링된 사진 계산
+  const filteredPhotos = useCallback(() => {
+    if (filter === "all") return photos;
+    return photos.filter(
+      (photo) => photo.type === (filter === "main" ? "MAIN" : "ADDITIONAL")
+    );
+  }, [photos, filter]);
 
-  // 무한 스크롤 관찰자 설정
+  // 무한 스크롤 구현
   useEffect(() => {
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting && !loading) {
-          loadMorePhotos();
+        if (entry.isIntersecting && hasMore && !loading) {
+          // 필터링된 사진들 중 다음 페이지의 사진 4개를 가져옴
+          const filtered = filteredPhotos();
+          const nextItems = filtered.slice((page - 1) * 4, page * 4);
+
+          if (nextItems.length > 0) {
+            setVisiblePhotos((prev) => [...prev, ...nextItems]);
+            setPage((prev) => prev + 1);
+            setHasMore(page * 4 < filtered.length);
+          } else {
+            setHasMore(false);
+          }
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.5 }
     );
 
-    if (loadMoreRef.current) {
-      observerRef.current.observe(loadMoreRef.current);
-    }
+    const target = observerTarget.current;
+    if (target) observer.observe(target);
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      if (target) observer.unobserve(target);
     };
-  }, [visibleCount, loading]);
+  }, [hasMore, loading, page, filteredPhotos]);
 
-  // 추가 사진 로드 함수
-  const loadMorePhotos = useCallback(() => {
-    if (visibleCount >= allPhotos.length) return;
-
-    setLoading(true);
-
-    // 실제 API 호출 대신 지연 시간을 두어 로딩 효과를 보여줌
-    setTimeout(() => {
-      setVisibleCount((prev) => Math.min(prev + 8, allPhotos.length));
-      setLoading(false);
-    }, 800);
-  }, [visibleCount, allPhotos.length]);
-
-  // 드롭다운 외부 클릭 시 닫기
+  // 필터 변경 시 상태 초기화
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        filterRef.current &&
-        !filterRef.current.contains(event.target as Node)
-      ) {
-        setShowFilterDropdown(false);
-      }
-    }
+    const filtered = filteredPhotos();
+    setVisiblePhotos(filtered.slice(0, 8));
+    setHasMore(filtered.length > 8);
+    setPage(2);
+  }, [filter, filteredPhotos]);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // 메인 사진이 있는지 확인
-  const hasMainPhoto = allPhotos.some((photo) => photo.isMain);
-
-  // 메인 사진이 없는 경우 사용할 기본 로고 사진
-  const defaultMainPhoto: Photo = {
-    id: 0,
-    src: "/images/logo.png", // 로고 이미지 경로
-    title: "기본 이미지",
-    totalImages: 1,
-    isMain: true,
-    isDefault: true,
+  // 사진 클릭 시 모달 표시
+  const openPhotoModal = (photo: Photo) => {
+    setSelectedPhoto(photo);
+    setShowModal(true);
   };
 
-  // 필터링 및 정렬된 사진 목록
-  const filteredPhotos = allPhotos
-    .filter((photo) => {
-      if (photoFilter === "전체사진") return true;
-      if (photoFilter === "메인사진") return photo.isMain;
-      if (photoFilter === "추가사진") return !photo.isMain;
-      return true;
-    })
-    .sort((a, b) => {
-      // 메인 사진을 항상 첫 번째로 정렬
-      if (a.isMain) return -1;
-      if (b.isMain) return 1;
-      return 0;
-    });
+  // 모달 닫기
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedPhoto(null);
+  };
 
-  // 최종 표시할 사진 목록 (메인 사진이 없으면 기본 이미지 추가)
-  const displayPhotos = hasMainPhoto
-    ? filteredPhotos
-    : photoFilter === "전체사진" || photoFilter === "메인사진"
-    ? [defaultMainPhoto, ...filteredPhotos]
-    : filteredPhotos;
-
-  // 표시할 사진 목록 (무한 스크롤을 위해 visibleCount로 제한)
-  const visiblePhotos = displayPhotos.slice(0, visibleCount);
-
-  // 팝업에서 다음/이전 사진으로 이동
-  const navigatePhoto = (direction: "prev" | "next") => {
+  // 이전 사진으로 이동
+  const goToPrevPhoto = () => {
     if (!selectedPhoto) return;
-
-    const currentIndex = displayPhotos.findIndex(
-      (p) => p.id === selectedPhoto.id
-    );
-    if (currentIndex === -1) return;
-
-    let newIndex;
-    if (direction === "prev") {
-      newIndex =
-        (currentIndex - 1 + displayPhotos.length) % displayPhotos.length;
-    } else {
-      newIndex = (currentIndex + 1) % displayPhotos.length;
-    }
-
-    setSelectedPhoto(displayPhotos[newIndex]);
+    const filtered = filteredPhotos();
+    const currentIndex = filtered.findIndex((p) => p.id === selectedPhoto.id);
+    const prevIndex = (currentIndex - 1 + filtered.length) % filtered.length;
+    setSelectedPhoto(filtered[prevIndex]);
   };
 
-  // ESC 키로 모달 닫기
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setShowModal(false);
-      } else if (e.key === "ArrowLeft") {
-        navigatePhoto("prev");
-      } else if (e.key === "ArrowRight") {
-        navigatePhoto("next");
-      }
-    };
+  // 다음 사진으로 이동
+  const goToNextPhoto = () => {
+    if (!selectedPhoto) return;
+    const filtered = filteredPhotos();
+    const currentIndex = filtered.findIndex((p) => p.id === selectedPhoto.id);
+    const nextIndex = (currentIndex + 1) % filtered.length;
+    setSelectedPhoto(filtered[nextIndex]);
+  };
 
+  // 키보드 이벤트 핸들러 - 모달이 열려있을 때만 작동
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (showModal) {
+        if (event.key === "Escape") closeModal();
+        if (event.key === "ArrowLeft") goToPrevPhoto();
+        if (event.key === "ArrowRight") goToNextPhoto();
+      }
+    },
+    [showModal, selectedPhoto]
+  );
+
+  // 키보드 이벤트 리스너 등록
+  useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedPhoto]);
+  }, [selectedPhoto, handleKeyDown]);
 
   // 모달이 열려있을 때 스크롤 방지
   useEffect(() => {
@@ -254,367 +229,310 @@ export default function PhotosPage() {
     };
   }, [showModal]);
 
-  // 임시 인증 상태 체크 (실제로는 API 호출 등으로 대체)
-  useEffect(() => {
-    // 예: 실제 인증 상태 확인 로직
-    // checkAuthStatus().then(status => setIsAuthenticated(status));
-    setIsAuthenticated(true); // 테스트용으로 항상 true
-  }, []);
+  // 사진 다운로드 함수
+  const downloadPhoto = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename || "photo.jpg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("다운로드 중 오류 발생:", error);
+    }
+  };
+
+  // 사진 공유 함수
+  const sharePhoto = async (url: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: boardTitle,
+          text: "사진 공유하기",
+          url: url,
+        });
+      } catch (error) {
+        console.error("공유 중 오류 발생:", error);
+      }
+    } else {
+      // 클립보드에 복사
+      navigator.clipboard
+        .writeText(url)
+        .then(() => alert("링크가 클립보드에 복사되었습니다."))
+        .catch((err) => console.error("클립보드 복사 실패:", err));
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* 헤더/네비게이션 */}
-      <header className="border-b border-gray-100 bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
+      {/* 헤더 영역 - 현대적인 디자인으로 업데이트 */}
+      <header className="py-4 px-6 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center">
-            {/* 로고 */}
-            <Link href="/" className="flex items-center">
-              <div className="relative w-[46px] h-[46px]">
-                <Image
-                  src="/images/logo.png"
-                  alt="Momentree"
-                  width={46}
-                  height={46}
-                  className="object-contain"
-                />
-              </div>
-              <span className="text-[#2c714c] text-2xl font-medium ml-2">
-                Momentree
-              </span>
+            <Link
+              href={`/boards/${boardId}`}
+              className="mr-4 text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors flex items-center"
+            >
+              <FaChevronLeft className="mr-2" /> 돌아가기
             </Link>
-
-            {/* 메뉴 */}
-            <nav className="ml-12">
-              <ul className="flex space-x-8">
-                <li>
-                  <Link
-                    href="/"
-                    className="text-gray-600 hover:text-gray-900 py-4"
-                  >
-                    홈
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/my-tree"
-                    className="text-gray-600 hover:text-gray-900 py-4"
-                  >
-                    나의 나무
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/dictionary"
-                    className="text-gray-600 hover:text-gray-900 py-4"
-                  >
-                    사전집
-                  </Link>
-                </li>
-              </ul>
-            </nav>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white truncate">
+              {boardTitle ? boardTitle : "사진 모아보기"}
+            </h1>
           </div>
 
-          {/* 인증된 사용자의 경우 보여줄 UI */}
-          {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              {/* 검색창 */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="검색"
-                  className="bg-gray-100 rounded-full pl-10 pr-4 py-2 w-60 focus:outline-none focus:ring-2 focus:ring-[#2c714c]/30"
-                />
-                <BiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg" />
-              </div>
-
-              {/* 글쓰기 버튼 */}
-              <Link
-                href="/boards/create"
-                className="bg-[#2c714c] text-white px-4 py-2 rounded-full font-medium shadow-sm hover:bg-[#225c3d] transition-colors"
+          {/* 컨트롤 영역 - 필터 옵션만 남기고 뷰 모드 토글 제거 */}
+          <div className="flex items-center">
+            {/* 필터 옵션 */}
+            <div className="relative inline-block">
+              <select
+                value={filter}
+                onChange={(e) =>
+                  setFilter(e.target.value as "all" | "main" | "additional")
+                }
+                className="appearance-none bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg py-2 pl-3 pr-8 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
               >
-                글쓰기
-              </Link>
-
-              {/* 프로필 이미지 */}
-              <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden border-2 border-[#2c714c] cursor-pointer">
-                <Image
-                  src="https://images.unsplash.com/photo-1560941001-d4b52ad00ecc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
-                  alt="Profile"
-                  width={36}
-                  height={36}
-                  className="object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/images/logo.png"; // 프로필 이미지 로드 실패 시 기본 이미지
-                  }}
-                />
+                <option value="all">모든 사진</option>
+                <option value="main">대표 사진</option>
+                <option value="additional">추가 사진</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
               </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="text-gray-700 hover:text-[#2c714c] px-4 py-2"
-              >
-                로그인
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-[#2c714c] text-white px-4 py-2 rounded-lg font-medium"
-              >
-                회원가입
-              </Link>
-            </div>
-          )}
+          </div>
         </div>
       </header>
 
-      {/* 메인 콘텐츠 */}
-      <main className="flex-grow">
-        <div className="max-w-screen-lg mx-auto px-4 py-12">
-          {/* 제목 및 필터 상단 영역 */}
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold mb-6 text-gray-900 leading-tight">
-              게시물 사진첩
-            </h1>
-
-            {/* 메타 상단 영역 */}
-            <div className="flex justify-between items-center mb-8">
-              {/* 필터 영역 */}
-              <div className="flex items-center space-x-3">
-                {/* 사진 필터 */}
-                <div className="relative" ref={filterRef}>
-                  <button
-                    className="flex items-center px-3 py-2 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                  >
-                    <span>{photoFilter}</span>
-                    <MdKeyboardArrowDown
-                      className={`ml-2 transition-transform ${
-                        showFilterDropdown ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {/* 드롭다운 메뉴 */}
-                  {showFilterDropdown && (
-                    <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-100 overflow-hidden">
-                      <button
-                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors ${
-                          photoFilter === "전체사진"
-                            ? "bg-gray-50 font-medium"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          setPhotoFilter("전체사진");
-                          setShowFilterDropdown(false);
-                        }}
-                      >
-                        전체사진
-                      </button>
-                      <button
-                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors ${
-                          photoFilter === "메인사진"
-                            ? "bg-gray-50 font-medium"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          setPhotoFilter("메인사진");
-                          setShowFilterDropdown(false);
-                        }}
-                      >
-                        메인사진
-                      </button>
-                      <button
-                        className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors ${
-                          photoFilter === "추가사진"
-                            ? "bg-gray-50 font-medium"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          setPhotoFilter("추가사진");
-                          setShowFilterDropdown(false);
-                        }}
-                      >
-                        추가사진
-                      </button>
-                    </div>
-                  )}
+      {/* 로딩 상태 - 현대적인 스켈레톤 UI */}
+      {loading && page === 1 && (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-7xl">
+            <div className="flex items-center justify-center flex-col">
+              <div className="animate-pulse flex flex-col items-center space-y-8 w-full">
+                <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-xl"
+                    ></div>
+                  ))}
                 </div>
-
-                {/* 정렬 옵션 */}
-                <div className="relative">
-                  <button className="flex items-center px-3 py-2 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
-                    <span>최신순</span>
-                    <MdKeyboardArrowDown className="ml-2" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 게시글/사진 뷰 선택 */}
-              <div className="flex rounded-md overflow-hidden border border-gray-200">
-                <Link
-                  href={`/boards/${boardId}`}
-                  className="flex items-center gap-1 bg-white text-gray-600 hover:bg-gray-50 px-3 py-1.5 text-sm border-0 transition-colors"
-                >
-                  <HiOutlineDocumentText className="text-lg" />
-                  <span>게시글</span>
-                </Link>
-                <button
-                  className="flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 text-sm border-0"
-                  disabled
-                >
-                  <IoImagesOutline className="text-lg" />
-                  <span>사진</span>
-                </button>
               </div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* 구분선 */}
-          <div className="w-full h-px bg-gray-200 mb-8"></div>
-
-          {/* 사진 그리드 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-            {visiblePhotos.map((photo) => (
-              <div
-                key={photo.id}
-                className="relative group rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-300 bg-white"
+      {/* 오류 상태 - 모던한 디자인으로 업데이트 */}
+      {!loading && error && (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 max-w-md">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 mb-4">
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <div
-                  className="relative pb-[75%] cursor-pointer"
-                  onClick={() => {
-                    setSelectedPhoto(photo);
-                    setShowModal(true);
-                  }}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              오류가 발생했습니다
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                ></path>
+              </svg>
+              다시 시도
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 사진 그리드 - 항상 메이슨리 레이아웃만 사용(뷰 모드 전환 제거) */}
+      {!loading && !error && (
+        <div className="flex-1 p-4 sm:p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                총 {filteredPhotos().length}장의 사진
+              </p>
+
+              {filter !== "all" && (
+                <button
+                  onClick={() => setFilter("all")}
+                  className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
                 >
-                  <div className="absolute inset-0">
-                    {photo.isDefault ? (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                        <Image
-                          src={photo.src}
-                          alt={photo.title}
-                          width={120}
-                          height={120}
-                          className="object-contain"
-                        />
+                  모든 사진 보기
+                </button>
+              )}
+            </div>
+
+            {/* 메이슨리 레이아웃 사용 (항상) */}
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+              {visiblePhotos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="break-inside-avoid transform transition-opacity duration-300 opacity-100"
+                >
+                  <div
+                    className="relative rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                    onClick={() => openPhotoModal(photo)}
+                  >
+                    <img
+                      src={photo.url}
+                      alt={photo.alt || "게시글 사진"}
+                      className="w-full h-auto object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <div className="text-white text-sm font-medium">
+                        {photo.type === "MAIN" ? "대표 사진" : `추가 사진`}
                       </div>
-                    ) : (
-                      <img
-                        src={photo.src}
-                        alt={photo.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                    </div>
+
+                    {photo.type === "MAIN" && (
+                      <div className="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded-md">
+                        대표
+                      </div>
                     )}
                   </div>
-                  {photo.isMain && (
-                    <div className="absolute top-2 left-2 bg-[#2c714c] text-white text-xs px-2 py-1 rounded-md">
-                      메인
-                    </div>
-                  )}
                 </div>
+              ))}
+            </div>
+
+            {/* 무한 스크롤 감지 영역 */}
+            {hasMore && (
+              <div
+                ref={observerTarget}
+                className="h-20 mt-8 flex justify-center items-center"
+              >
+                {loading && page > 1 && (
+                  <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 dark:border-green-400"></div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      더 불러오는 중...
+                    </p>
+                  </div>
+                )}
               </div>
-            ))}
+            )}
+
+            {/* 더 불러올 데이터가 없는 경우 메시지 */}
+            {!hasMore && photos.length > 8 && (
+              <div className="mt-8 text-center text-gray-500 dark:text-gray-400 py-4">
+                <p>모든 사진을 불러왔습니다.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 사진 상세보기 모달 - 현대적인 디자인으로 업데이트 */}
+      {showModal && selectedPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm">
+          {/* 모달 닫기 버튼 */}
+          <button
+            onClick={closeModal}
+            className="absolute top-4 right-4 md:top-6 md:right-6 text-white hover:text-gray-300 z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+            aria-label="닫기"
+          >
+            <FaTimes size={20} />
+          </button>
+
+          {/* 좌우 탐색 버튼 */}
+          <button
+            onClick={goToPrevPhoto}
+            className="absolute left-2 md:left-6 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10 p-3 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+            aria-label="이전 사진"
+          >
+            <FaChevronLeft size={20} />
+          </button>
+
+          <button
+            onClick={goToNextPhoto}
+            className="absolute right-2 md:right-6 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-10 p-3 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+            aria-label="다음 사진"
+          >
+            <FaChevronRight size={20} />
+          </button>
+
+          {/* 이미지 컨테이너 */}
+          <div className="w-full h-full flex items-center justify-center p-4">
+            <img
+              src={selectedPhoto.url}
+              alt={selectedPhoto.alt || "게시글 사진"}
+              className="max-w-full max-h-full object-contain transition-opacity duration-300"
+              style={{ opacity: 1 }}
+            />
           </div>
 
-          {/* 무한 스크롤을 위한 로딩 인디케이터 */}
-          {visibleCount < displayPhotos.length && (
-            <div
-              ref={loadMoreRef}
-              className="flex justify-center items-center my-8 h-10"
-            >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-3 h-3 rounded-full bg-[#2c714c] animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  ></div>
-                  <div
-                    className="w-3 h-3 rounded-full bg-[#2c714c] animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  ></div>
-                  <div
-                    className="w-3 h-3 rounded-full bg-[#2c714c] animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  ></div>
-                </div>
-              ) : (
-                <div className="text-gray-400">
-                  스크롤하여 더 많은 사진 보기
-                </div>
-              )}
+          {/* 하단 컨트롤 바 */}
+          <div className="absolute bottom-4 md:bottom-6 left-0 right-0 flex justify-between items-center px-4 md:px-6">
+            <div className="bg-black bg-opacity-50 text-white px-3 py-2 rounded-full text-sm backdrop-blur-sm">
+              {selectedPhoto.type === "MAIN" ? "대표 사진" : "추가 사진"}
             </div>
-          )}
-        </div>
-      </main>
 
-      {/* 푸터 */}
-      <footer className="py-6 text-center border-t border-gray-100 bg-white">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-          © 2024 Company Name. All rights reserved.
-        </div>
-      </footer>
+            <div className="flex items-center space-x-2">
+              {/* 다운로드 버튼 */}
+              <button
+                onClick={() =>
+                  downloadPhoto(
+                    selectedPhoto.url,
+                    `photo-${selectedPhoto.id}.jpg`
+                  )
+                }
+                className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors backdrop-blur-sm"
+                aria-label="다운로드"
+              >
+                <FaDownload size={16} />
+              </button>
 
-      {/* 사진 팝업 모달 */}
-      {showModal && selectedPhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
-          onClick={() => setShowModal(false)}
-        >
-          {/* 모달 내용 - 이벤트 버블링 방지 */}
-          <div
-            className="relative max-w-5xl max-h-[85vh] w-full mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 닫기 버튼 */}
-            <button
-              className="absolute top-0 right-0 z-10 p-2 text-white bg-black bg-opacity-50 rounded-bl-lg hover:bg-opacity-70 transition-all"
-              onClick={() => setShowModal(false)}
-            >
-              <MdClose size={24} />
-            </button>
+              {/* 공유 버튼 */}
+              <button
+                onClick={() => sharePhoto(selectedPhoto.url)}
+                className="bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors backdrop-blur-sm"
+                aria-label="공유하기"
+              >
+                <FaShareAlt size={16} />
+              </button>
 
-            {/* 이전 사진 버튼 */}
-            <button
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 text-white bg-black bg-opacity-50 rounded-r-lg hover:bg-opacity-70 transition-all"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigatePhoto("prev");
-              }}
-            >
-              <FiChevronLeft size={28} />
-            </button>
-
-            {/* 다음 사진 버튼 */}
-            <button
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 text-white bg-black bg-opacity-50 rounded-l-lg hover:bg-opacity-70 transition-all"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigatePhoto("next");
-              }}
-            >
-              <FiChevronRight size={28} />
-            </button>
-
-            {/* 사진 표시 */}
-            <div className="h-[85vh] flex items-center justify-center">
-              {selectedPhoto.isDefault ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Image
-                    src={selectedPhoto.src}
-                    alt={selectedPhoto.title}
-                    width={200}
-                    height={200}
-                    className="object-contain max-h-full"
-                  />
-                </div>
-              ) : (
-                <img
-                  src={selectedPhoto.src}
-                  alt={selectedPhoto.title}
-                  className="object-contain max-h-full max-w-full"
-                />
-              )}
+              {/* 사진 인덱스 표시 */}
+              <div className="bg-black bg-opacity-50 text-white px-3 py-2 rounded-full text-sm backdrop-blur-sm">
+                {filteredPhotos().findIndex((p) => p.id === selectedPhoto.id) +
+                  1}{" "}
+                / {filteredPhotos().length}
+              </div>
             </div>
           </div>
         </div>
