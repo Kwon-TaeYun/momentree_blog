@@ -45,7 +45,7 @@ public class BoardService {
 
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
-    private final S3V1Service s3V1Service;
+
     //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
