@@ -15,6 +15,8 @@ public class BlogDetailResponseDto {
     private String userName;
     private String userEmail;
     private String profileImage;
+    private Long followerCount;
+
     private Long postsCount;
     private Page<BoardListResponseDto> boards; // 게시글 목록 페이징
 

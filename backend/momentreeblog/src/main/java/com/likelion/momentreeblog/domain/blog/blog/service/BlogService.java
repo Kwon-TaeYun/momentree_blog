@@ -163,8 +163,12 @@ public class BlogService {
         // 6. 게시글 총 수 (프론트 postsCount에 사용)
         Long totalPostsCount = boards.getTotalElements(); // Long 타입에 맞춤
 
+        String profileImage = null;
+        if (blog.getUser() != null && blog.getUser().getCurrentProfilePhoto() != null) {
+            profileImage = blog.getUser().getCurrentProfilePhoto().getUrl();
+        }
 
-        // 7. BlogDetailResponseDto 생성 및 반환
+     
         return BlogDetailResponseDto.builder()
                 .id(blog.getId())
                 .name(blog.getName())
