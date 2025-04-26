@@ -2,6 +2,7 @@ package com.likelion.momentreeblog.domain.user.user.controller;
 
 // 팔로우/언팔로우/팔로우 수 확인
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.user.user.dto.UserFollowDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.FollowService;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -69,8 +71,8 @@ public class FollowApiV1Controller {
     @PostMapping("/follow")
     public ResponseEntity<String> follow(
             @RequestParam(name = "followingid") Long followingId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        Long userId = jwtTokenizer.getUserIdFromToken(authorizationHeader);
+            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getUserId();
 
         // ✅ 자기 자신 체크를 제일 먼저!
         if (userId.equals(followingId)) {
@@ -100,9 +102,9 @@ public class FollowApiV1Controller {
     @DeleteMapping("/unfollow")
     public ResponseEntity<String> unfollow(
             @RequestParam(name = "followingid") Long followingId,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
 
-        Long userId = jwtTokenizer.getUserIdFromToken(authorizationHeader);
+        Long userId = customUserDetails.getUserId();
 
         // ✅ 자기 자신 체크
         if (userId.equals(followingId)) {

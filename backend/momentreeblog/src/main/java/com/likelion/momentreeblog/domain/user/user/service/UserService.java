@@ -165,6 +165,7 @@ public class UserService {
                             .blogName(user.getBlog().getName())
                             .profilePhotoKey(key)
                             .profilePhotoUrl(url)
+                            .blogId(user.getBlog().getId())
                             .build();
                 })
                 .toList();
