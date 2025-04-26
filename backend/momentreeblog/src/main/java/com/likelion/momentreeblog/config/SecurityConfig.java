@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
 
-                                .requestMatchers("/api/v1/members/**", "/api/v1/boards/**", "/api/s3/presigned-url", "/api/v1/categories/**", "/api/v1/albums/**").permitAll()
+                                .requestMatchers("/api/v1/members/**", "/api/v1/boards/**", "/api/s3/presigned-url", "/api/v1/categories/**", "/api/v1/albums/**","/api/v1/boards/*/album/").permitAll()
 
                                 .requestMatchers("/h2-console/**")
                                 .permitAll()

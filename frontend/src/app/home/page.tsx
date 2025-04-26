@@ -106,7 +106,7 @@ export default function BlogPage() {
                 <span className="text-sm font-medium text-center">
                   {blogger.name}
                 </span>
-                <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500">
                   팔로워 {blogger.followerCount?.toLocaleString() || "0"}
                 </span>
               </Link>
@@ -142,8 +142,8 @@ export default function BlogPage() {
                   </div>
                 </Link>
               ))}
-          </div>
-        </section>
+            </div>
+          </section>
 
         {/* 실시간 인기글 */}
         <section className="mb-8">

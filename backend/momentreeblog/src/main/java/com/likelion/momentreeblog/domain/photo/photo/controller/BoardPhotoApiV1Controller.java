@@ -15,15 +15,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-
-@RequestMapping("/api/v1/albums")
+@RequestMapping("/api/v1/")
 @RequiredArgsConstructor
 public class BoardPhotoApiV1Controller {
 
     private final PhotoV1Service photoService;
     private final BoardPhotoService boardPhotoService;
 
-    @GetMapping
+    // 사진첩
+    @GetMapping("/albums")
     public ResponseEntity<List<PhotoAlbumDto>> getAlbum(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
@@ -32,7 +32,7 @@ public class BoardPhotoApiV1Controller {
         return ResponseEntity.ok(albumDtos);
     }
 
-    @GetMapping("/boards/{boardId}/photos")
+    @GetMapping("/boards/{boardId}/album/photos")
     public ResponseEntity<BoardPhotoResponseDto> getPhotosByBoardId(
             @PathVariable(name = "boardId") Long boardId
     ) {
@@ -42,8 +42,7 @@ public class BoardPhotoApiV1Controller {
 
 
     // 게시글 사진 전체 삭제 (대표 + 추가)
-    @DeleteMapping("boards/{boardId}/photos")
-
+    @DeleteMapping("/boards/{boardId}/photos")
     public ResponseEntity<String> deleteBoardPhotos(
             @PathVariable Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {

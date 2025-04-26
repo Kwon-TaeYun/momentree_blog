@@ -2,7 +2,10 @@ package com.likelion.momentreeblog.domain.board.board.service;
 
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
-import com.likelion.momentreeblog.domain.board.board.dto.*;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardDetailResponseDto;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardMyBlogResponseDto;
+import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
@@ -23,8 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,7 @@ public class BoardService {
 
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
-
+    private final S3V1Service s3V1Service;
     //    public boolean checkUserIsBlogOwner(Long userId, Long blogId) {
 //        Blog blog = blogRepository.findById(blogId)
 //                .orElseThrow(() -> new RuntimeException("블로그를 찾을 수 없습니다."));
@@ -359,13 +360,14 @@ public class BoardService {
                             .orElse(DEFAULT_IMAGE_URL);
 
                     String publicUrl = s3V1Service.generateGetPresignedUrl(key).getPublicUrl();
-                            return new BoardListResponseDto(
-                                    board.getId(),
-                                    board.getTitle(),
-                                    board.getBlog().getId(),
-                                    publicUrl,
-                                    board.getLikes().stream().count()
-                            );
+                    return new BoardListResponseDto(
+                            board.getId(),
+                            board.getTitle(),
+                            board.getBlog().getId(),
+                            publicUrl,
+                            board.getLikes().stream().count()
+                    );
+                        
                 })
                 .collect(Collectors.toList());
     }

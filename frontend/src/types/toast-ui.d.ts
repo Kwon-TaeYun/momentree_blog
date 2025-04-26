@@ -15,8 +15,8 @@ declare module "@toast-ui/react-editor" {
     toolbarItems?: string[][];
     hooks?: {
       addImageBlobHook?: (
-        blob: File,
-        callback: (url: string, alt: string) => void
+          blob: File,
+          callback: (url: string, alt: string) => void
       ) => boolean;
     };
     language?: string;
@@ -64,4 +64,6 @@ declare module "@toast-ui/react-editor" {
 
   export const Editor: ComponentType<EditorProps>;
   export const Viewer: ComponentType<ViewerProps>;
+
 }
+

@@ -14,7 +14,9 @@ public class UserResponse {
     private String blogName;
     private String profilePhotoUrl;
     private String profilePhotoKey;
+
     private Long blogId;
+
 
     public static UserResponse from(User user) {
         return UserResponse.builder()

@@ -1,8 +1,10 @@
 package com.likelion.momentreeblog.domain.photo.photo.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
+import com.likelion.momentreeblog.domain.photo.photo.dto.photo.PhotoUploadResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
 import com.likelion.momentreeblog.domain.photo.photo.service.PhotoV1Service;
+import com.likelion.momentreeblog.domain.s3.dto.request.PhotoUploadRequestDto;
 import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -48,23 +50,30 @@ public class ProfilePhotoApiV1Controller {
 
 
     // 프로필 사진을 기본 이미지로 변경
-    @PutMapping("/reset/profile")
-    public ResponseEntity<String> changeToDefaultProfilePhoto(
+    @PutMapping("/default")
+    public ResponseEntity<PreSignedUrlResponseDto> changeToDefaultProfilePhoto(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        photoService.changeToDefaultPhoto(PhotoType.PROFILE, userId, null);
-        return ResponseEntity.ok().body("프로필 사진을 기본사진으로 변경했습니다");
+        PreSignedUrlResponseDto preSignedUrlResponseDto = photoService.changeToDefaultPhoto(PhotoType.PROFILE, userId, null);
+        return ResponseEntity.ok(preSignedUrlResponseDto);
     }
 
 
-    // 사용자의 프로필 사진 변경 (기존 사진 중에서 선택)
-    @PutMapping("/change/{photoId}")
-    public ResponseEntity<String> updateCurrentProfilePhoto(
-            @PathVariable Long photoId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    // 사용자의 프로필 사진 변경
+    @PostMapping("/profile-photo")
+    public ResponseEntity<PhotoUploadResponseDto> updateCurrentProfilePhoto(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody PreSignedUrlResponseDto dto
+    ) {
         Long userId = userDetails.getUserId();
-        photoService.updateCurrentPhoto(PhotoType.PROFILE, userId, null, photoId);
-        return ResponseEntity.ok().body("사진을 프로필 사진으로 변경 완료했습니다");
-    }
+        PhotoUploadRequestDto photoUploadRequestDto = PhotoUploadRequestDto.builder()
+                .userId(userId)
+                .photoType(PhotoType.PROFILE)
+                .key(dto.getKey())
+                .url(dto.getUrl())
+                .build();
 
+        PhotoUploadResponseDto responseDto = photoService.updatePhotoWithS3Key(PhotoType.PROFILE, userId, null, dto.getKey(), photoUploadRequestDto);
+        return ResponseEntity.ok(responseDto);
+    }
 } 

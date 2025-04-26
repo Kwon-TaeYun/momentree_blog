@@ -1,12 +1,9 @@
 package com.likelion.momentreeblog.domain.user.user.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
+import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
+import com.likelion.momentreeblog.domain.s3.service.S3V1Service;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
-import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
-import com.likelion.momentreeblog.domain.user.user.dto.UserDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserLoginDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserLoginResponseDto;
-import com.likelion.momentreeblog.domain.user.user.dto.UserSignupDto;
 import com.likelion.momentreeblog.domain.user.user.dto.*;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.service.UserService;
@@ -17,7 +14,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -37,6 +35,11 @@ public class UserApiV1Controller {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final Rq rq;
+    private final S3V1Service s3V1Service;
+
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
+
 
     // 이메일 중복 확인 API 추가
     @PostMapping("/check-email")
@@ -303,13 +306,21 @@ public class UserApiV1Controller {
             
             Long userId = Long.parseLong(claims.get("userId").toString());
             User user = userService.findUserById(userId);
-            
+
+
             if (user == null) {
                 log.warn("ID {}에 해당하는 사용자를 찾을 수 없음", userId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자 정보를 찾을 수 없습니다.");
             }
-            
-            return ResponseEntity.ok(new UserDto(user));
+
+            String key = Optional.ofNullable(user.getCurrentProfilePhoto())
+                    .map(Photo::getUrl)
+                    .orElse(DEFAULT_IMAGE_URL);
+
+            String url = s3V1Service.generateGetPresignedUrl(key).getUrl();
+
+
+            return ResponseEntity.ok(new UserDto(user, url));
         } catch (Exception e) {
             log.error("사용자 정보 조회 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("사용자 정보 조회 중 오류가 발생했습니다.");

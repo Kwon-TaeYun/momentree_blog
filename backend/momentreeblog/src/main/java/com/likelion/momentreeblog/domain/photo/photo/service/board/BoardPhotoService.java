@@ -256,7 +256,7 @@ public class BoardPhotoService {
 
     // 게시글 대표 사진 기본 이미지로 변경
     @Transactional
-    public void changeToDefaultBoardPhoto(Long userId, Long boardId) {
+    public PreSignedUrlResponseDto changeToDefaultBoardPhoto(Long userId, Long boardId) {
         // 게시글 존재 여부 및 권한 확인
         verifyBoardAndUser(boardId, userId);
 
@@ -267,12 +267,14 @@ public class BoardPhotoService {
 
         // 현재 대표 사진이 이미 null이라면 아무 작업도 수행하지 않음
         if (currentMainPhoto == null) {
-            return;
+            return s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
         }
 
         // 현재 대표 사진 null로 설정 (기본 이미지로 표시됨)
         board.setCurrentMainPhoto(null);
         boardRepository.save(board);
+
+        return s3V1Service.generateGetPresignedUrl(DEFAULT_IMAGE_URL);
     }
 
 

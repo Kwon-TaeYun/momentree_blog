@@ -38,6 +38,10 @@ public class UserService {
     private final AuthTokenService authTokenService;
     private final S3V1Service s3V1Service;
     private final PhotoRepository photoRepository;
+    private final S3V1Service s3V1Service;
+
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
 
 
     @Value("${custom.default-image.url}")

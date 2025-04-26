@@ -14,12 +14,16 @@ public class PhotoUploadRequestDto {
 
     private String filename; //파일 이름
 
-    private PhotoType photoType;
-
-    private String contentType; // PROFILE, MAIN, ADDITIONAL
+    private PhotoType photoType; // PROFILE, MAIN, ADDITIONAL
 
     private Long userId;
 
     private Long boardId;
+
+    private String key;
+
+    private String url;
+
+    private String contentType;
 
 }

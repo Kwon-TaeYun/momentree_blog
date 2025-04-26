@@ -11,15 +11,15 @@ import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // Toast UI Editor 동적 임포트
 const Editor = dynamic(
-  () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-96 w-full flex items-center justify-center">
-        에디터 로딩 중...
-      </div>
-    ),
-  }
+    () => import("@toast-ui/react-editor").then((mod) => mod.Editor),
+    {
+      ssr: false,
+      loading: () => (
+          <div className="h-96 w-full flex items-center justify-center">
+            에디터 로딩 중...
+          </div>
+      ),
+    }
 );
 
 // Toast UI Editor CSS
@@ -61,7 +61,7 @@ export default function CreatePostPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [representativeImage, setRepresentativeImage] = useState<string | null>(
-    null
+      null
   );
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -98,13 +98,13 @@ export default function CreatePostPage() {
         setIsLoading(true);
         // 백엔드에 인증 확인 요청
         const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-          }/api/v1/members/me`,
-          {
-            method: "GET",
-            credentials: "include", // 쿠키 포함
-          }
+            `${
+                process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            }/api/v1/members/me`,
+            {
+              method: "GET",
+              credentials: "include", // 쿠키 포함
+            }
         );
 
         if (!response.ok) {
@@ -127,8 +127,8 @@ export default function CreatePostPage() {
 
   // 에디터에 이미지 삽입 핸들러 - 하이브리드 방식
   const handleEditorImageUpload = (
-    blob: File,
-    callback: (url: string, alt: string) => void
+      blob: File,
+      callback: (url: string, alt: string) => void
   ) => {
     // 1. 먼저 즉시 화면에 보여주기 위해 FileReader로 미리보기 이미지 생성
     const reader = new FileReader();
@@ -155,22 +155,22 @@ export default function CreatePostPage() {
 
       // S3 프리사인드 URL 요청
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/s3/presigned-url`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            filename,
-            contentType,
-            photoType: PhotoType.ADDITIONAL,
-            userId: userId,
-          }),
-        }
+          `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/s3/presigned-url`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              filename,
+              contentType,
+              photoType: PhotoType.ADDITIONAL,
+              userId: userId,
+            }),
+          }
       );
 
       if (!response.ok) {
@@ -265,13 +265,13 @@ export default function CreatePostPage() {
 
       // S3 기본 URL 정의 (환경 변수에서 가져오기)
       const S3_BASE =
-        process.env.NEXT_PUBLIC_S3_BASE_URL ||
-        "https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com";
+          process.env.NEXT_PUBLIC_S3_BASE_URL ||
+          "https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com";
 
       // 콘텐츠에서 절대 경로(publicUrl)를 상대 경로(key)로 치환
       const submitContent = formData.content.replace(
-        new RegExp(`${S3_BASE}/(uploads/[^)\\s]+)`, "g"),
-        "/$1" // 또는 key 값만 남기려면 '$1'
+          new RegExp(`${S3_BASE}/(uploads/[^)\\s]+)`, "g"),
+          "/$1" // 또는 key 값만 남기려면 '$1'
       );
 
       console.log("제출 데이터:");
@@ -292,17 +292,17 @@ export default function CreatePostPage() {
       // console.log("Request Data:", requestData); // 디버깅용 로그
 
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/v1/boards`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(requestData),
-        }
+          `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/boards`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(requestData),
+          }
       );
 
       if (!response.ok) {
@@ -321,7 +321,7 @@ export default function CreatePostPage() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -345,22 +345,22 @@ export default function CreatePostPage() {
 
           // S3 프리사인드 URL 요청
           const presignedUrlResponse = await fetch(
-            `${
-              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-            }/api/s3/presigned-url`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify({
-                filename,
-                contentType,
-                photoType: PhotoType.ADDITIONAL,
-                userId: userId,
-              }),
-            }
+              `${
+                  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+              }/api/s3/presigned-url`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  filename,
+                  contentType,
+                  photoType: PhotoType.ADDITIONAL,
+                  userId: userId,
+                }),
+              }
           );
 
           if (!presignedUrlResponse.ok) {
@@ -394,7 +394,7 @@ export default function CreatePostPage() {
 
   // 대표 이미지 업로드 핸들러
   const handleRepresentativeImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
+      e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -417,22 +417,22 @@ export default function CreatePostPage() {
       // 만약 게시글 ID가 없는 경우(새 게시글 작성)
       // S3 프리사인드 URL 요청
       const presignedUrlResponse = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/s3/presigned-url`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            filename,
-            contentType,
-            photoType: PhotoType.MAIN,
-            userId: userId,
-          }),
-        }
+          `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/s3/presigned-url`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              filename,
+              contentType,
+              photoType: PhotoType.MAIN,
+              userId: userId,
+            }),
+          }
       );
 
       if (!presignedUrlResponse.ok) {
@@ -494,16 +494,16 @@ export default function CreatePostPage() {
   const fetchCategories = async () => {
     try {
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/v1/categories`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // 인증 정보 포함
-        }
+          `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/categories`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include", // 인증 정보 포함
+          }
       );
 
       if (response.ok) {
@@ -542,19 +542,19 @@ export default function CreatePostPage() {
 
       // API 호출
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/v1/categories/${blogId}`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: newCategory.trim(), // 카테고리 이름
-          }),
-        }
+          `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/categories/${blogId}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: newCategory.trim(), // 카테고리 이름
+            }),
+          }
       );
 
       if (response.ok) {
@@ -595,16 +595,16 @@ export default function CreatePostPage() {
       }
 
       const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
-        }/api/v1/categories/${blogId}/${category.name}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+          `${
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/categories/${blogId}/${category.name}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
       );
 
       if (response.ok) {
@@ -624,301 +624,301 @@ export default function CreatePostPage() {
   // 로딩 중이면 로딩 상태 표시
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-gray-600">로딩 중...</p>
-      </div>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <p className="text-xl text-gray-600">로딩 중...</p>
+        </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-6 py-4">
-          <div className="flex-1">
-            <div className="bg-white rounded-lg p-6">
-              <h1 className="text-4xl font-bold mb-6">새 글 작성</h1>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* 제목 입력 */}
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-lg font-medium text-black mb-2"
-                  >
-                    제목
-                  </label>
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <input
-                      type="text"
-                      id="title"
-                      name="title"
-                      placeholder="제목을 입력하세요"
-                      value={formData.title}
-                      onChange={handleChange}
-                      className="block w-full border-0 text-base text-black placeholder-gray-600 focus:ring-0 focus:outline-none"
-                    />
+      <div className="min-h-screen flex flex-col bg-white">
+        {/* 메인 콘텐츠 */}
+        <div className="max-w-[1080px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-6 py-4">
+            <div className="flex-1">
+              <div className="bg-white rounded-lg p-6">
+                <h1 className="text-4xl font-bold mb-6">새 글 작성</h1>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* 제목 입력 */}
+                  <div>
+                    <label
+                        htmlFor="title"
+                        className="block text-lg font-medium text-black mb-2"
+                    >
+                      제목
+                    </label>
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <input
+                          type="text"
+                          id="title"
+                          name="title"
+                          placeholder="제목을 입력하세요"
+                          value={formData.title}
+                          onChange={handleChange}
+                          className="block w-full border-0 text-base text-black placeholder-gray-600 focus:ring-0 focus:outline-none"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* 대표 이미지 업로드 */}
-                <div>
-                  <label className="block text-lg font-medium text-black mb-2">
-                    대표 이미지
-                  </label>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    {representativeImage ? (
-                      // 이미지가 있는 경우 - 이미지 프리뷰 표시
-                      <div className="relative">
-                        <div className="bg-gray-100 w-full h-60 flex items-center justify-center">
-                          <img
-                            src={representativeImage}
-                            alt="대표 이미지 미리보기"
-                            className="max-h-60 max-w-full object-contain"
-                          />
-                        </div>
+                  {/* 대표 이미지 업로드 */}
+                  <div>
+                    <label className="block text-lg font-medium text-black mb-2">
+                      대표 이미지
+                    </label>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      {representativeImage ? (
+                          // 이미지가 있는 경우 - 이미지 프리뷰 표시
+                          <div className="relative">
+                            <div className="bg-gray-100 w-full h-60 flex items-center justify-center">
+                              <img
+                                  src={representativeImage}
+                                  alt="대표 이미지 미리보기"
+                                  className="max-h-60 max-w-full object-contain"
+                              />
+                            </div>
 
-                        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-25 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
-                          <div className="flex gap-3">
-                            {/* 이미지 변경 버튼 */}
-                            <label className="cursor-pointer px-4 py-2 bg-white rounded shadow text-gray-700 hover:bg-gray-100 transition-colors">
-                              <input
+                            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-25 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
+                              <div className="flex gap-3">
+                                {/* 이미지 변경 버튼 */}
+                                <label className="cursor-pointer px-4 py-2 bg-white rounded shadow text-gray-700 hover:bg-gray-100 transition-colors">
+                                  <input
+                                      type="file"
+                                      accept="image/*"
+                                      ref={fileInputRef}
+                                      onChange={handleRepresentativeImageUpload}
+                                      className="hidden"
+                                  />
+                                  변경
+                                </label>
+
+                                {/* 이미지 삭제 버튼 */}
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveRepresentativeImage}
+                                    className="px-4 py-2 bg-white rounded shadow text-red-600 hover:bg-gray-100 transition-colors"
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                      ) : (
+                          // 이미지가 없는 경우 - 이미지 업로드 인터페이스 표시
+                          <label className="flex flex-col items-center justify-center h-60 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
+                            <div className="flex flex-col items-center justify-center p-6">
+                              <FaImage className="text-gray-400 w-12 h-12 mb-4" />
+                              <p className="text-gray-700 font-medium mb-2 text-lg">
+                                대표 이미지 업로드
+                              </p>
+                              <p className="text-gray-500 text-center text-sm">
+                                JPG, PNG 파일을 여기에 끌어다 놓거나 클릭하여
+                                선택하세요
+                              </p>
+                            </div>
+                            <input
                                 type="file"
                                 accept="image/*"
                                 ref={fileInputRef}
                                 onChange={handleRepresentativeImageUpload}
                                 className="hidden"
-                              />
-                              변경
-                            </label>
-
-                            {/* 이미지 삭제 버튼 */}
-                            <button
-                              type="button"
-                              onClick={handleRemoveRepresentativeImage}
-                              className="px-4 py-2 bg-white rounded shadow text-red-600 hover:bg-gray-100 transition-colors"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      // 이미지가 없는 경우 - 이미지 업로드 인터페이스 표시
-                      <label className="flex flex-col items-center justify-center h-60 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
-                        <div className="flex flex-col items-center justify-center p-6">
-                          <FaImage className="text-gray-400 w-12 h-12 mb-4" />
-                          <p className="text-gray-700 font-medium mb-2 text-lg">
-                            대표 이미지 업로드
-                          </p>
-                          <p className="text-gray-500 text-center text-sm">
-                            JPG, PNG 파일을 여기에 끌어다 놓거나 클릭하여
-                            선택하세요
-                          </p>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          ref={fileInputRef}
-                          onChange={handleRepresentativeImageUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                {/* 카테고리 선택 */}
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">
-                    카테고리
-                  </label>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">
-                      {categories.find(
-                        (category) =>
-                          category.id.toString() === formData.categoryId
-                      )?.name || "카테고리를 선택하세요"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={openCategoryModal}
-                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
-                    >
-                      카테고리 선택
-                    </button>
-                  </div>
-                </div>
-
-                {/* 내용 입력 - Toast UI Editor */}
-                <div>
-                  <label
-                    htmlFor="content"
-                    className="block text-lg font-medium text-black mb-2"
-                  >
-                    내용
-                  </label>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="toast-ui-editor-container">
-                      <Editor
-                        initialValue=" "
-                        height="900px"
-                        initialEditType="wysiwyg"
-                        useCommandShortcut={true}
-                        usageStatistics={false}
-                        onChange={handleEditorChange}
-                        ref={editorRef}
-                        toolbarItems={[
-                          ["heading", "bold", "italic", "strike"],
-                          ["hr", "quote"],
-                          ["ul", "ol", "task", "indent", "outdent"],
-                          ["table", "image", "link"],
-                          ["code", "codeblock"],
-                        ]}
-                        hooks={{
-                          addImageBlobHook: handleEditorImageUpload,
-                        }}
-                        language="ko-KR"
-                        placeholder=""
-                        hideModeSwitch={true}
-                      />
+                            />
+                          </label>
+                      )}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    * 이미지를 삽입하려면 툴바의 이미지 아이콘을 클릭하세요.
-                  </p>
-                </div>
-              </form>
-            </div>
-          </div>
 
-          <div className="w-72 flex-shrink-0">
-            <div className="bg-white rounded-lg p-6">
-              <h2 className="text-lg font-medium mb-6 text-black">글 설정</h2>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-medium text-black">
-                      공개 설정
-                    </h3>
-                    <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
-                      전체 공개
-                    </button>
+                  {/* 카테고리 선택 */}
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">
+                      카테고리
+                    </label>
+                    <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">
+                      {categories.find(
+                          (category) =>
+                              category.id.toString() === formData.categoryId
+                      )?.name || "카테고리를 선택하세요"}
+                    </span>
+                      <button
+                          type="button"
+                          onClick={openCategoryModal}
+                          className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                      >
+                        카테고리 선택
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-medium text-black">카테고리</h3>
-                    <button
-                      type="button"
-                      onClick={openCategoryModal}
-                      className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                  {/* 내용 입력 - Toast UI Editor */}
+                  <div>
+                    <label
+                        htmlFor="content"
+                        className="block text-lg font-medium text-black mb-2"
                     >
-                      카테고리 선택
+                      내용
+                    </label>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="toast-ui-editor-container">
+                        <Editor
+                            initialValue=" "
+                            height="900px"
+                            initialEditType="wysiwyg"
+                            useCommandShortcut={true}
+                            usageStatistics={false}
+                            onChange={handleEditorChange}
+                            ref={editorRef}
+                            toolbarItems={[
+                              ["heading", "bold", "italic", "strike"],
+                              ["hr", "quote"],
+                              ["ul", "ol", "task", "indent", "outdent"],
+                              ["table", "image", "link"],
+                              ["code", "codeblock"],
+                            ]}
+                            hooks={{
+                              addImageBlobHook: handleEditorImageUpload,
+                            }}
+                            language="ko-KR"
+                            placeholder=""
+                            hideModeSwitch={true}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      * 이미지를 삽입하려면 툴바의 이미지 아이콘을 클릭하세요.
+                    </p>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div className="w-72 flex-shrink-0">
+              <div className="bg-white rounded-lg p-6">
+                <h2 className="text-lg font-medium mb-6 text-black">글 설정</h2>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium text-black">
+                        공개 설정
+                      </h3>
+                      <button className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black">
+                        전체 공개
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium text-black">카테고리</h3>
+                      <button
+                          type="button"
+                          onClick={openCategoryModal}
+                          className="px-4 py-1 text-sm rounded-full border border-gray-200 hover:bg-gray-50 text-black"
+                      >
+                        카테고리 선택
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="px-4 py-2 text-sm rounded-md border border-gray-200 hover:bg-gray-50 text-black"
+                    >
+                      취소
+                    </button>
+                    <button
+                        type="submit"
+                        className="px-4 py-2 text-sm text-white rounded-md bg-black hover:bg-gray-800"
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                    >
+                      {submitting ? "저장 중..." : "작성"}
                     </button>
                   </div>
-                </div>
-
-                <div className="flex justify-end space-x-2 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => router.back()}
-                    className="px-4 py-2 text-sm rounded-md border border-gray-200 hover:bg-gray-50 text-black"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm text-white rounded-md bg-black hover:bg-gray-800"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                  >
-                    {submitting ? "저장 중..." : "작성"}
-                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 카테고리 모달 */}
-      {isCategoryModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h2 className="text-lg font-medium text-black mb-4">
-              카테고리 선택
-            </h2>
-            <div className="space-y-4">
-              {/* 기존 카테고리 목록 */}
-              {categories.map((category: Category, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between border-b pb-2"
-                >
-                  <span className="text-sm text-gray-700">{category.name}</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectCategory(category)}
-                      className="text-sm text-blue-500 hover:underline"
+        {/* 카테고리 모달 */}
+        {isCategoryModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-96">
+                <h2 className="text-lg font-medium text-black mb-4">
+                  카테고리 선택
+                </h2>
+                <div className="space-y-4">
+                  {/* 기존 카테고리 목록 */}
+                  {categories.map((category: Category, index) => (
+                      <div
+                          key={index}
+                          className="flex items-center justify-between border-b pb-2"
+                      >
+                        <span className="text-sm text-gray-700">{category.name}</span>
+                        <div className="flex gap-2">
+                          <button
+                              type="button"
+                              onClick={() => handleSelectCategory(category)}
+                              className="text-sm text-blue-500 hover:underline"
+                          >
+                            선택
+                          </button>
+                          <button
+                              type="button"
+                              onClick={() => handleDeleteCategory(category)}
+                              className="text-sm text-red-500 hover:underline"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </div>
+                  ))}
+
+                  {/* 새 카테고리 추가 */}
+                  <div>
+                    <label
+                        htmlFor="new-category"
+                        className="block text-sm font-medium text-black mb-2"
                     >
-                      선택
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(category)}
-                      className="text-sm text-red-500 hover:underline"
-                    >
-                      삭제
-                    </button>
+                      새 카테고리 추가
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                          type="text"
+                          id="new-category"
+                          value={newCategory}
+                          onChange={(e) => setNewCategory(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                      />
+                      <button
+                          type="button"
+                          onClick={handleAddCategory}
+                          className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                      >
+                        추가
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))}
 
-              {/* 새 카테고리 추가 */}
-              <div>
-                <label
-                  htmlFor="new-category"
-                  className="block text-sm font-medium text-black mb-2"
-                >
-                  새 카테고리 추가
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    id="new-category"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
-                  />
+                {/* 모달 닫기 버튼 */}
+                <div className="mt-6 flex justify-end">
                   <button
-                    type="button"
-                    onClick={handleAddCategory}
-                    className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                      type="button"
+                      onClick={closeCategoryModal}
+                      className="px-4 py-2 text-sm text-black border border-gray-300 rounded-md hover:bg-gray-100"
                   >
-                    추가
+                    닫기
                   </button>
                 </div>
               </div>
             </div>
+        )}
 
-            {/* 모달 닫기 버튼 */}
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={closeCategoryModal}
-                className="px-4 py-2 text-sm text-black border border-gray-300 rounded-md hover:bg-gray-100"
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast UI Editor 스타일 */}
-      <style jsx global>{`
+        {/* Toast UI Editor 스타일 */}
+        <style jsx global>{`
         /* 에디터 기본 텍스트 숨기기 */
         .toastui-editor-defaultUI-toolbar {
           background: white !important;
@@ -977,6 +977,6 @@ export default function CreatePostPage() {
           display: block !important;
         }
       `}</style>
-    </div>
+      </div>
   );
 }
