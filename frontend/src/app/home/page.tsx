@@ -5,18 +5,20 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 interface Blogger {
-  id: number; // 추가
+  id: number;
   name: string;
   followerCount: number;
   profileImageUrl: string;
+  blogId: number;
 }
 
 interface Post {
   id: number;
   title: string;
-  excerpt: string;
-  imageUrl: string;
-  authorName: string;
+  blogId?: number;
+  imageUrl?: string;
+  excerpt?: string;
+  authorName?: string;
   likeCount: number;
 }
 
@@ -43,6 +45,7 @@ export default function BlogPage() {
       try {
         const res = await fetch("http://localhost:8090/api/v1/members/top5");
         const data = await res.json();
+        console.log("🔥 인기 블로거 응답:", data);
         setBloggers(data);
       } catch (error) {
         console.error("블로거 불러오기 실패:", error);
@@ -87,8 +90,8 @@ export default function BlogPage() {
           <div className="flex gap-6 overflow-x-auto pb-2">
             {bloggers.map((blogger: Blogger) => (
               <Link
-                href={`/blog/${blogger.id}`}
-                key={blogger.id}
+                href={`/blog/${blogger.blogId}`}
+                key={blogger.blogId}
                 className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer"
               >
                 <div className="w-16 h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
@@ -201,13 +204,16 @@ export default function BlogPage() {
                             d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                           />
                         </svg>
-                        {post.likeCount?.toLocaleString() || 0}
+                         <span className="flex items-center">
+                          ❤️ {post.likeCount?.toLocaleString() || 0}
+                        </span>
                       </span>
                     </div>
                   </div>
                 </div>
               </Link>
             ))}
+
           </div>
         </section>
       </main>

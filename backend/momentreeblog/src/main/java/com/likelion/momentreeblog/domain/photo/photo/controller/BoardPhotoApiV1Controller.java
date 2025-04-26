@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+
 @RequestMapping("/api/v1/albums")
 @RequiredArgsConstructor
 public class BoardPhotoApiV1Controller {
@@ -22,7 +23,6 @@ public class BoardPhotoApiV1Controller {
     private final PhotoV1Service photoService;
     private final BoardPhotoService boardPhotoService;
 
-    // 사진첩
     @GetMapping
     public ResponseEntity<List<PhotoAlbumDto>> getAlbum(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -42,7 +42,8 @@ public class BoardPhotoApiV1Controller {
 
 
     // 게시글 사진 전체 삭제 (대표 + 추가)
-    @DeleteMapping
+    @DeleteMapping("boards/{boardId}/photos")
+
     public ResponseEntity<String> deleteBoardPhotos(
             @PathVariable Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -62,15 +63,15 @@ public class BoardPhotoApiV1Controller {
 
 
     // 게시글의 대표 사진 조회
-    @GetMapping("/main")
+    @GetMapping("boards/{boardId}/main-photo")
     public ResponseEntity<PreSignedUrlResponseDto> getBoardMainPhoto(
-            @PathVariable Long boardId) {
+            @PathVariable(name = "boardId" ) Long boardId) {
         return ResponseEntity.ok(photoService.getPhotoUrl(PhotoType.MAIN, boardId));
     }
 
 
     //게시글의 대표 사진들 조회
-    @GetMapping("/main/all")
+    @GetMapping("/boards/{boardId}/main-photo/all")
     public ResponseEntity<List<PreSignedUrlResponseDto>> getBoardsCurrentMainPhotos(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
@@ -79,7 +80,7 @@ public class BoardPhotoApiV1Controller {
 
 
     // 게시글의 현재 메인 사진들 조회
-    @GetMapping("/current-main-photos")
+    @GetMapping("/boards/{boardId}/current-main-photos")
     public ResponseEntity<List<PreSignedUrlResponseDto>> getAllUserCurrentMainPhotos(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
@@ -89,7 +90,7 @@ public class BoardPhotoApiV1Controller {
 
 
     // 게시글 대표 사진을 기본 이미지로 변경
-    @PutMapping("/change/default-image")
+    @PutMapping("/boards/{boardId}/main-photo/default-image")
     public ResponseEntity<String> changeToDefaultBoardPhoto(
             @PathVariable Long boardId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -100,7 +101,7 @@ public class BoardPhotoApiV1Controller {
 
 
     // 추가 사진을 대표 사진으로 변경
-    @PutMapping("/change-main/{photoId}")
+    @PutMapping("/boards/{boardId}/main-photo/{photoId}")
     public ResponseEntity<String> changeAdditionalToMainPhoto(
             @PathVariable Long boardId,
             @PathVariable Long photoId,

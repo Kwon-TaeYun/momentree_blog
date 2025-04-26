@@ -12,6 +12,9 @@ public class UserResponse {
     private String email; // 이메일
     private Long blogViewCount;
     private String blogName;
+    private String profilePhotoUrl;
+    private String profilePhotoKey;
+    private Long blogId;
 
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -20,6 +23,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .blogViewCount(user.getBlog().getViewCount())
                 .blogName(user.getBlog().getName())
+                .blogId(user.getBlog().getId())
                 .build();
     }
 }

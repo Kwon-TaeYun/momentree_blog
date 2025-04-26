@@ -17,16 +17,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.likelion.momentreeblog.domain.user.user.repository.FollowRepository;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true) // 조회 메소드에 ReadOnly 트랜잭션 적용
 public class BlogService {
 
     private final BlogRepository blogRepository;
-    private final UserRepository userRepository;
-    private final BoardService boardService;
+    private final UserRepository userRepository; // User 조회에 필요
+    private final BoardService boardService; // 게시글 조회에 필요
+    private final FollowRepository followRepository; // 팔로우 관련 정보 조회에 필요
+
 
     /**
      * 블로그 생성
@@ -122,33 +127,63 @@ public class BlogService {
         return blogRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("해당 유저의 블로그가 없습니다"));
     }
 
-
-
     /**
      * 블로그 상세보기
      */
-    public BlogDetailResponseDto getBlogDetails(Long blogId, int page, int size) {
+    @Transactional(readOnly = true)
+    public BlogDetailResponseDto getBlogDetails(Long blogId, int page, int size, Long loggedInUserId) {
+        // 1. 블로그 조회
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<BoardListResponseDto> boards = boardService.getBoardsByBlogId(blogId, pageable);
+        // 2. 블로그 주인 유저 정보 확보
+        User blogOwner = blog.getUser(); // Blog 엔티티에서 User 엔티티 가져오기
+        Long ownerId = blogOwner.getId(); // <-- 블로그 주인 유저 ID 확보
 
-        // 필요한 연관 엔티티들을 명시적으로 초기화
-        Hibernate.initialize(blog.getUser());
+
+        // 3. isFollowing 상태 계산
+        boolean isFollowing = false; // 기본값: 팔로우하지 않음
+        if (loggedInUserId != null && !loggedInUserId.equals(ownerId)) { // 로그인된 유저가 있고, 자신의 블로그가 아닌 경우에만 계산
+            Optional<User> loggedInUserOptional = userRepository.findById(loggedInUserId); // UserRepository 활용
+            if (loggedInUserOptional.isPresent()) {
+                User loggedInUser = loggedInUserOptional.get();
+                isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, blogOwner).isPresent();
+            }
+        }
+
+        // 4. 팔로워/팔로잉 수 조회 (블로그 주인 유저의 ID로 조회)
+        int followerCount = followRepository.countByFollowing(blogOwner).intValue();
+        int followingCount = followRepository.countByFollower(blogOwner).intValue();
+
+
+        // 5. 블로그의 게시물 목록 페이징 조회 (기존 코드 활용)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<BoardListResponseDto> boards = boardService.getBoardsByBlogId(blogId, pageable); // BoardService 활용
+
+        // 6. 게시글 총 수 (프론트 postsCount에 사용)
+        Long totalPostsCount = boards.getTotalElements(); // Long 타입에 맞춤
 
         String profileImage = null;
         if (blog.getUser() != null && blog.getUser().getCurrentProfilePhoto() != null) {
             profileImage = blog.getUser().getCurrentProfilePhoto().getUrl();
         }
 
+     
         return BlogDetailResponseDto.builder()
                 .id(blog.getId())
                 .name(blog.getName())
-                .userName(blog.getUser() != null ? blog.getUser().getName() : "알 수 없음")
-                .userEmail(blog.getUser() != null ? blog.getUser().getEmail() : "알 수 없음")
-                .profileImage(profileImage)
-                .boards(boards)
+                .userName(blogOwner.getName()) // 유저 이름 설정
+                .userEmail(blogOwner.getEmail()) // 유저 이메일 설정
+                .profileImage(blogOwner.getCurrentProfilePhoto() != null ? blogOwner.getCurrentProfilePhoto().getUrl() : null) // 프로필 이미지 URL 설정
+
+                .postsCount(totalPostsCount) // 계산된 게시글 총 수 설정
+
+                .ownerId(ownerId)
+                .isFollowing(isFollowing)
+                .followerCount(followerCount)
+                .followingCount(followingCount)
+
+                .boards(boards) // 페이징된 게시물 목록 설정
                 .build();
     }
 }
