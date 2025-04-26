@@ -29,7 +29,6 @@ interface CommentDto {
   modifiedAt: string;
 }
 
-
 interface BoardListResponseDto {
   id: number;
   title: string;
@@ -84,7 +83,6 @@ export default function BlogDetailPage() {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
 
   const [isFollowing, setIsFollowing] = useState(false); // 초기값 false
   const [followerCount, setFollowerCount] = useState(0); // 초기값 0
@@ -379,7 +377,6 @@ export default function BlogDetailPage() {
     );
   };
 
-
   return (
     <div className="min-h-screen bg-white text-black">
       <main className="max-w-7xl mx-auto py-8 px-6">
@@ -391,14 +388,12 @@ export default function BlogDetailPage() {
                 {/* 프로필 이미지 */}
                 <div className="w-32 h-32 relative rounded-full overflow-hidden mb-4">
                   {blogDetail?.profileImage ? (
-
                     <Image
                       src={getS3ImageUrl(blogDetail.profileImage) || ""}
                       alt="Profile"
                       fill
                       className="object-cover"
                     />
-
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-200 text-4xl font-semibold text-gray-400">
                       {/* 프로필 이미지가 없을 경우 이니셜 또는 기본 아이콘 */}
@@ -406,7 +401,6 @@ export default function BlogDetailPage() {
                         ? blogDetail.userName.charAt(0)
                         : "?"}
                     </div>
-
                   )}
                 </div>
                 {/* 유저 이름 및 이메일 */}
@@ -415,7 +409,6 @@ export default function BlogDetailPage() {
                 </h2>{" "}
                 {/* 블로그 이름 대신 유저 이름 표시 */}
                 <p className="text-gray-500 mb-4">{blogDetail?.userEmail}</p>
-
                 {/* 팔로우/언팔로우 버튼 */}
                 <button
                   onClick={handleFollowToggle} // 수정된 handleFollowToggle 함수 연결
@@ -429,7 +422,6 @@ export default function BlogDetailPage() {
                   {isFollowing ? "언팔로잉" : "팔로잉"}{" "}
                   {/* isFollowing 상태에 따라 텍스트 변경 */}
                 </button>
-
                 <div className="w-full flex flex-col space-y-2">
                   <div className="flex justify-between p-2">
                     <p className="text-black">게시글</p>
@@ -456,7 +448,6 @@ export default function BlogDetailPage() {
                     <p className="text-black">팔로잉</p>
                     {/* 팔로잉 수 상태 표시 */}
                     <p className="font-bold">{followingCount}</p>
-
                   </div>
                 </div>
               </div>
@@ -466,6 +457,8 @@ export default function BlogDetailPage() {
           {/* 오른쪽 메인 컨텐츠 - 게시글 목록 */}
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-6">게시글 목록</h1>
+
+            {/* blogDetail이 존재하고 boards.content가 비어 있지 않으면 게시글 목록 출력 */}
             {blogDetail?.boards.content.length ? (
               <div className="space-y-4">
                 {blogDetail.boards.content.map((board) => (
@@ -484,7 +477,6 @@ export default function BlogDetailPage() {
                             height={96}
                             className="object-cover w-full h-full"
                           />
-            
                         )}
                       </div>
                       <div className="flex-1">
@@ -527,17 +519,11 @@ export default function BlogDetailPage() {
                         </div>
                       </div>
                     </div>
-
-                  ))}
-                </div>
-                {renderPagination()} {/* 페이지네이션 렌더링 */}
-              </>
-
-            ) : (
-              // 게시글이 없을 경우 메시지
-              <div className="text-center py-10 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">아직 작성한 게시글이 없습니다.</p>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p>게시글이 없습니다.</p> // 게시글이 없을 경우 안내 메시지 추가
             )}
           </div>
         </div>
@@ -549,7 +535,6 @@ export default function BlogDetailPage() {
           userId={blogDetail?.ownerId?.toString()} // <-- 모달에 블로그 주인 유저 ID 전달
           initialTab={activeFollowTab}
         />
-
       </main>
     </div>
   );

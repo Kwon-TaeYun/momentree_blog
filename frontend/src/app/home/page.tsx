@@ -16,14 +16,14 @@ interface Post {
   id: number;
   title: string;
   blogId?: number;
-  imageUrl?: string;
+  imageUrl?: string | null;
   excerpt?: string;
   authorName?: string;
   likeCount: number;
 }
 
 // AWS S3 URL 생성 함수 추가
-const getS3ImageUrl = (imageKey: string) => {
+const getS3ImageUrl = (imageKey: string | null | undefined) => {
   const bucket = process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
   const region = process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
   const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
@@ -204,7 +204,7 @@ export default function BlogPage() {
                             d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                           />
                         </svg>
-                         <span className="flex items-center">
+                        <span className="flex items-center">
                           ❤️ {post.likeCount?.toLocaleString() || 0}
                         </span>
                       </span>
@@ -213,7 +213,6 @@ export default function BlogPage() {
                 </div>
               </Link>
             ))}
-
           </div>
         </section>
       </main>
