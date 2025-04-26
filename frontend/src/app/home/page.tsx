@@ -9,6 +9,7 @@ interface Blogger {
   name: string;
   followerCount: number;
   profileImageUrl: string;
+  blogId: number;
 }
 
 interface Post {
@@ -30,6 +31,7 @@ export default function BlogPage() {
       try {
         const res = await fetch("http://localhost:8090/api/v1/members/top5");
         const data = await res.json();
+        console.log("🔥 인기 블로거 응답:", data);
         setBloggers(data);
       } catch (error) {
         console.error("블로거 불러오기 실패:", error);
@@ -74,8 +76,8 @@ export default function BlogPage() {
           <div className="flex gap-6 overflow-x-auto pb-2">
             {bloggers.map((blogger: Blogger) => (
               <Link
-                href={`/blog/${blogger.id}`}
-                key={blogger.id}
+                href={`/blog/${blogger.blogId}`}
+                key={blogger.blogId}
                 className="flex flex-col items-center hover:opacity-80 transition-opacity cursor-pointer"
               >
                 <div className="w-16 h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
