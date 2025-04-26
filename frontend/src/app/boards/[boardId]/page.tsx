@@ -7,6 +7,9 @@ import dynamic from "next/dynamic";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
+
 // Toast UI Viewer 동적 임포트
 const Viewer = dynamic(
     () => import("@toast-ui/react-editor").then((mod) => mod.Viewer),
@@ -174,6 +177,7 @@ export default function BoardDetail() {
 
             // 키를 공개 URL로 변환
             data.content = data.content.replace(
+
                 relativePathPattern,
 
                 (match: string, alt: string, imageKey: string) => {

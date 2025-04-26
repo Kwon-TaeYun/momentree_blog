@@ -115,16 +115,6 @@ public class S3V1Service {
     }
 
 
-    //사진 다중 조회용 presigned URL 생성
-    public List<PreSignedUrlResponseDto> generateGetPresignedUrlMulti(List<String> keys) {
-        List<PreSignedUrlResponseDto> result = new ArrayList<>();
-        for (String key : keys) {
-            result.add(generateGetPresignedUrl(key));
-        }
-        return result;
-    }
-
-
 
 
     // S3에서 객체 삭제

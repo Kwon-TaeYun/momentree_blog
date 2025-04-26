@@ -36,11 +36,18 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
+    private final S3V1Service s3V1Service;
     private final PhotoRepository photoRepository;
     private final S3V1Service s3V1Service;
 
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
+
+
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
+
+
 
     @Transactional
     public String saveUser(UserSignupDto dto) {
@@ -162,10 +169,12 @@ public class UserService {
                             .blogName(user.getBlog().getName())
                             .profilePhotoKey(key)
                             .profilePhotoUrl(url)
+                            .blogId(user.getBlog().getId())
                             .build();
                 })
                 .toList();
     }
+
 
     @Transactional
     public void updateUser(Long userId, UserUpdateDto dto) {

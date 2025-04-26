@@ -92,8 +92,6 @@ export default function MyBlogPage() {
           email: userData.email || "",
           profilePhoto: undefined, // fetchMyPosts에서 설정
           profileImage: userData.profileImage || "",
-
-
           posts: 0,
           visitors: 0,
           followers: 0,
@@ -233,7 +231,6 @@ export default function MyBlogPage() {
 
     fetchFollowStats();
   }, [userInfo.id]);
-
 
   const handleFollowClick = (tab: "followers" | "following") => {
     setActiveFollowTab(tab);

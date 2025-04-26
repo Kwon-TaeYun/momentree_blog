@@ -15,6 +15,9 @@ public class UserResponse {
     private String profilePhotoUrl;
     private String profilePhotoKey;
 
+    private Long blogId;
+
+
     public static UserResponse from(User user) {
         return UserResponse.builder()
                 .id(user.getId())
@@ -22,6 +25,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .blogViewCount(user.getBlog().getViewCount())
                 .blogName(user.getBlog().getName())
+                .blogId(user.getBlog().getId())
                 .build();
     }
 }

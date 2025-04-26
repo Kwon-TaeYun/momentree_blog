@@ -26,7 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +40,9 @@ public class BoardService {
     private final CategoryRepository categoryRepository;
     private final PhotoV1Service photoV1Service;
     private final PhotoRepository photoRepository;
+
+    private final S3V1Service s3V1Service;
+
     @Value("${custom.default-image.url}")
     private String DEFAULT_IMAGE_URL;
     private final S3V1Service s3V1Service;
@@ -365,6 +367,7 @@ public class BoardService {
                             publicUrl,
                             board.getLikes().stream().count()
                     );
+                        
                 })
                 .collect(Collectors.toList());
     }

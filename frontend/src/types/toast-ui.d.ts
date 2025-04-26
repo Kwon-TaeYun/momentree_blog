@@ -64,4 +64,6 @@ declare module "@toast-ui/react-editor" {
 
   export const Editor: ComponentType<EditorProps>;
   export const Viewer: ComponentType<ViewerProps>;
+
 }
+

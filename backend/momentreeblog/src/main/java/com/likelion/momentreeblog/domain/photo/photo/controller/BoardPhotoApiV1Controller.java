@@ -64,7 +64,7 @@ public class BoardPhotoApiV1Controller {
     // 게시글의 대표 사진 조회
     @GetMapping("boards/{boardId}/main-photo")
     public ResponseEntity<PreSignedUrlResponseDto> getBoardMainPhoto(
-            @PathVariable Long boardId) {
+            @PathVariable(name = "boardId" ) Long boardId) {
         return ResponseEntity.ok(photoService.getPhotoUrl(PhotoType.MAIN, boardId));
     }
 
