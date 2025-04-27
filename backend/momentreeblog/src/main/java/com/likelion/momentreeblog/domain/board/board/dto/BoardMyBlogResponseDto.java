@@ -5,6 +5,7 @@ import com.likelion.momentreeblog.domain.s3.dto.response.PreSignedUrlResponseDto
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class BoardMyBlogResponseDto {
     private Long likeCount;
     private List<PreSignedUrlResponseDto> currentMainPhotoUrls;  // ✅ 대표 이미지 URL 필드 추가
     private PreSignedUrlResponseDto currentProfilePhoto;
+    private LocalDateTime createdAt;
 
     public static BoardMyBlogResponseDto from(Board board) {
 
@@ -31,7 +33,8 @@ public class BoardMyBlogResponseDto {
                 board.getBlog().getId(),
                 board.getLikes().stream().count(),
                 currentMainPhotoUrls,
-                currentProfilePhoto
+                currentProfilePhoto,
+                board.getCreatedAt()
         );
     }
 

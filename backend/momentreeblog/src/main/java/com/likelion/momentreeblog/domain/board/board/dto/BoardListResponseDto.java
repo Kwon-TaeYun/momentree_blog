@@ -4,6 +4,8 @@ import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 
 @Data
 @AllArgsConstructor
@@ -13,6 +15,7 @@ public class BoardListResponseDto {
     private Long blogId;
     private String imageUrl;  // ✅ 대표 이미지 URL 필드 추가
     private Long likeCount;
+    private LocalDateTime createdAt;
     public static BoardListResponseDto from(Board board) {
         String imageUrl = board.getCurrentMainPhoto() != null
                 ? board.getCurrentMainPhoto().getUrl()
@@ -23,7 +26,8 @@ public class BoardListResponseDto {
                 board.getTitle(),
                 board.getBlog().getId(),
                 imageUrl,
-                board.getLikes().stream().count()
+                board.getLikes().stream().count(),
+                board.getCreatedAt()
         );
     }
 }

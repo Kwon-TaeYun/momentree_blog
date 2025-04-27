@@ -264,7 +264,8 @@ public class BoardService {
                         board.getTitle(),
                         board.getBlog().getId(),
                         board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
-                        board.getLikes().stream().count()
+                        board.getLikes().stream().count(),
+                        board.getCreatedAt()
                 ));
     }
 
@@ -278,7 +279,8 @@ public class BoardService {
                 board.getTitle(),
                 board.getBlog().getId(),
                 board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
-                board.getLikes().stream().count()
+                board.getLikes().stream().count(),
+                board.getCreatedAt()
         ));
     }
 
@@ -317,7 +319,8 @@ public class BoardService {
                     board.getBlog().getId(),
                     board.getLikes().stream().count(),
                     mainPhotoList,
-                    profilePhotoDto
+                    profilePhotoDto,
+                    board.getCreatedAt()
             );
 
         });
@@ -341,7 +344,8 @@ public class BoardService {
                             board.getTitle(),
                             board.getBlog().getId(),
                             publicUrl,
-                            board.getLikes().stream().count()
+                            board.getLikes().stream().count(),
+                            board.getCreatedAt()
                     );
                 })
                 .collect(Collectors.toList());
@@ -365,7 +369,8 @@ public class BoardService {
                             board.getTitle(),
                             board.getBlog().getId(),
                             publicUrl,
-                            board.getLikes().stream().count()
+                            board.getLikes().stream().count(),
+                            board.getCreatedAt()
                     );
                         
                 })
@@ -380,7 +385,8 @@ public class BoardService {
                 board.getTitle(),
                 board.getBlog().getId(),
                 board.getCurrentMainPhoto() != null ? board.getCurrentMainPhoto().getUrl() : null,
-                board.getLikes().stream().count() // likeCount
+                board.getLikes().stream().count(), // likeCount
+                board.getCreatedAt()
         ));
     }
 }
