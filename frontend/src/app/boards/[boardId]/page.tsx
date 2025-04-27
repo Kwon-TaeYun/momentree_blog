@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 import "@toast-ui/editor/dist/toastui-editor.css";
+import Image from "next/image"; // Next.js의 Image 컴포넌트를 사용
 
 // Toast UI Editor CSS
 import "@toast-ui/editor/dist/toastui-editor.css";
@@ -39,8 +40,12 @@ interface Post {
   title: string;
   content: string;
   authorName: string;
-  authorId?: number; // 작성자 ID 추가
+  authorId?: number;
   authorProfilePhoto?: string; // 작성자 프로필 사진 추가
+  profilePhoto?: {
+    url: string; // 프로필 이미지 URL
+    key: string; // S3 키
+  };
   createdAt: string;
   viewCount: number;
   likeCount: number;
@@ -57,6 +62,7 @@ interface Comment {
   createdAt: string;
   updatedAt?: string;
   author?: string; // author 속성 추가
+  userProfileUrl?: string;
 }
 
 interface User {
@@ -240,11 +246,23 @@ export default function BoardDetail() {
 
           if (commentsResponse.ok) {
             const commentsData = await commentsResponse.json();
-            const processedComments = commentsData.map((comment: any) => ({
-              ...comment,
-              author: comment.userName || "알 수 없음", // author 속성 추가
-              createdAt: new Date(comment.createdAt).toLocaleString(),
-            })) as Comment[]; // 타입 단언 추가
+            const processComments = (commentsData: any[]) => {
+              const bucket =
+                process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+              const region =
+                process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+              const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+              return commentsData.map((comment) => ({
+                ...comment,
+                userProfileUrl: comment.userProfileUrl
+                  ? comment.userProfileUrl.startsWith("uploads/")
+                    ? `${S3_PUBLIC_BASE}/${comment.userProfileUrl}`
+                    : comment.userProfileUrl
+                  : "/default-profile.png", // 기본값 처리
+              }));
+            };
+            const processedComments = processComments(commentsData);
             setComments(processedComments);
           }
 
@@ -528,11 +546,13 @@ export default function BoardDetail() {
         {/* 작성자 정보 + 수정/삭제 버튼 */}
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            {post.authorProfilePhoto ? (
-              <img
-                src={post.authorProfilePhoto}
-                alt="작성자 프로필"
-                className="w-10 h-10 rounded-full object-cover mr-3"
+            {post.profilePhoto?.url ? (
+              <Image
+                src={post.profilePhoto.url || "/default-profile.png"} // 기본 이미지 설정
+                alt={post.authorName || "작성자"}
+                width={40}
+                height={40}
+                className="object-cover rounded-full mr-3"
               />
             ) : (
               <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
@@ -668,17 +688,26 @@ export default function BoardDetail() {
 
         <div className="space-y-6 mb-8">
           {comments.length > 0 ? (
-            comments.map((comment, index) => (
-              <div key={index} className="pt-4 pb-5 border-b border-gray-200">
+            comments.map((comment) => (
+              <div
+                key={comment.id}
+                className="pt-4 pb-5 border-b border-gray-200"
+              >
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-300 rounded-full mr-3"></div>
-                    <span className="font-medium">
-                      {comment.userName || comment.author || "알 수 없음"}
-                    </span>
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 mr-3">
+                      <Image
+                        src={comment.userProfileUrl ?? "/default-profile.png"} // 기본 이미지 설정
+                        alt={comment.userName || "사용자"}
+                        width={32}
+                        height={32}
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="font-medium">{comment.userName}</span>
                   </div>
                   <div className="text-sm text-gray-400 flex items-center space-x-4">
-                    <span>{comment.createdAt}</span>
+                    <span>{new Date(comment.createdAt).toLocaleString()}</span>
                     {currentUser?.id === comment.userId && (
                       <div className="flex space-x-2">
                         <button
@@ -700,43 +729,7 @@ export default function BoardDetail() {
                     )}
                   </div>
                 </div>
-
-                {editingCommentId === comment.id ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleCommentEdit(comment.id);
-                    }}
-                    className="pl-11"
-                  >
-                    <textarea
-                      value={editCommentText}
-                      onChange={(e) => setEditCommentText(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      rows={3}
-                    />
-                    <div className="flex justify-end space-x-2 mt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingCommentId(null);
-                          setEditCommentText("");
-                        }}
-                        className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                      >
-                        취소
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
-                      >
-                        저장
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <p className="text-gray-700 pl-11">{comment.content}</p>
-                )}
+                <p className="text-gray-700 pl-11">{comment.content}</p>
               </div>
             ))
           ) : (
