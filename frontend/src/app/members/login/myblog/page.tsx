@@ -296,7 +296,10 @@ export default function MyBlogPage() {
                   />
                 </div>
 
-                <button className="w-full bg-green-50 text-green-700 font-medium py-2 px-4 rounded-md flex items-center justify-center gap-2">
+                <button
+                  onClick={() => router.push(`/blog/${userInfo.id}`)} // userInfo.id를 사용하여 blog/[id]로 이동
+                  className="w-full bg-green-50 text-green-700 font-medium py-2 px-4 rounded-md flex items-center justify-center gap-2"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
