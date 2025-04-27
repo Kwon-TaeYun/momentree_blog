@@ -8,7 +8,8 @@ interface Blogger {
   id: number;
   name: string;
   followerCount: number;
-  profileImageUrl: string;
+  profilePhotoUrl: string; // 백엔드에서 반환되는 필드
+  profileImageUrl: string; // 프론트엔드에서 처리된 필드
   blogId: number;
 }
 
@@ -43,10 +44,18 @@ export default function BlogPage() {
   useEffect(() => {
     const fetchBloggers = async () => {
       try {
-        const res = await fetch("http://localhost:8090/api/v1/members/top5");
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"}/api/v1/members/top5`
+        );
         const data = await res.json();
-        console.log("🔥 인기 블로거 응답:", data);
-        setBloggers(data);
+        console.log("🔥 인기 블로거 응답 데이터:", data);
+
+        const processedBloggers = data.map((blogger: Blogger) => ({
+          ...blogger,
+          profileImageUrl: blogger.profilePhotoUrl || "/default-profile.png", // 기본 이미지 설정
+        }));
+
+        setBloggers(processedBloggers);
       } catch (error) {
         console.error("블로거 불러오기 실패:", error);
       }
@@ -106,7 +115,7 @@ export default function BlogPage() {
                 <span className="text-sm font-medium text-center">
                   {blogger.name}
                 </span>
-                    <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500">
                   팔로워 {blogger.followerCount?.toLocaleString() || "0"}
                 </span>
               </Link>
@@ -142,8 +151,8 @@ export default function BlogPage() {
                   </div>
                 </Link>
               ))}
-            </div>
-          </section>
+          </div>
+        </section>
 
         {/* 실시간 인기글 */}
         <section className="mb-8">
