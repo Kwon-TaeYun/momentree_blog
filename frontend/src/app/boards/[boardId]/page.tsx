@@ -64,6 +64,11 @@ interface User {
   name: string;
   email: string;
   token?: string;
+  profilePhoto?: {
+    url: string;
+    key: string;
+  };
+  profileImage?: string;
 }
 
 export default function BoardDetail() {
@@ -76,7 +81,12 @@ export default function BoardDetail() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>({
+    id: 0,
+    name: "",
+    email: "",
+    profilePhoto: undefined,
+  });
   const [isAuthor, setIsAuthor] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);

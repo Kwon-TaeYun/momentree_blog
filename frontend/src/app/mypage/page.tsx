@@ -41,12 +41,6 @@ export default function Mypage() {
     profileImage: "",
   });
 
-  // 활동 내역 상태
-  const [activities, setActivities] = useState([
-    { type: "게시글 작성", date: "2024-02-14" },
-    { type: "댓글 작성", date: "2024-02-13" },
-  ]);
-
   // 이미지 프리사인드 URL 상태 추가
   const [presignedImageUrl, setPresignedImageUrl] = useState<string | null>(
     null
@@ -542,24 +536,6 @@ export default function Mypage() {
                 <p className="text-sm text-gray-500 mb-1">이메일</p>
                 <p className="font-medium">{userProfile.email}</p>
               </div>
-            </div>
-          </div>
-
-          {/* 최근 활동 */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">최근 활동</h2>
-            <div className="bg-white rounded border-gray-100 border">
-              {activities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between p-4 border-b border-gray-100 last:border-b-0"
-                >
-                  <div>
-                    <p className="font-medium">{activity.type}</p>
-                  </div>
-                  <p className="text-sm text-black">{activity.date}</p>
-                </div>
-              ))}
             </div>
           </div>
         </main>
