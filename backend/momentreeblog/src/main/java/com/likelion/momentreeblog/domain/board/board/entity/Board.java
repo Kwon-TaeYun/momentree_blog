@@ -3,6 +3,7 @@ package com.likelion.momentreeblog.domain.board.board.entity;
 import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.board.board.dto.BoardRequestDto;
 import com.likelion.momentreeblog.domain.board.category.entity.Category;
+import com.likelion.momentreeblog.domain.board.comment.entity.Comment;
 import com.likelion.momentreeblog.domain.board.like.entity.Like;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.global.jpa.BaseEntity;
@@ -49,6 +50,9 @@ public class Board extends BaseEntity {
     // 게시글에 첨부된 모든 사진 기록 (대표 사진 히스토리 포함 가능)
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Photo> photos;
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)  // 댓글 추가
+    private List<Comment> comments;  // 댓글 추가
 
 
     public Board(BoardRequestDto dto, Blog blog) {

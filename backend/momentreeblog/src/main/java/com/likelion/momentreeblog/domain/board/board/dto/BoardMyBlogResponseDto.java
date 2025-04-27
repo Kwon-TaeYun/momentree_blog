@@ -19,6 +19,8 @@ public class BoardMyBlogResponseDto {
     private List<PreSignedUrlResponseDto> currentMainPhotoUrls;  // ✅ 대표 이미지 URL 필드 추가
     private PreSignedUrlResponseDto currentProfilePhoto;
     private LocalDateTime createdAt;
+    private Long commentCount;
+
 
     public static BoardMyBlogResponseDto from(Board board) {
 
@@ -34,7 +36,8 @@ public class BoardMyBlogResponseDto {
                 board.getLikes().stream().count(),
                 currentMainPhotoUrls,
                 currentProfilePhoto,
-                board.getCreatedAt()
+                board.getCreatedAt(),
+                board.getComments().stream().count()
         );
     }
 

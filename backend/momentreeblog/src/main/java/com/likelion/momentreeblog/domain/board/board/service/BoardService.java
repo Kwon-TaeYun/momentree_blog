@@ -320,7 +320,8 @@ public class BoardService {
                     board.getLikes().stream().count(),
                     mainPhotoList,
                     profilePhotoDto,
-                    board.getCreatedAt()
+                    board.getCreatedAt(),
+                    board.getComments().stream().count()
             );
 
         });
