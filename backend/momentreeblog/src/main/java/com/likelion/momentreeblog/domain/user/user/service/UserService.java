@@ -149,7 +149,7 @@ public class UserService {
 
     }
 
-
+    @Transactional
     public List<UserResponse> getTop5Bloggers() {
         List<User> topUsers = userRepository.findTop5ByOrderByViewCountDescCreatedAtDesc((Pageable) PageRequest.of(0, 5));
         return topUsers.stream()

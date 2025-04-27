@@ -26,6 +26,8 @@ public class UserResponse {
                 .blogViewCount(user.getBlog().getViewCount())
                 .blogName(user.getBlog().getName())
                 .blogId(user.getBlog().getId())
+                .profilePhotoKey(user.getCurrentProfilePhoto().getUrl())
+                .profilePhotoUrl(user.getCurrentProfilePhoto().getUrl())
                 .build();
     }
 }
