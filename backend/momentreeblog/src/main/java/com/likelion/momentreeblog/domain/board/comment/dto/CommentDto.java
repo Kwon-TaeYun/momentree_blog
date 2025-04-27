@@ -15,6 +15,7 @@ public class CommentDto {
     private String userName; //작성자 이름 추가
     private Long boardId;
     private String content;
+    private String userProfileUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
