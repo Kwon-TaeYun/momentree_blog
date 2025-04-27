@@ -20,16 +20,13 @@ import org.hibernate.mapping.ToOne;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString
 public class Like extends BaseEntity
 {
     @ManyToOne
-    @JsonBackReference
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;
 
     @ManyToOne
-    @JsonBackReference
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

@@ -39,12 +39,11 @@ public class LikeService {
     public String likeBoard(Long userId, Long boardId) {
         System.out.println("userId: " + userId);
         System.out.println("boardId: " + boardId);
-        // 이미 좋아요 눌렀는지 체크
+
         Optional<Like> optionalLike = likeRepository.findByUserIdAndBoardId(userId, boardId);
 
         if (optionalLike.isPresent()) {
-            likeRepository.delete(optionalLike.get());
-            return "좋아요 취소!";
+            throw new IllegalArgumentException("이미 좋아요를 눌렀습니다."); // 좋아요 중복 방지
         }
 
         Board board = boardRepository.findById(boardId)
@@ -60,26 +59,20 @@ public class LikeService {
         likeRepository.save(like);
         return "좋아요 완료!";
     }
+
     @Transactional
     public String unlikeBoard(Long userId, Long boardId) {
-        // 게시글을 조회하고, likes를 강제로 로딩
-        Board board = boardRepository.findByIdWithLikes(boardId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-
-        // 좋아요를 찾고 삭제
+        // 좋아요 취소 로직 구현 (예: 해당 유저의 좋아요를 삭제하는 로직)
+        // 예시: BoardLike 엔티티에서 해당 유저와 게시글을 찾고 삭제
         Like boardLike = likeRepository.findByUserIdAndBoardId(userId, boardId)
                 .orElseThrow(() -> new IllegalArgumentException("좋아요가 존재하지 않습니다."));
-
+        log.info("boardLike: " + boardLike);
+        likeRepository.flush();
         likeRepository.delete(boardLike);
         likeRepository.flush();
 
-        // 게시글에서 해당 좋아요를 제거한 후 결과 반환
         return "좋아요 취소 성공";
     }
-    @Transactional
-    public Board getBoardWithLikes(Long boardId) {
-        return boardRepository.findByIdWithLikes(boardId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-    }
+
 
 }

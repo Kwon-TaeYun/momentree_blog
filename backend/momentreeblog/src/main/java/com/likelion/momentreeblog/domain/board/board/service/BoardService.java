@@ -325,6 +325,14 @@ public class BoardService {
             );
 
         });
+
+
+    }
+
+    @Transactional
+    public Board getBoardWithLikes(Long boardId) {
+        return boardRepository.findByIdWithLikes(boardId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
     }
 
 
