@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.board.like.repository;
 
+import com.likelion.momentreeblog.domain.board.board.entity.Board;
 import com.likelion.momentreeblog.domain.board.like.entity.Like;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,5 +16,4 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     boolean existsByUserIdAndBoardId(Long userId, Long boardId);
     Optional<Like> findByUserIdAndBoardId(Long userId, Long boardId);
-
 }

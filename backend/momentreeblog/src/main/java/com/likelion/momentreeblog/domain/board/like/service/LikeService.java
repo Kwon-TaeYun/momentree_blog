@@ -60,16 +60,26 @@ public class LikeService {
         likeRepository.save(like);
         return "좋아요 완료!";
     }
-
+    @Transactional
     public String unlikeBoard(Long userId, Long boardId) {
-        // 좋아요 취소 로직 구현 (예: 해당 유저의 좋아요를 삭제하는 로직)
-        // 예시: BoardLike 엔티티에서 해당 유저와 게시글을 찾고 삭제
+        // 게시글을 조회하고, likes를 강제로 로딩
+        Board board = boardRepository.findByIdWithLikes(boardId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+
+        // 좋아요를 찾고 삭제
         Like boardLike = likeRepository.findByUserIdAndBoardId(userId, boardId)
                 .orElseThrow(() -> new IllegalArgumentException("좋아요가 존재하지 않습니다."));
 
         likeRepository.delete(boardLike);
+        likeRepository.flush();
 
+        // 게시글에서 해당 좋아요를 제거한 후 결과 반환
         return "좋아요 취소 성공";
+    }
+    @Transactional
+    public Board getBoardWithLikes(Long boardId) {
+        return boardRepository.findByIdWithLikes(boardId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
     }
 
 }

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,5 +35,6 @@ public interface BoardRepository extends JpaRepository<Board, Long>{
 
     // BoardRepository 인터페이스에 추가
     Page<Board> findByBlogId(Long blogId, Pageable pageable);
-
+    @Query("SELECT b FROM Board b LEFT JOIN FETCH b.likes WHERE b.id = :boardId")
+    Optional<Board> findByIdWithLikes(@Param("boardId") Long boardId);
 }

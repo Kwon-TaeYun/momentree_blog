@@ -1,6 +1,8 @@
 package com.likelion.momentreeblog.domain.photo.photo.controller;
 
 import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
+import com.likelion.momentreeblog.domain.board.board.entity.Board;
+import com.likelion.momentreeblog.domain.board.board.repository.BoardRepository;
 import com.likelion.momentreeblog.domain.photo.photo.dto.board.BoardPhotoResponseDto;
 import com.likelion.momentreeblog.domain.photo.photo.dto.board.PhotoAlbumDto;
 import com.likelion.momentreeblog.domain.photo.photo.photoenum.PhotoType;
@@ -13,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/")
@@ -21,6 +24,7 @@ public class BoardPhotoApiV1Controller {
 
     private final PhotoV1Service photoService;
     private final BoardPhotoService boardPhotoService;
+    private final BoardRepository boardRepository;
 
     // 사진첩
     @GetMapping("/albums")
@@ -36,7 +40,9 @@ public class BoardPhotoApiV1Controller {
     public ResponseEntity<BoardPhotoResponseDto> getPhotosByBoardId(
             @PathVariable(name = "boardId") Long boardId
     ) {
+        Optional<Board> board = boardRepository.findById(boardId);
         BoardPhotoResponseDto boardPhotos = boardPhotoService.getBoardPhotos(boardId);
+        boardPhotos.setBoardName(board.get().getTitle());
         return ResponseEntity.ok(boardPhotos);
     }
 

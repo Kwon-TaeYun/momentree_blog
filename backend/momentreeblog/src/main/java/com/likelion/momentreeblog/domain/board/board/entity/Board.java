@@ -39,7 +39,7 @@ public class Board extends BaseEntity {
     private Category category;
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<Like> likes; // 좋아요 테이블, 리스트타입
+    private List<Like> likes;
 
     // 현재 대표(메인) 사진: 이 값은 게시글 작성 혹은 수정 시 업데이트됩니다.
     @OneToOne(cascade = CascadeType.PERSIST)
