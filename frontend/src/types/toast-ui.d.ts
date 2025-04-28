@@ -15,8 +15,8 @@ declare module "@toast-ui/react-editor" {
     toolbarItems?: string[][];
     hooks?: {
       addImageBlobHook?: (
-        blob: File,
-        callback: (url: string, alt: string) => void
+          blob: File,
+          callback: (url: string, alt: string) => void
       ) => boolean;
     };
     language?: string;
@@ -25,6 +25,25 @@ declare module "@toast-ui/react-editor" {
     autofocus?: boolean;
     hideModeSwitch?: boolean;
     theme?: string;
+  }
+
+  export interface ViewerProps {
+    initialValue?: string;
+    height?: string;
+    referenceCallback?: (el: HTMLElement | undefined) => void;
+    theme?: string;
+    language?: string;
+    usageStatistics?: boolean;
+    onLoad?: () => void;
+    ref?: RefObject<ViewerInstance | null>;
+  }
+
+  export interface ViewerInstance {
+    getInstance: () => {
+      setMarkdown: (markdown: string) => void;
+      getMarkdown: () => string;
+      getRootElement: () => HTMLElement;
+    };
   }
 
   export interface EditorInstance {
@@ -44,4 +63,7 @@ declare module "@toast-ui/react-editor" {
   }
 
   export const Editor: ComponentType<EditorProps>;
+  export const Viewer: ComponentType<ViewerProps>;
+
 }
+

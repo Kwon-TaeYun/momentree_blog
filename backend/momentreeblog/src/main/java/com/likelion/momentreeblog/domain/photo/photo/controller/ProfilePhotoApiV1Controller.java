@@ -21,38 +21,6 @@ public class ProfilePhotoApiV1Controller {
     private final PhotoV1Service photoService;
 
 
-    // 프로필 사진 업로드용 presigned URL 생성
-    @PostMapping("/upload")
-    public ResponseEntity<PreSignedUrlResponseDto> getProfileUploadUrl(
-            @RequestBody PhotoUploadRequestDto request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        if (request.getPhotoType() != PhotoType.PROFILE) {
-            return ResponseEntity.badRequest().build();
-        }
-        
-        Long userId = userDetails.getUserId();
-        return ResponseEntity.ok(photoService.uploadPhoto(request, userId, null));
-    }
-
-
-    // 프로필 사진 S3 업로드 완료 후 DB 저장
-    @PutMapping("/update")
-    public ResponseEntity<PhotoUploadResponseDto> updateProfilePhoto(
-            @RequestParam("s3Key") String s3Key,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        
-        Long userId = userDetails.getUserId();
-        
-        // Builder 패턴으로 DTO 생성
-        PhotoUploadRequestDto request = PhotoUploadRequestDto.builder()
-                .userId(userId)
-                .photoType(PhotoType.PROFILE)
-                .build();
-        
-        return ResponseEntity.ok(photoService.updatePhotoWithS3Key(PhotoType.PROFILE, userId, null, s3Key, request));
-    }
-
     // 현재 프로필 사진 조회
     @GetMapping
     public ResponseEntity<PreSignedUrlResponseDto> getCurrentProfilePhoto(
@@ -82,23 +50,30 @@ public class ProfilePhotoApiV1Controller {
 
 
     // 프로필 사진을 기본 이미지로 변경
-    @PutMapping("/reset/profile")
-    public ResponseEntity<String> changeToDefaultProfilePhoto(
+    @PutMapping("/default")
+    public ResponseEntity<PreSignedUrlResponseDto> changeToDefaultProfilePhoto(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        photoService.changeToDefaultPhoto(PhotoType.PROFILE, userId, null);
-        return ResponseEntity.ok().body("프로필 사진을 기본사진으로 변경했습니다");
+        PreSignedUrlResponseDto preSignedUrlResponseDto = photoService.changeToDefaultPhoto(PhotoType.PROFILE, userId, null);
+        return ResponseEntity.ok(preSignedUrlResponseDto);
     }
 
 
-    // 사용자의 프로필 사진 변경 (기존 사진 중에서 선택)
-    @PutMapping("/change/{photoId}")
-    public ResponseEntity<String> updateCurrentProfilePhoto(
-            @PathVariable Long photoId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+    // 사용자의 프로필 사진 변경
+    @PostMapping("/profile-photo")
+    public ResponseEntity<PhotoUploadResponseDto> updateCurrentProfilePhoto(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody PreSignedUrlResponseDto dto
+    ) {
         Long userId = userDetails.getUserId();
-        photoService.updateCurrentPhoto(PhotoType.PROFILE, userId, null, photoId);
-        return ResponseEntity.ok().body("사진을 프로필 사진으로 변경 완료했습니다");
-    }
+        PhotoUploadRequestDto photoUploadRequestDto = PhotoUploadRequestDto.builder()
+                .userId(userId)
+                .photoType(PhotoType.PROFILE)
+                .key(dto.getKey())
+                .url(dto.getUrl())
+                .build();
 
+        PhotoUploadResponseDto responseDto = photoService.updatePhotoWithS3Key(PhotoType.PROFILE, userId, null, dto.getKey(), photoUploadRequestDto);
+        return ResponseEntity.ok(responseDto);
+    }
 } 

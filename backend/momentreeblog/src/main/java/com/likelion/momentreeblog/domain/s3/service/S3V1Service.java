@@ -7,10 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -55,18 +52,27 @@ public class S3V1Service {
                 .build();
 
 
-        // 프리사인 URL 생성: 5분간 유효
+        // 프리사인 URL 생성: 20분간 유효
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
+                .signatureDuration(Duration.ofMinutes(20))
                 .putObjectRequest(putObjectRequest)
                 .build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
         String url = presignedRequest.url().toString();
 
+        // 2) 퍼블릭 URL 생성 (SSL 엔드포인트)
+        String publicUrl = s3Client.utilities()
+                .getUrl(GetUrlRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .build())
+                .toExternalForm();
+
         return PreSignedUrlResponseDto.builder()
                 .url(url)
                 .key(key)
+                .publicUrl(publicUrl)
                 .build();
     }
 
@@ -87,33 +93,25 @@ public class S3V1Service {
 
     //단일 사진 조회(GET) presigned URL 생성
     public PreSignedUrlResponseDto generateGetPresignedUrl(String key) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
+        // GET 요청용 presigned URL
+        PresignedGetObjectRequest presignedGet = s3Presigner.presignGetObject(
+                GetObjectPresignRequest.builder()
+                        .signatureDuration(Duration.ofMinutes(20))
+                        .getObjectRequest(r -> r.bucket(bucketName).key(key))
+                        .build()
+        );
+        String url = presignedGet.url().toString();
 
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .getObjectRequest(getObjectRequest)
-                .signatureDuration(Duration.ofMinutes(15))
-                .build();
-
-        PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(presignRequest);
-        String url = presignedGetObjectRequest.url().toString();
+        // public URL
+        String publicUrl = s3Client.utilities()
+                .getUrl(GetUrlRequest.builder().bucket(bucketName).key(key).build())
+                .toExternalForm();
 
         return PreSignedUrlResponseDto.builder()
                 .url(url)
                 .key(key)
+                .publicUrl(publicUrl)
                 .build();
-    }
-
-
-    //사진 다중 조회용 presigned URL 생성
-    public List<PreSignedUrlResponseDto> generateGetPresignedUrlMulti(List<String> keys) {
-        List<PreSignedUrlResponseDto> result = new ArrayList<>();
-        for (String key : keys) {
-            result.add(generateGetPresignedUrl(key));
-        }
-        return result;
     }
 
 

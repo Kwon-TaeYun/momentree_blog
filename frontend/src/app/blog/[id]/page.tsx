@@ -3,8 +3,22 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
+
+
+// S3 이미지 URL 처리를 위한 유틸리티 함수
+const getS3ImageUrl = (imageKey: string | null) => {
+  if (!imageKey) return null;
+  if (imageKey.startsWith("http")) return imageKey;
+
+  const key = imageKey.startsWith("uploads/")
+    ? imageKey
+    : `uploads/${imageKey}`;
+  return `https://momentrees3bucket.s3.ap-northeast-2.amazonaws.com/${key}`;
+};
+
 import axios from "axios"; // axios 사용을 위해 임포트 (fetch 대신 axios 사용)
 import UserFollower from "@/components/user_follower";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 interface CommentDto {
   id: number;
@@ -20,7 +34,7 @@ interface BoardListResponseDto {
   id: number;
   title: string;
   blogId: number;
-  mainPhotoUrl: string | null;
+  imageUrl: string | null;
   likeCount: number;
   commentCount: number;
 }
@@ -45,6 +59,7 @@ interface BlogDetails {
   followerCount: number;
   followingCount: number;
   isFollowing?: boolean; // 현재 로그인된 유저가 이 블로그 주인 유저를 팔로우하는지 여부
+
   boards: PagedBoards;
   ownerId: number; // <-- 블로그 주인 유저의 ID 필드 추가 (백엔드 응답에 포함되어야 함)
 }
@@ -66,7 +81,7 @@ export default function BlogDetailPage() {
   const id = params?.id; // 현재 보고 있는 블로그의 ID (URL 파라미터)
 
   const [blogDetail, setBlogDetail] = useState<BlogDetails | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +93,8 @@ export default function BlogDetailPage() {
   const [activeFollowTab, setActiveFollowTab] = useState<
     "followers" | "following"
   >("followers");
+
+  const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
 
   // 팔로워/팔로잉 수 조회 함수 수정: 유저 ID를 인자로 받도록 변경
   const fetchFollowCounts = async (ownerUserId: number) => {
@@ -128,6 +145,7 @@ export default function BlogDetailPage() {
   // 팔로우/언팔로우 처리 함수 수정
   const handleFollowToggle = async () => {
     // 블로그 상세 정보와 블로그 주인 ID가 로드되었는지 확인
+    console.log(blogDetail?.ownerId);
     if (!blogDetail?.ownerId) {
       console.error(
         "Cannot toggle follow: Blog detail or owner ID is missing."
@@ -136,9 +154,7 @@ export default function BlogDetailPage() {
       return;
     }
 
-    // 1. 로그인 상태 확인 (localStorage 토큰 사용)
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+    if (!isLogin) {
       alert("로그인이 필요합니다.");
       // 필요시 로그인 페이지로 리다이렉트
       return;
@@ -165,8 +181,7 @@ export default function BlogDetailPage() {
         method: method, // 메소드 설정
         url: url, // URL 설정
         headers: {
-          "Content-Type": "application/json", // Content-Type 유지
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json", // Content-Type 유
           Accept: "application/json", // 응답 타입 명시
         },
         withCredentials: true, // 쿠키 포함 (세션 유지 등)
@@ -259,10 +274,9 @@ export default function BlogDetailPage() {
         const response = await fetch(
           `${apiBaseUrl}/api/v1/blogs/${id}/details?page=${currentPage}&size=10`,
           {
-            method: "GET",
             headers: {
-              "Content-Type": "application/json",
               Accept: "application/json",
+              "Content-Type": "application/json",
             },
             credentials: "include", // 쿠키 포함
           }
@@ -378,7 +392,7 @@ export default function BlogDetailPage() {
                 <div className="w-32 h-32 relative rounded-full overflow-hidden mb-4">
                   {blogDetail?.profileImage ? (
                     <Image
-                      src={blogDetail.profileImage}
+                      src={getS3ImageUrl(blogDetail.profileImage) || ""}
                       alt="Profile"
                       fill
                       className="object-cover"
@@ -408,7 +422,7 @@ export default function BlogDetailPage() {
                   }`}
                 >
                   {/* 로딩 상태를 별도로 관리하면 버튼 텍스트 및 비활성화 처리 가능 */}
-                  {isFollowing ? "팔로잉" : "팔로우"}{" "}
+                  {isFollowing ? "언팔로잉" : "팔로잉"}{" "}
                   {/* isFollowing 상태에 따라 텍스트 변경 */}
                 </button>
                 <div className="w-full flex flex-col space-y-2">
@@ -419,6 +433,7 @@ export default function BlogDetailPage() {
                       {/* blogDetail에서 postsCount 사용 */}
                     </p>
                   </div>
+
                   {/* 팔로워 수 표시 및 모달 열기 */}
                   <div
                     className="flex justify-between p-2 cursor-pointer hover:bg-gray-50 rounded"
@@ -445,36 +460,65 @@ export default function BlogDetailPage() {
           {/* 오른쪽 메인 컨텐츠 - 게시글 목록 */}
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-6">게시글 목록</h1>
-            {boards.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {boards.map((board) => (
-                    <div
-                      key={board.id}
-                      className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/boards/${board.id}`)} // 게시글 상세 페이지로 이동
-                    >
-                      <div className="flex items-center space-x-4">
-                        {board.mainPhotoUrl && (
-                          <div className="w-24 h-24 relative rounded-lg overflow-hidden">
-                            <Image
-                              src={board.mainPhotoUrl}
-                              alt={board.title}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
+
+            {/* blogDetail이 존재하고 boards.content가 비어 있지 않으면 게시글 목록 출력 */}
+            {blogDetail?.boards.content.length ? (
+              <div className="space-y-4">
+                {blogDetail.boards.content.map((board) => (
+                  <div
+                    key={board.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/boards/${board.id}`)}
+                  >
+                    <div className="flex gap-4 border-b pb-4">
+                      <div className="w-24 h-24 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
+                        {board.imageUrl && (
+                          <Image
+                            src={getS3ImageUrl(board.imageUrl) || ""}
+                            alt={board.title}
+                            width={96}
+                            height={96}
+                            className="object-cover w-full h-full"
+                          />
                         )}
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold mb-2">
-                            {board.title}
-                          </h3>
-                          <div className="flex justify-between text-sm text-gray-500">
-                            <div className="flex space-x-4">
-                              <span>❤️ {board.likeCount}</span>
-                              <span>💬 {board.commentCount || 0}</span>
-                            </div>
-                          </div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium mb-2">{board.title}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              className="w-4 h-4 mr-1"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                              />
+                            </svg>
+                            {board.likeCount}
+                          </span>
+                          <span className="flex items-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              className="w-4 h-4 mr-1"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {board.commentCount}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -487,9 +531,12 @@ export default function BlogDetailPage() {
               <div className="text-center py-10 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">아직 작성한 게시글이 없습니다.</p>
               </div>
+            ) : (
+              <p>게시글이 없습니다.</p> // 게시글이 없을 경우 안내 메시지 추가
             )}
           </div>
         </div>
+
         {/* 팔로워/팔로잉 모달 */}
         <UserFollower
           isOpen={showFollowModal}

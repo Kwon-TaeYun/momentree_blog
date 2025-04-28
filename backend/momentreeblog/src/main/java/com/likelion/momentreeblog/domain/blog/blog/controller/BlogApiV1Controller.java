@@ -1,5 +1,6 @@
 package com.likelion.momentreeblog.domain.blog.blog.controller;
 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogDetailResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogResponseDto;
 import com.likelion.momentreeblog.domain.blog.blog.dto.BlogUpdateRequestDto;
@@ -9,6 +10,7 @@ import com.likelion.momentreeblog.domain.board.board.dto.BoardListResponseDto;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal; 
@@ -124,13 +127,16 @@ public class BlogApiV1Controller {
     /**
      * 블로그 상세 조회 (게시물 목록 포함)
      */
+    /**
+     * 블로그 상세 조회 (게시물 목록 포함)
+     */
     @GetMapping("/{id}/details")
     public ResponseEntity<?> getBlogDetails(
             @PathVariable(name = "id") Long id, //블로그 ID
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0", name = "page") int page,
+            @RequestParam(defaultValue = "10", name = "size") int size,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
-            ) {
+    ) {
 
         Long loggedInUserId = null;
         if (customUserDetails != null) {

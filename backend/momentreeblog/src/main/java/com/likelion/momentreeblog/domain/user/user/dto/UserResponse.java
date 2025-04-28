@@ -12,9 +12,14 @@ public class UserResponse {
     private String email; // 이메일
     private Long blogViewCount;
     private String blogName;
-    
-    private Long blogId; 
+ 
     private String profileImage; 
+
+    private String profilePhotoUrl;
+    private String profilePhotoKey;
+
+    private Long blogId;
+
 
     public static UserResponse from(User user) {
         Long blogId = null;
@@ -36,10 +41,11 @@ public class UserResponse {
                 .id(user.getId()) 
                 .name(user.getName()) 
                 .email(user.getEmail())
-                .profileImage(profileImageUrl)
-                .blogViewCount(blogViewCount) 
-                .blogName(blogName) 
-                .blogId(blogId) 
+                .blogViewCount(user.getBlog().getViewCount())
+                .blogName(user.getBlog().getName())
+                .blogId(user.getBlog().getId())
+                .profilePhotoKey(user.getCurrentProfilePhoto().getUrl())
+                .profilePhotoUrl(user.getCurrentProfilePhoto().getUrl())
                 .build();
     }
 }

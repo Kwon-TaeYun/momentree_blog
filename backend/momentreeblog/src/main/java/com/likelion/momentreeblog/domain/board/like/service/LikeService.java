@@ -8,6 +8,7 @@ import com.likelion.momentreeblog.domain.board.like.repository.LikeRepository;
 import com.likelion.momentreeblog.domain.user.user.dto.UserLikeDto;
 import com.likelion.momentreeblog.domain.user.user.entity.User;
 import com.likelion.momentreeblog.domain.user.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,12 +40,11 @@ public class LikeService {
     public String likeBoard(Long userId, Long boardId) {
         System.out.println("userId: " + userId);
         System.out.println("boardId: " + boardId);
-        // 이미 좋아요 눌렀는지 체크
+
         Optional<Like> optionalLike = likeRepository.findByUserIdAndBoardId(userId, boardId);
 
         if (optionalLike.isPresent()) {
-            likeRepository.delete(optionalLike.get());
-            return "좋아요 취소!";
+            throw new IllegalArgumentException("이미 좋아요를 눌렀습니다."); // 좋아요 중복 방지
         }
 
         Board board = boardRepository.findById(boardId)
@@ -61,15 +61,16 @@ public class LikeService {
         return "좋아요 완료!";
     }
 
-    public String unlikeBoard(Long userId, Long boardId) {
-        // 좋아요 취소 로직 구현 (예: 해당 유저의 좋아요를 삭제하는 로직)
-        // 예시: BoardLike 엔티티에서 해당 유저와 게시글을 찾고 삭제
-        Like boardLike = likeRepository.findByUserIdAndBoardId(userId, boardId)
-                .orElseThrow(() -> new IllegalArgumentException("좋아요가 존재하지 않습니다."));
+    @Transactional
+    public void unlikePost(Long userId, Long boardId) {
+        // 방법 1: 레포지토리에서 직접 삭제
+//        likeRepository.deleteByUserIdAndBoardId(userId, boardId);
 
-        likeRepository.delete(boardLike);
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다"));
 
-        return "좋아요 취소 성공";
+        board.getLikes().removeIf(like -> like.getUser().getId().equals(userId));
+        boardRepository.save(board);
+
     }
-
 }

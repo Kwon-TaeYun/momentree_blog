@@ -4,6 +4,7 @@ import com.likelion.momentreeblog.domain.blog.blog.entity.Blog;
 import com.likelion.momentreeblog.domain.blog.blog.repository.BlogRepository;
 import com.likelion.momentreeblog.domain.photo.photo.entity.Photo;
 import com.likelion.momentreeblog.domain.photo.photo.repository.PhotoRepository;
+import com.likelion.momentreeblog.domain.s3.service.S3V1Service;
 import com.likelion.momentreeblog.domain.user.role.entity.Role;
 import com.likelion.momentreeblog.domain.user.user.dto.UserDeleteRequest;
 import com.likelion.momentreeblog.domain.user.user.dto.UserResponse;
@@ -16,6 +17,7 @@ import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -35,7 +36,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenizer jwtTokenizer;
     private final AuthTokenService authTokenService;
+    private final S3V1Service s3V1Service;
     private final PhotoRepository photoRepository;
+
+
+    @Value("${custom.default-image.url}")
+    private String DEFAULT_IMAGE_URL;
+
+
+
+
 
     @Transactional
     public String saveUser(UserSignupDto dto) {
@@ -139,13 +149,30 @@ public class UserService {
 
     }
 
-
+    @Transactional
     public List<UserResponse> getTop5Bloggers() {
         List<User> topUsers = userRepository.findTop5ByOrderByViewCountDescCreatedAtDesc((Pageable) PageRequest.of(0, 5));
         return topUsers.stream()
-                .map(UserResponse::from)
+                .map(user -> {
+                    Photo currentProfilePhoto = user.getCurrentProfilePhoto();
+                    String key = (currentProfilePhoto != null) ? currentProfilePhoto.getUrl() : DEFAULT_IMAGE_URL;
+                    String url = s3V1Service.generateGetPresignedUrl(key).getPublicUrl();
+
+
+                    return UserResponse.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .blogViewCount(user.getBlog().getViewCount())
+                            .blogName(user.getBlog().getName())
+                            .profilePhotoKey(key)
+                            .profilePhotoUrl(url)
+                            .blogId(user.getBlog().getId())
+                            .build();
+                })
                 .toList();
     }
+
 
     @Transactional
     public void updateUser(Long userId, UserUpdateDto dto) {

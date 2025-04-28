@@ -1,10 +1,34 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import "@toast-ui/editor/dist/toastui-editor.css";
+import Image from "next/image"; // Next.js의 Image 컴포넌트를 사용
+
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
+
+// Toast UI Viewer 동적 임포트
+const Viewer = dynamic(
+  () => import("@toast-ui/react-editor").then((mod) => mod.Viewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-96 w-full flex items-center justify-center">
+        콘텐츠 로딩 중...
+      </div>
+    ),
+  }
+);
+
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
+
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 동적 임포트로 LikeList 컴포넌트 가져오기
 const LikeList = dynamic(() => import("@/components/LikeList"), {
@@ -16,7 +40,12 @@ interface Post {
   title: string;
   content: string;
   authorName: string;
-  userId?: number; // authorId를 userId로 변경
+  authorId?: number;
+  authorProfilePhoto?: string; // 작성자 프로필 사진 추가
+  profilePhoto?: {
+    url: string; // 프로필 이미지 URL
+    key: string; // S3 키
+  };
   createdAt: string;
   viewCount: number;
   likeCount: number;
@@ -33,6 +62,7 @@ interface Comment {
   createdAt: string;
   updatedAt?: string;
   author?: string; // author 속성 추가
+  userProfileUrl?: string;
 }
 
 interface User {
@@ -40,6 +70,11 @@ interface User {
   name: string;
   email: string;
   token?: string;
+  profilePhoto?: {
+    url: string;
+    key: string;
+  };
+  profileImage?: string;
 }
 
 export default function BoardDetail() {
@@ -52,12 +87,18 @@ export default function BoardDetail() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>({
+    id: 0,
+    name: "",
+    email: "",
+    profilePhoto: undefined,
+  });
   const [isAuthor, setIsAuthor] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
   const [token, setToken] = useState<string | null>(null);
   const [isLikeListOpen, setIsLikeListOpen] = useState<boolean>(false);
+  const viewerRef = useRef(null);
 
   // 상태 추가
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
@@ -135,9 +176,64 @@ export default function BoardDetail() {
             throw new Error("게시글 조회 실패");
           }
 
-          const postData = await postResponse.json();
-          setPost(postData);
-          setLikeCount(postData.likeCount || 0);
+          const data = await postResponse.json();
+
+          // 마크다운 내의 이미지 키를 URL로 변환
+          if (data.content) {
+            // S3 버킷 정보로 공개 URL 기본 주소 설정
+            const bucket =
+              process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+            const region =
+              process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+            const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+            // 상대 경로 패턴 찾기: 1) ![alt](/uploads/xxxx.jpg) 2) ![alt](uploads/xxxx.jpg)
+            const relativePathPattern = /!\[(.*?)\]\(\/?uploads\/([^)]+)\)/g;
+
+            // 키를 공개 URL로 변환
+            data.content = data.content.replace(
+              relativePathPattern,
+
+              (match: string, alt: string, imageKey: string) => {
+                const imageUrl = `${S3_PUBLIC_BASE}/uploads/${imageKey}`;
+                console.log("이미지 URL로 변환:", imageKey, "->", imageUrl);
+                return `![${alt}](${imageUrl})`;
+              }
+            );
+          }
+
+          // 대표 이미지 URL도 변환
+          if (data.photos && data.photos.length > 0) {
+            const bucket =
+              process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+            const region =
+              process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+            const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+            data.photos = data.photos.map((photoUrl: string) => {
+              if (photoUrl.startsWith("uploads/")) {
+                return `${S3_PUBLIC_BASE}/${photoUrl}`;
+              }
+              return photoUrl;
+            });
+          }
+
+          // 프로필 사진 URL도 처리
+          if (data.authorProfilePhoto) {
+            const bucket =
+              process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+            const region =
+              process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+            const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+            // 상대 경로면 절대 경로로 변환
+            if (data.authorProfilePhoto.startsWith("uploads/")) {
+              data.authorProfilePhoto = `${S3_PUBLIC_BASE}/${data.authorProfilePhoto}`;
+            }
+          }
+
+          setPost(data);
+          setLikeCount(data.likeCount || 0);
 
           // 댓글 데이터 따로 가져오기
           const commentsResponse = await fetch(
@@ -150,32 +246,37 @@ export default function BoardDetail() {
 
           if (commentsResponse.ok) {
             const commentsData = await commentsResponse.json();
-            const processedComments = commentsData.map((comment: any) => ({
-              ...comment,
-              author: comment.userName || "알 수 없음", // author 속성 추가
-              createdAt: new Date(comment.createdAt).toLocaleString(),
-            })) as Comment[]; // 타입 단언 추가
+            const processComments = (commentsData: any[]) => {
+              const bucket =
+                process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+              const region =
+                process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+              const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+              return commentsData.map((comment) => ({
+                ...comment,
+                userProfileUrl: comment.userProfileUrl
+                  ? comment.userProfileUrl.startsWith("uploads/")
+                    ? `${S3_PUBLIC_BASE}/${comment.userProfileUrl}`
+                    : comment.userProfileUrl
+                  : "/default-profile.png", // 기본값 처리
+              }));
+            };
+            const processedComments = processComments(commentsData);
             setComments(processedComments);
           }
 
-          if (
-            currentUser &&
-            Number(postData.userId) === Number(currentUser.id)
-          ) {
+          if (currentUser && Number(data.userId) === Number(currentUser.id)) {
             setIsAuthor(true);
           }
 
           // 좋아요 상태 확인
-          if (
-            currentUser &&
-            postData.likeUsers &&
-            Array.isArray(postData.likeUsers)
-          ) {
-            if (typeof postData.likeUsers[0] === "string") {
-              setIsLiked(postData.likeUsers.includes(currentUser.name));
+          if (currentUser && data.likeUsers && Array.isArray(data.likeUsers)) {
+            if (typeof data.likeUsers[0] === "string") {
+              setIsLiked(data.likeUsers.includes(currentUser.name));
             } else {
               setIsLiked(
-                postData.likeUsers.some(
+                data.likeUsers.some(
                   (user: any) => Number(user.id) === Number(currentUser.id)
                 )
               );
@@ -429,25 +530,57 @@ export default function BoardDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-md">
-      <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
-      <div className="flex justify-between text-gray-500 text-sm mb-6">
-        <span>작성자: {post.authorName}</span>
-        <div className="flex items-center space-x-4">
-          <span>{new Date(post.createdAt).toLocaleString()}</span>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* 페이지 상단 정보 섹션 */}
+      <div className="mb-12 pb-8 border-b border-gray-100">
+        {/* 카테고리 + 생성 날짜 */}
+        <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+          <span className="px-2 py-1 bg-gray-50 rounded-full">블로그</span>
+          <span>•</span>
+          <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+        </div>
+
+        {/* 제목 */}
+        <h1 className="text-4xl font-bold text-gray-800 mb-8">{post.title}</h1>
+
+        {/* 작성자 정보 + 수정/삭제 버튼 */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            {post.profilePhoto?.url ? (
+              <Image
+                src={post.profilePhoto.url || "/default-profile.png"} // 기본 이미지 설정
+                alt={post.authorName || "작성자"}
+                width={40}
+                height={40}
+                className="object-cover rounded-full mr-3"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                <span className="text-gray-500 font-medium">
+                  {post.authorName && post.authorName[0]}
+                </span>
+              </div>
+            )}
+            <div>
+              <p className="font-medium text-gray-800">{post.authorName}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(post.createdAt).toLocaleString()}
+              </p>
+            </div>
+          </div>
 
           {/* 수정/삭제 버튼 - 작성자에게만 표시 */}
-          {loginMember.name == post.authorName && (
+          {loginMember.name === post.authorName && (
             <div className="flex space-x-3">
               <Link
                 href={`/boards/${boardId}/edit`}
-                className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
+                className="px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors font-medium"
               >
                 수정
               </Link>
               <button
                 onClick={handleDelete}
-                className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                className="px-3 py-2 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors font-medium"
               >
                 삭제
               </button>
@@ -455,58 +588,85 @@ export default function BoardDetail() {
           )}
         </div>
       </div>
-      {/* photos 배열이 null이 아닐 때만 렌더링 */}
-      {post.photos && post.photos.length > 0 && (
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {post.photos.map((photoUrl, index) => (
+
+      {/* 본문 콘텐츠 영역 */}
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+        {/* 대표 이미지 */}
+        {post.photos && post.photos.length > 0 && (
+          <div className="mb-8 flex justify-center relative">
             <img
-              key={index}
-              src={photoUrl}
-              alt={`게시글 이미지 ${index + 1}`}
-              className="rounded-xl w-full h-auto object-cover"
+              src={post.photos[0]}
+              alt="대표 이미지"
+              className="rounded-xl max-h-[500px] object-contain"
             />
-          ))}
+            {post.photos.length > 1 && (
+              <div className="absolute bottom-4 right-4">
+                <Link
+                  href={`/boards/${boardId}/photos`}
+                  className="bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg text-sm hover:bg-opacity-80 transition flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  전체보기 ({post.photos.length}장)
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Toast UI Viewer로 마크다운 콘텐츠 렌더링 */}
+        <div className="markdown-viewer pb-10 mx-auto max-w-3xl">
+          <Viewer initialValue={post.content || ""} ref={viewerRef} />
         </div>
-      )}
-      <p className="text-lg text-gray-800 whitespace-pre-line">
-        {post.content}
-      </p>
 
-      {/* 좋아요 버튼 및 카운트 */}
-      <div className="mt-6 flex justify-end items-center space-x-2">
-        <button
-          onClick={handleLikeToggle}
-          className={`flex items-center space-x-1 px-4 py-2 rounded-full transition-colors ${
-            isLiked
-              ? "bg-red-50 text-red-600 hover:bg-red-100"
-              : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill={isLiked ? "currentColor" : "none"}
-            stroke="currentColor"
-            strokeWidth={isLiked ? "0" : "1.5"}
-          >
-            <path
-              fillRule="evenodd"
-              d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{isLiked ? "좋아요 취소" : "좋아요"}</span>
-        </button>
+        {/* 좋아요 영역 */}
+        <div className="mt-10 mb-16 flex justify-center">
+          <div className="flex flex-col items-center space-y-2">
+            <button
+              onClick={handleLikeToggle}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+                isLiked
+                  ? "bg-red-50 text-red-600 hover:bg-red-100"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                viewBox="0 0 20 20"
+                fill={isLiked ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={isLiked ? "0" : "1.5"}
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
 
-        {/* 좋아요 개수 버튼 - 클릭하면 좋아요 리스트 표시 */}
-        <button
-          onClick={toggleLikeList}
-          className="text-sm text-gray-600 hover:text-gray-800 transition-colors flex items-center"
-        >
-          <span className="mr-1">❤️</span>
-          <span>{likeCount}</span>
-        </button>
+            {/* 좋아요 개수 버튼 - 클릭하면 좋아요 리스트 표시 */}
+            <button
+              onClick={toggleLikeList}
+              className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              {likeCount > 0
+                ? `${likeCount}명이 좋아합니다`
+                : "첫 좋아요를 눌러보세요"}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 좋아요 리스트 모달 */}
@@ -519,119 +679,265 @@ export default function BoardDetail() {
       )}
 
       {/* 댓글 섹션 */}
-      <div className="mt-16">
-        <h3 className="text-xl font-bold mb-6">
-          댓글 <span className="text-gray-500">({comments.length})</span>
+      <div className="mt-16 bg-white rounded-xl p-8 shadow-sm">
+        <h3 className="text-xl font-bold mb-8 flex items-center">
+          <span className="mr-2">💬</span>
+          <span>댓글</span>
+          <span className="text-gray-500 ml-2">({comments.length})</span>
         </h3>
+
         <div className="space-y-6 mb-8">
-          {comments.map((comment, index) => (
-            <div key={index} className="pt-4 pb-5 border-b border-gray-200">
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full mr-3"></div>
-                  <span className="font-medium">
-                    {comment.userName || comment.author || "알 수 없음"}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-400 flex items-center space-x-4">
-                  <span>{comment.createdAt}</span>
-                  {currentUser?.id === comment.userId && (
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditingCommentId(comment.id);
-                          setEditCommentText(comment.content);
-                        }}
-                        className="text-blue-500 hover:text-blue-600"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleCommentDelete(comment.id)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        삭제
-                      </button>
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <div
+                key={comment.id}
+                className="pt-4 pb-5 border-b border-gray-200"
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 mr-3">
+                      <Image
+                        src={comment.userProfileUrl ?? "/default-profile.png"} // 기본 이미지 설정
+                        alt={comment.userName || "사용자"}
+                        width={32}
+                        height={32}
+                        className="object-cover"
+                      />
                     </div>
-                  )}
-                </div>
-              </div>
-              {editingCommentId === comment.id ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleCommentEdit(comment.id);
-                  }}
-                  className="pl-11"
-                >
-                  <textarea
-                    value={editCommentText}
-                    onChange={(e) => setEditCommentText(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    rows={3}
-                  />
-                  <div className="flex justify-end space-x-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingCommentId(null);
-                        setEditCommentText("");
-                      }}
-                      className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
-                    >
-                      저장
-                    </button>
+                    <span className="font-medium">{comment.userName}</span>
                   </div>
-                </form>
-              ) : (
-                <p className="text-gray-800 pl-11">{comment.content}</p>
-              )}
+                  <div className="text-sm text-gray-400 flex items-center space-x-4">
+                    <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                    {currentUser?.id === comment.userId && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditCommentText(comment.content);
+                          }}
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleCommentDelete(comment.id)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="text-gray-700 pl-11">{comment.content}</p>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+              <p>첫 댓글을 남겨보세요!</p>
             </div>
-          ))}
+          )}
         </div>
 
         {/* 댓글 입력 */}
         {isAuthenticated ? (
           <form onSubmit={handleCommentSubmit}>
-            <div className="border border-gray-300 rounded-md overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               <textarea
                 placeholder="댓글을 입력하세요..."
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="w-full p-4 outline-none resize-none text-gray-800"
+                className="w-full p-4 outline-none resize-none text-gray-800 min-h-[100px]"
                 rows={3}
               />
             </div>
             <div className="flex justify-end mt-3">
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#2c714c] text-white text-sm font-medium rounded-md hover:bg-[#225c3d] transition-colors"
+                className="px-5 py-2 bg-[#2c714c] text-white font-medium rounded-md hover:bg-[#225c3d] transition-colors"
+                disabled={!commentText.trim()}
               >
                 댓글 작성
               </button>
             </div>
           </form>
         ) : (
-          <div className="bg-gray-50 p-4 rounded-lg text-center">
-            <p className="text-gray-600">
-              댓글을 작성하려면{" "}
-              <a
-                href="/members/login"
-                className="text-[#2c714c] hover:underline"
-              >
-                로그인
-              </a>{" "}
-              이 필요합니다.
+          <div className="bg-white p-6 rounded-lg text-center border border-gray-200">
+            <p className="text-gray-600 mb-4">
+              댓글을 작성하려면 로그인이 필요합니다.
             </p>
+            <Link
+              href="/members/login"
+              className="inline-block px-5 py-2 bg-[#2c714c] text-white font-medium rounded-md hover:bg-[#225c3d] transition-colors"
+            >
+              로그인하기
+            </Link>
           </div>
         )}
       </div>
+
+      {/* CSS - 스타일 오버라이드 */}
+      <style jsx global>{`
+        /* 페이지 전체 배경색 */
+        body {
+          background-color: #ffffff;
+        }
+
+        /* 콘텐츠 영역 스타일링 - 중앙 정렬 */
+        .markdown-viewer .toastui-editor-contents {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+          font-size: 1.25rem; /* 글씨 크기 증가: 1.125rem -> 1.25rem (20px) */
+          line-height: 1.8;
+          color: #333;
+          padding: 0 2rem;
+          text-align: left !important;
+        }
+
+        /* 이미지 중앙 정렬 (중요!) */
+        .toastui-editor-contents img {
+          display: block !important;
+          max-width: 100% !important; /* 이미지 크기 증가: 90% -> 100% */
+          margin: 2rem auto !important;
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* 제목 스타일 */
+        .toastui-editor-contents h1,
+        .toastui-editor-contents h2,
+        .toastui-editor-contents h3,
+        .toastui-editor-contents h4,
+        .toastui-editor-contents h5,
+        .toastui-editor-contents h6 {
+          margin: 2rem 0 1rem;
+          font-weight: 600;
+          text-align: left;
+        }
+
+        .toastui-editor-contents h1 {
+          font-size: 2rem;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 0.5rem;
+        }
+
+        .toastui-editor-contents h2 {
+          font-size: 1.75rem;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 0.5rem;
+        }
+
+        .toastui-editor-contents h3 {
+          font-size: 1.5rem;
+        }
+
+        /* 단락 스타일 */
+        .toastui-editor-contents p {
+          margin: 1rem 0;
+          line-height: 1.8;
+          text-align: left;
+        }
+
+        /* 인용구 스타일 */
+        .toastui-editor-contents blockquote {
+          background-color: #f8f9fa;
+          border-left: 4px solid #2c714c;
+          padding: 1rem 1.5rem;
+          margin: 1.5rem 0;
+          color: #555;
+        }
+
+        /* 코드 블록 스타일 */
+        .toastui-editor-contents pre {
+          background-color: #f6f8fa;
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin: 1.5rem 0;
+          overflow-x: auto;
+        }
+
+        /* 인라인 코드 스타일 */
+        .toastui-editor-contents code {
+          background-color: #f6f8fa;
+          border-radius: 0.25rem;
+          padding: 0.2rem 0.4rem;
+          font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo,
+            monospace;
+          font-size: 0.875em;
+        }
+
+        /* 리스트 스타일 */
+        .toastui-editor-contents ul,
+        .toastui-editor-contents ol {
+          margin: 1rem 0 1rem 2rem;
+          text-align: left;
+        }
+
+        .toastui-editor-contents li {
+          margin-bottom: 0.5rem;
+          text-align: left;
+        }
+
+        /* 테이블 스타일 */
+        .toastui-editor-contents table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 1.5rem auto;
+        }
+
+        .toastui-editor-contents th,
+        .toastui-editor-contents td {
+          border: 1px solid #e2e8f0;
+          padding: 0.75rem 1rem;
+          text-align: left;
+        }
+
+        .toastui-editor-contents th {
+          background-color: #f8fafc;
+        }
+
+        .toastui-editor-contents tr:nth-child(even) {
+          background-color: #f9fafb;
+        }
+
+        /* 수평선 스타일 */
+        .toastui-editor-contents hr {
+          border: 0;
+          height: 1px;
+          background-color: #e2e8f0;
+          margin: 2rem 0;
+        }
+
+        /* 링크 스타일 */
+        .toastui-editor-contents a {
+          color: #2c714c;
+          text-decoration: none;
+        }
+
+        .toastui-editor-contents a:hover {
+          text-decoration: underline;
+        }
+
+        /* 에디터 불필요한 요소 숨김 */
+        .toastui-editor-mode-switch {
+          display: none !important;
+        }
+
+        /* 이 스타일을 통해 Write 페이지와 충돌을 방지합니다 */
+        #viewer-content-body-container .toastui-editor-contents p,
+        #viewer-content-body-container .toastui-editor-contents h1,
+        #viewer-content-body-container .toastui-editor-contents h2,
+        #viewer-content-body-container .toastui-editor-contents h3,
+        #viewer-content-body-container .toastui-editor-contents h4,
+        #viewer-content-body-container .toastui-editor-contents h5,
+        #viewer-content-body-container .toastui-editor-contents h6,
+        #viewer-content-body-container .toastui-editor-contents ul,
+        #viewer-content-body-container .toastui-editor-contents ol,
+        #viewer-content-body-container .toastui-editor-contents blockquote {
+          text-align: left;
+        }
+      `}</style>
     </div>
   );
 }

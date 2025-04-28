@@ -155,6 +155,23 @@ public class BlogService {
         int followerCount = followRepository.countByFollowing(blogOwner).intValue(); 
         int followingCount = followRepository.countByFollower(blogOwner).intValue(); 
 
+        // 2. 블로그 주인 유저 정보 확보
+        User blogOwner = blog.getUser(); // Blog 엔티티에서 User 엔티티 가져오기
+        Long ownerId = blogOwner.getId(); // <-- 블로그 주인 유저 ID 확보
+
+
+        // 3. isFollowing 상태 계산
+        boolean isFollowing = false; // 기본값: 팔로우하지 않음
+        if (loggedInUserId != null && !loggedInUserId.equals(ownerId)) { // 로그인된 유저가 있고, 자신의 블로그가 아닌 경우에만 계산
+            Optional<User> loggedInUserOptional = userRepository.findById(loggedInUserId); // UserRepository 활용
+            if (loggedInUserOptional.isPresent()) {
+                User loggedInUser = loggedInUserOptional.get();
+                isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, blogOwner).isPresent();
+            }
+        }
+
+
+
 
         // 5. 블로그의 게시물 목록 페이징 조회 (기존 코드 활용)
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -163,8 +180,12 @@ public class BlogService {
         // 6. 게시글 총 수 (프론트 postsCount에 사용)
         Long totalPostsCount = boards.getTotalElements(); // Long 타입에 맞춤
 
+        String profileImage = null;
+        if (blog.getUser() != null && blog.getUser().getCurrentProfilePhoto() != null) {
+            profileImage = blog.getUser().getCurrentProfilePhoto().getUrl();
+        }
 
-        // 7. BlogDetailResponseDto 생성 및 반환
+     
         return BlogDetailResponseDto.builder()
                 .id(blog.getId())
                 .name(blog.getName())
@@ -174,10 +195,10 @@ public class BlogService {
 
                 .postsCount(totalPostsCount) // 계산된 게시글 총 수 설정
 
-                .ownerId(ownerId) 
+                .ownerId(ownerId)
                 .isFollowing(isFollowing)
-                .followerCount(followerCount) 
-                .followingCount(followingCount) 
+                .followerCount(followerCount)
+                .followingCount(followingCount)
 
                 .boards(boards) // 페이징된 게시물 목록 설정
                 .build();

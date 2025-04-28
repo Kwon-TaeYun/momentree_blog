@@ -33,7 +33,7 @@ public class CommentService {
         Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         return commentRepository.findByBoardIdOrderByCreatedAtDesc(boardId, pageable)
-                .map(this::toDto);
+                .map(comment -> toDto(comment));
     }
 
 
@@ -97,12 +97,19 @@ public class CommentService {
     }
 
     private CommentDto toDto(Comment comment) {
+        User user = comment.getUser();
+
+        // 프로필 사진 URL이 존재하는 경우 설정, 없으면 기본 이미지 사용
+        String userProfileUrl = (user != null && user.getCurrentProfilePhoto() != null)
+                ? user.getCurrentProfilePhoto().getUrl()
+                : "defaultProfilePhotoUrl"; // 기본 이미지 URL 설정
         return CommentDto.builder()
                 .id(comment.getId())
                 .userId(comment.getUser().getId())
                 .userName(comment.getUser().getName()) // 작성자 이름 추가
                 .boardId(comment.getBoard().getId())
                 .content(comment.getContent())
+                .userProfileUrl(userProfileUrl)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();
