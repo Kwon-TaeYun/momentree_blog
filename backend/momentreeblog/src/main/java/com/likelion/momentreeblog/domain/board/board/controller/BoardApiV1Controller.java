@@ -252,9 +252,9 @@ public class BoardApiV1Controller {
             Long userId = customUserDetails.getUserId();
 
             // 좋아요 취소하는 서비스 메소드 호출
-            String result = likeService.unlikeBoard(userId, boardId);
+            likeService.unlikePost(userId, boardId);
 
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok("result");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(401).body("인증 정보가 잘못되었습니다.");
         } catch (Exception e) {

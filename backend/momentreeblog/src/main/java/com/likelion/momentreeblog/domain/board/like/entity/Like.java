@@ -12,6 +12,8 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.mapping.ToOne;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "likes", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "board_id"})
@@ -29,5 +31,20 @@ public class Like extends BaseEntity
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Like like = (Like) o;
+        return Objects.equals(getId(), like.getId()) &&
+                Objects.equals(user.getId(), like.getUser().getId()) &&
+                Objects.equals(board.getId(), like.getBoard().getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), user.getId(), board.getId());
+    }
 
 }
