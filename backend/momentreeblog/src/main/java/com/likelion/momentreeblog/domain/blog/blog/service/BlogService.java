@@ -155,13 +155,7 @@ public class BlogService {
         int followerCount = followRepository.countByFollowing(blogOwner).intValue(); 
         int followingCount = followRepository.countByFollower(blogOwner).intValue(); 
 
-        // 2. 블로그 주인 유저 정보 확보
-        User blogOwner = blog.getUser(); // Blog 엔티티에서 User 엔티티 가져오기
-        Long ownerId = blogOwner.getId(); // <-- 블로그 주인 유저 ID 확보
 
-
-        // 3. isFollowing 상태 계산
-        boolean isFollowing = false; // 기본값: 팔로우하지 않음
         if (loggedInUserId != null && !loggedInUserId.equals(ownerId)) { // 로그인된 유저가 있고, 자신의 블로그가 아닌 경우에만 계산
             Optional<User> loggedInUserOptional = userRepository.findById(loggedInUserId); // UserRepository 활용
             if (loggedInUserOptional.isPresent()) {

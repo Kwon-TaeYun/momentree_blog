@@ -48,7 +48,6 @@ public class User extends BaseEntity {
     )
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    @Builder.Default // <-- @Builder.Default 추가
     private Set<Role> roles = new HashSet<>();
 
 

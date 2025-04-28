@@ -15,5 +15,5 @@ public class UserFollowDto {
     private Long id;
     private String name;
     private UserStatus status;
-    private Photo currentProfilePhoto;
+    private String currentProfilePhotoUrl;
 }

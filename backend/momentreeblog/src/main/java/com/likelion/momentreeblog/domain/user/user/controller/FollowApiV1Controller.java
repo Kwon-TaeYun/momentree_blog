@@ -36,7 +36,7 @@ public class FollowApiV1Controller {
 
     // 특정 유저의 팔로워 목록 조회
     @GetMapping("/members/{userId}/followers")
-    public ResponseEntity<List<UserFollowDto>> listFollowers(@PathVariable Long userId) {
+    public ResponseEntity<List<UserFollowDto>> listFollowers(@PathVariable(name="userId") Long userId) {
         List<UserFollowDto> list = followService.getFollowers(userId);
         return ResponseEntity.ok(list);
     }
@@ -44,7 +44,7 @@ public class FollowApiV1Controller {
     // 특정 유저의 팔로워 수 조회
     @Operation(summary = "팔로워 수 조회", description = "특정 유저의 팔로워 수를 조회합니다.")
     @GetMapping("/members/{userId}/followers/counts")
-    public ResponseEntity<?> getFollowerCount(@PathVariable Long userId) {
+    public ResponseEntity<?> getFollowerCount(@PathVariable(name="userId") Long userId) {
         Optional<User> user = userFindService.getUserById(userId);
         if(user.isEmpty()) {
             return ResponseEntity.ok("유저를 찾을 수 없습니다.");
@@ -57,7 +57,7 @@ public class FollowApiV1Controller {
     // 특정 유저의 팔로잉 수 조회
     @Operation(summary = "팔로잉 수 조회", description = "특정 유저의 팔로잉 수를 조회합니다.")
     @GetMapping("/members/{userId}/followings/counts")
-    public ResponseEntity<?> getFollowingCount(@PathVariable Long userId) {
+    public ResponseEntity<?> getFollowingCount(@PathVariable(name="userId") Long userId) {
         Optional<User> user = userFindService.getUserById(userId);
         if(user.isEmpty()) {
             return ResponseEntity.ok("유저를 찾을 수 없습니다.");
@@ -89,6 +89,11 @@ public class FollowApiV1Controller {
 
             if (following.isEmpty()) {
                 return ResponseEntity.status(404).body("팔로우 할 회원을 찾을 수 없습니다.");
+            }
+
+            boolean alreadyFollowing = followService.isAlreadyFollowing(follower.get(), following.get());
+            if (alreadyFollowing) {
+                return ResponseEntity.status(400).body("이미 팔로우한 유저입니다.");
             }
 
             followService.follow(follower.get(), following.get());

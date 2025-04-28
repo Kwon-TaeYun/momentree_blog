@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface FollowRepository extends JpaRepository<FollowManagement, Long> {
     // o1 : (T) - 관리할 Entity 클래스, o2 : (ID) - 해당 Entity의 기본키 타입
-
+    boolean existsByFollowerAndFollowing(User follower, User following);
     // 팔로우 관계 확인
     Optional<FollowManagement> findByFollowerAndFollowing(User follower, User following);
 
