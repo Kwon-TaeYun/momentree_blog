@@ -22,6 +22,7 @@ public class Category extends BaseEntity {
     private Blog blog;
 
     @Column(nullable = false )
+    @Builder.Default // <-- @Builder.Default 추가
     private boolean isDefault = false;
 
     public void update(String name) {

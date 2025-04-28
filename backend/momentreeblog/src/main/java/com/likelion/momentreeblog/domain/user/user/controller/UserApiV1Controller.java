@@ -147,8 +147,8 @@ public class UserApiV1Controller {
         response.addCookie(refreshCookie);
 
         UserLoginResponseDto userLoginResponseDto = UserLoginResponseDto.builder()
-                .accessToken("Bearer " + accessToken)
-                .refreshToken("Bearer " + refreshToken)
+                .accessToken(accessToken) // <-- 순수한 Access Token 문자열
+                .refreshToken(refreshToken) // <-- 순수한 Refresh Token 문자열
                 .email(user.getEmail())
                 .name(user.getName())
                 .build();
@@ -338,22 +338,10 @@ public class UserApiV1Controller {
         return ResponseEntity.ok("회원 탈퇴를 성공하셨습니다");
     }
 
-
     @GetMapping("/top5")
     public ResponseEntity<List<UserResponse>> getTop5Users() {
         List<UserResponse> top5Users = userService.getTop5Bloggers();
         return ResponseEntity.ok(top5Users);
 
     }
-
 }
-
-
-
-
-
-
-
-
-
-

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import styled from "styled-components";
 const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
 const redirectUrlAfterSocialLogin = `http://localhost:3000/home`;
@@ -12,6 +13,8 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   });
+
+  const router = useRouter(); // useRouter 훅 초기화
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,16 +36,50 @@ export default function LoginPage() {
       );
 
       if (!response.ok) {
-        const errorMessage = await response.text(); // 서버에서 보낸 에러 메시지
+        // 로그인 실패 시 에러 메시지 처리
+        const errorData = await response.json().catch(() => response.text()); // JSON 파싱 시도, 실패하면 text 파싱
+        const errorMessage =
+          typeof errorData === "object" &&
+          errorData !== null &&
+          errorData.message
+            ? errorData.message // 메시지 필드가 있다면 사용
+            : typeof errorData === "string"
+            ? errorData // 문자열 에러 메시지
+            : "로그인에 실패했습니다."; // 기본 메시지
+
+        console.error("로그인 실패:", response.status, errorData);
         alert(errorMessage);
         return;
       }
 
-      // 로그인 성공 - 원하는 페이지로 이동
-      window.location.href = redirectUrlAfterSocialLogin;
+      // 로그인 성공 시: 응답 본문에서 토큰을 읽어와 localStorage에 저장
+      const data = await response.json();
+
+      const accessToken = data.accessToken;
+
+      if (accessToken) {
+        console.log("로그인 성공! Access token 수신 및 localStorage에 저장.");
+        localStorage.setItem("accessToken", accessToken);
+
+        alert("로그인 성공!");
+        router.push(redirectUrlAfterSocialLogin);
+      } else {
+        console.warn(
+          "로그인 성공 응답을 받았지만, Access Token 필드를 찾을 수 없습니다.",
+          data
+        );
+        alert(
+          "로그인은 성공했으나, 인증 정보를 받지 못했습니다. 다시 로그인해주세요."
+        );
+      }
     } catch (error) {
-      console.error("로그인 에러:", error);
-      alert("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      // fetch 자체의 네트워크 오류 등
+      console.error("로그인 요청 중 오류 발생:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      alert(
+        `로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n오류: ${errorMessage}`
+      );
     }
   };
 

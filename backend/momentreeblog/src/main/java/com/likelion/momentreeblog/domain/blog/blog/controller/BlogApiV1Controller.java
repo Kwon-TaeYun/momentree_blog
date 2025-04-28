@@ -20,7 +20,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal; 
+import com.likelion.momentreeblog.config.security.dto.CustomUserDetails; 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -64,8 +66,6 @@ public class BlogApiV1Controller {
 
         return ResponseEntity.ok(dto);
     }
-
-    
 
     /**
      * 블로그 수정
@@ -161,7 +161,5 @@ public class BlogApiV1Controller {
                     .body(Map.of("message", "블로그 조회 중 오류가 발생했습니다."));
         }
     }
-
-
 }
 

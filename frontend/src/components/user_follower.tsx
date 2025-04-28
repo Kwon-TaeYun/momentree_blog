@@ -13,12 +13,11 @@ interface UserFollowerProps {
 interface User {
   id: number;
   name: string;
-  status: string; // 예: ACTIVE, DELETED
+  status: string; // ACTIVE, DELETED
   currentProfilePhoto?: {
-    // 프로필 사진 정보 (있을 수도, 없을 수도)
     url: string;
   } | null;
-  isFollowing?: boolean; // 로그인한 유저가 이 목록의 유저를 팔로우하는지 여부 (백엔드 지원 필요)
+  isFollowing?: boolean;
 }
 
 const UserFollower: React.FC<UserFollowerProps> = ({
@@ -44,10 +43,9 @@ const UserFollower: React.FC<UserFollowerProps> = ({
       const baseURL =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
 
-      // --- 엔드포인트 구성 수정: activeTab 값에 따라 정확한 백엔드 경로 사용 ---
       const endpoint = `${baseURL}/api/v1/follows/members/${userId}/${
         activeTab === "followers" ? "followers" : "followings"
-      }`; // <-- 404 오류 해결!
+      }`;
 
       console.log(
         `Workspaceing data for tab: ${activeTab} from endpoint: ${endpoint}. Relying on cookies.`
@@ -55,7 +53,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({
 
       const response = await axios.get(endpoint, {
         withCredentials: true, // 브라우저가 쿠키 자동 포함
-        // headers: { /* Authorization 헤더 없음 */ } // GET 요청에는 Authorization 헤더 불필요 (백엔드 설정에 따라)
       });
 
       const data = response.data; // axios는 응답 본문을 .data에 담음
@@ -64,14 +61,12 @@ const UserFollower: React.FC<UserFollowerProps> = ({
 
       // 받아온 데이터 구조에 맞춰 상태 업데이트
       if (activeTab === "following") {
-        // 혹시 목록에 자신의 ID가 포함된다면 제외 (선택 사항)
         setFollowing(
           (data || []).filter((user: User) => user.id !== Number(userId))
         );
         setFollowers([]); // 다른 목록 비움
       } else {
         // activeTab === "followers"
-        // 혹시 목록에 자신의 ID가 포함된다면 제외 (선택 사항)
         setFollowers(
           (data || []).filter((user: User) => user.id !== Number(userId))
         );
@@ -84,12 +79,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
       } else {
         setFollowers([]);
       }
-      // --- 오류 메시지 표시 부분 수정 (404 처리 및 [object Object] 방지) ---
-      // AxiosError인지 확인하고, response 객체가 있는지 확인합니다.
       if (axios.isAxiosError(error) && error.response) {
-        // <-- error.response 체크 추가
-        // error.response가 있다면 data와 status에 안전하게 접근 가능합니다.
-        // error.response.data가 객체일 경우 문자열로 변환하여 [object Object] 방지
         const errorDataString =
           typeof error.response.data === "object"
             ? JSON.stringify(error.response.data)
@@ -109,9 +99,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
             `요청한 팔로워/팔로잉 목록을 찾을 수 없습니다: ${errorMessage}`
           ); // 사용자 정의 메시지와 백엔드 오류 메시지 함께 표시
         }
-        // 다른 4xx (400 등) 또는 5xx 에러는 여기서 추가 처리 가능
       } else {
-        // AxiosError가 아니거나 response 객체가 없는 경우 (네트워크 오류 등)
         const errorMessage =
           error instanceof Error ? error.message : String(error); // 'error' unknown 타입 처리
         console.error("목록 로딩 중 오류 발생:", error); // 전체 에러 로깅
@@ -122,13 +110,10 @@ const UserFollower: React.FC<UserFollowerProps> = ({
     }
   };
 
-  // 팔로우/언팔로우 토글 함수 (500 오류 발생 시 백엔드 디버깅 필요)
   const handleFollowToggle = async (targetUserId: number) => {
-    // 백엔드 컨트롤러가 Authorization 헤더를 요구하므로 토큰이 localStorage에 있어야 합니다.
     const token = localStorage.getItem("accessToken");
     if (!token) {
       alert("로그인이 필요합니다.");
-      // router.push("/members/login");
       return; // 토큰 없으면 요청 중단
     }
 
@@ -141,11 +126,10 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         "Attempted to toggle follow for user not in current list:",
         targetUserId
       );
-      // fetchFollowData(); // 목록 새로고침 시도 (선택 사항)
+
       return;
     }
 
-    // isFollowing 상태는 백엔드에서 정확히 내려온다는 가정 하에 토글 액션 결정
     const isCurrentlyFollowingStatus = userToToggle.isFollowing; // isFollowing 필드가 DTO에 있어야 함
 
     try {
@@ -153,7 +137,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
       const method = isCurrentlyFollowingStatus ? "DELETE" : "POST"; // 상태에 따라 메소드 결정
       const action = isCurrentlyFollowingStatus ? "unfollow" : "follow"; // 상태에 따라 액션 경로 결정
-      // 백엔드 컨트롤러 엔드포인트: POST /follow, DELETE /unfollow. 모두 쿼리 파라미터 'followingid' 사용.
+
       const url = `${apiBaseUrl}/api/v1/follows/${action}?followingid=${targetUserId}`;
 
       console.log(
@@ -166,7 +150,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         withCredentials: true, // 쿠키 포함
         headers: {
           "Content-Type": "application/json", // Content-Type 유지
-          Authorization: `Bearer ${token}`, // --- Authorization 헤더 추가 (컨트롤러 요구) ---
+          Authorization: `Bearer ${token}`,
         },
         data: undefined, // 본문 데이터 없음 (쿼리 파라미터 사용)
       });
@@ -177,11 +161,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
       fetchFollowData(); // 상태 변경 후 목록 새로고침
     } catch (error) {
       console.error("Error toggling follow state:", error);
-      // AxiosError인지 확인하고, response 객체가 있는지 확인합니다.
       if (axios.isAxiosError(error) && error.response) {
-        // <-- error.response 체크 추가
-        // error.response가 있다면 data와 status에 안전하게 접근 가능합니다.
-        // error.response.data가 객체일 경우 문자열로 변환하여 [object Object] 방지
         const errorDataString =
           typeof error.response.data === "object"
             ? JSON.stringify(error.response.data)
@@ -200,12 +180,11 @@ const UserFollower: React.FC<UserFollowerProps> = ({
           error.response.status >= 400 &&
           error.response.status < 500
         ) {
-          // 4xx 클라이언트 에러 (백엔드 로직 오류 등)
           console.warn(
             `Toggle failed (Client Error ${error.response.status}):`,
             errorMessage
           );
-          // alert(errorMessage); // 이미 위에서 alert 함
+
           fetchFollowData(); // 상태 동기화 위해 목록 다시 가져오기
         } else if (error.response.status >= 500) {
           // 5xx 서버 에러 처리
@@ -213,11 +192,10 @@ const UserFollower: React.FC<UserFollowerProps> = ({
             `Toggle failed (Server Error ${error.response.status}):`,
             errorMessage
           );
-          // alert(errorMessage); // 이미 위에서 alert 함
+
           fetchFollowData(); // 목록 다시 가져오기
         }
       } else {
-        // AxiosError가 아니거나 response 객체가 없는 경우 (예: 네트워크 오류)
         const errorMessage =
           error instanceof Error ? error.message : String(error); // 'error' unknown 타입 해결 및 메시지 처리
         console.error("Toggle failed (Non-Axios or No Response Error):", error);
@@ -267,7 +245,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({
       {/* 모달 본문 */}
       <div className="relative bg-white rounded-xl w-full max-w-[400px] mx-4">
         {/* 헤더 (닫기 버튼, 탭 이름) */}
-        {/* ... (닫기 버튼, 탭 이름 표시 div, 빈 div) ... */}
         <div className="flex items-center justify-between px-4 py-2 border-b">
           {/* 닫기 버튼 */}
           <button onClick={onClose} className="p-2 hover:opacity-50">
@@ -288,7 +265,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({
           {/* 탭 이름 */}
           <div className="flex-1 text-center font-semibold">
             {activeTab === "followers" ? "팔로워" : "팔로잉"}{" "}
-            {/* "팔로우" 대신 "팔로잉"이 맞습니다 */}
           </div>
           <div className="w-10"></div> {/* 우측 여백 */}
         </div>
@@ -321,7 +297,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         </div>
 
         {/* 검색 입력 필드 */}
-        {/* ... (검색 입력 필드) ... */}
         <div className="p-2">
           <div className="relative bg-gray-100 rounded-lg">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -411,7 +386,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
                   <button
                     className="px-4 py-2 bg-black text-white rounded-md text-sm font-medium"
                     onClick={() => {
-                      onClose(); /* Optional: Add navigation */
+                      onClose();
                     }}
                   >
                     사용자 찾아보기
@@ -462,7 +437,7 @@ const UserFollower: React.FC<UserFollowerProps> = ({
                 </div>
 
                 {/* 팔로우/언팔로우 버튼 */}
-                <button // 중복 조건문 2 (8062bc7 시점 코드 유지)
+                <button
                   onClick={() => handleFollowToggle(user.id)} // handleFollowToggle 호출
                   className={`ml-2 text-sm font-semibold px-4 py-1 rounded-md transition-colors ${
                     user.isFollowing // isFollowing에 따라 스타일 결정

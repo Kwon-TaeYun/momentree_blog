@@ -134,7 +134,26 @@ public class BlogService {
     public BlogDetailResponseDto getBlogDetails(Long blogId, int page, int size, Long loggedInUserId) {
         // 1. 블로그 조회
         Blog blog = blogRepository.findById(blogId)
-                .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
+                 .orElseThrow(() -> new IllegalArgumentException("블로그를 찾을 수 없습니다."));
+
+        // 2. 블로그 주인 유저 정보 확보
+        User blogOwner = blog.getUser(); // Blog 엔티티에서 User 엔티티 가져오기
+        Long ownerId = blogOwner.getId(); // <-- 블로그 주인 유저 ID 확보
+
+
+        // 3. isFollowing 상태 계산
+        boolean isFollowing = false; // 기본값: 팔로우하지 않음
+        if (loggedInUserId != null && !loggedInUserId.equals(ownerId)) { // 로그인된 유저가 있고, 자신의 블로그가 아닌 경우에만 계산
+            Optional<User> loggedInUserOptional = userRepository.findById(loggedInUserId); // UserRepository 활용
+            if (loggedInUserOptional.isPresent()) {
+                User loggedInUser = loggedInUserOptional.get();
+                isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, blogOwner).isPresent(); 
+            }
+        }
+
+        // 4. 팔로워/팔로잉 수 조회 (블로그 주인 유저의 ID로 조회)
+        int followerCount = followRepository.countByFollowing(blogOwner).intValue(); 
+        int followingCount = followRepository.countByFollower(blogOwner).intValue(); 
 
         // 2. 블로그 주인 유저 정보 확보
         User blogOwner = blog.getUser(); // Blog 엔티티에서 User 엔티티 가져오기
@@ -151,9 +170,7 @@ public class BlogService {
             }
         }
 
-        // 4. 팔로워/팔로잉 수 조회 (블로그 주인 유저의 ID로 조회)
-        int followerCount = followRepository.countByFollowing(blogOwner).intValue();
-        int followingCount = followRepository.countByFollower(blogOwner).intValue();
+
 
 
         // 5. 블로그의 게시물 목록 페이징 조회 (기존 코드 활용)

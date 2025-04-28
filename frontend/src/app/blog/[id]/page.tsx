@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 
+
 // S3 이미지 URL 처리를 위한 유틸리티 함수
 const getS3ImageUrl = (imageKey: string | null) => {
   if (!imageKey) return null;
@@ -92,7 +93,9 @@ export default function BlogDetailPage() {
   const [activeFollowTab, setActiveFollowTab] = useState<
     "followers" | "following"
   >("followers");
+
   const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
+
   // 팔로워/팔로잉 수 조회 함수 수정: 유저 ID를 인자로 받도록 변경
   const fetchFollowCounts = async (ownerUserId: number) => {
     if (!ownerUserId) {
@@ -519,8 +522,14 @@ export default function BlogDetailPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                {renderPagination()} {/* 페이지네이션 렌더링 */}
+              </>
+            ) : (
+              // 게시글이 없을 경우 메시지
+              <div className="text-center py-10 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">아직 작성한 게시글이 없습니다.</p>
               </div>
             ) : (
               <p>게시글이 없습니다.</p> // 게시글이 없을 경우 안내 메시지 추가
