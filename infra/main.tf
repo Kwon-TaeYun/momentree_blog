@@ -223,7 +223,7 @@ docker run -d \
   -v /dockerProjects/mysql_1/volumes/var/lib/mysql:/var/lib/mysql \
   -v /dockerProjects/mysql_1/volumes/etc/mysql/conf.d:/etc/mysql/conf.d \
   --network common \
-  -p 3308:3306 \
+  -p 3306:3306 \
   -e MYSQL_ROOT_PASSWORD=${var.password_1} \
   -e TZ=Asia/Seoul \
   mysql:latest
