@@ -3,10 +3,10 @@ on:
   push:
     paths:
       - ".github/workflows/**"
-      - "backend/momentreeblog/src/**"
-      - "backend/momentreeblog/build.gradle.kts"
-      - "backend/momentreeblog/settings.gradle.kts"
-      - "backend/momentreeblog/Dockerfile"
+      - "backend/src/**"
+      - "backend/build.gradle.kts"
+      - "backend/settings.gradle.kts"
+      - "backend/Dockerfile"
     branches:
       - main
 jobs:
@@ -38,7 +38,7 @@ jobs:
     needs: makeTagAndRelease
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE_NAME: momentree_blog # 팀 프로젝트 이미지 네임
+      DOCKER_IMAGE_NAME: momentree_blog ###!!!팀 프로젝트 이미지 네임!!!###
     outputs:
       DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
       OWNER_LC: ${{ env.OWNER_LC }}
@@ -47,7 +47,7 @@ jobs:
       - name: application-secret.yml 생성
         env:
           APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET_YML }}
-        run: echo "$APPLICATION_SECRET" > backend/momentreeblog/src/main/resources/application-secret.yml
+        run: echo "$APPLICATION_SECRET" > backend/src/main/resources/application-secret.yml
       - name: Docker Buildx 설치
         uses: docker/setup-buildx-action@v2
       - name: 레지스트리 로그인
@@ -64,7 +64,7 @@ jobs:
       - name: 빌드 앤 푸시
         uses: docker/build-push-action@v3
         with:
-          context: backend/momentreeblog
+          context: backend
           push: true
           cache-from: type=registry,ref=ghcr.io/${{ env.OWNER_LC }}/${{ env.DOCKER_IMAGE_NAME }}:cache
           cache-to: type=registry,ref=ghcr.io/${{ env.OWNER_LC }}/${{ env.DOCKER_IMAGE_NAME }}:cache,mode=max
