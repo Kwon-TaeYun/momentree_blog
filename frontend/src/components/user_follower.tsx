@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios"; // axios 임포트 필요
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 interface UserFollowerProps {
   isOpen: boolean;
@@ -9,11 +10,18 @@ interface UserFollowerProps {
   initialTab?: "followers" | "following"; // 초기 탭
 }
 
-// 백엔드 UserFollowDto에 맞춰 User 인터페이스 정의
+interface ApiResponse {
+  content: User[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 interface User {
   id: number;
   name: string;
-  status: string; // ACTIVE, DELETED
+  status: string;
   currentProfilePhoto?: {
     url: string;
   } | null;
@@ -47,30 +55,21 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         activeTab === "followers" ? "followers" : "followings"
       }`;
 
-      console.log(
-        `Workspaceing data for tab: ${activeTab} from endpoint: ${endpoint}. Relying on cookies.`
-      );
-
       const response = await axios.get(endpoint, {
-        withCredentials: true, // 브라우저가 쿠키 자동 포함
+        withCredentials: true,
       });
 
-      const data = response.data; // axios는 응답 본문을 .data에 담음
+      const data: ApiResponse = response.data; // axios는 응답 본문을 .data에 담음
+      console.log("API 응답 데이터:", data);
 
-      console.log(`Workspaceed data for ${activeTab}:`, data);
-
-      // 받아온 데이터 구조에 맞춰 상태 업데이트
+      // 데이터 처리
+      const users = Array.isArray(data) ? data : data.content || [];
       if (activeTab === "following") {
-        setFollowing(
-          (data || []).filter((user: User) => user.id !== Number(userId))
-        );
-        setFollowers([]); // 다른 목록 비움
+        setFollowing(users.filter((user: User) => user.id !== Number(userId)));
+        setFollowers([]);
       } else {
-        // activeTab === "followers"
-        setFollowers(
-          (data || []).filter((user: User) => user.id !== Number(userId))
-        );
-        setFollowing([]); // 다른 목록 비움
+        setFollowers(users.filter((user: User) => user.id !== Number(userId)));
+        setFollowing([]);
       }
     } catch (error) {
       console.error("Failed to fetch follow data:", error);
@@ -79,40 +78,15 @@ const UserFollower: React.FC<UserFollowerProps> = ({
       } else {
         setFollowers([]);
       }
-      if (axios.isAxiosError(error) && error.response) {
-        const errorDataString =
-          typeof error.response.data === "object"
-            ? JSON.stringify(error.response.data)
-            : error.response.data;
-        const errorMessage =
-          errorDataString || error.message || "알 수 없는 오류가 발생했습니다.";
-
-        if (error.response.status === 401) {
-          alert("인증 정보가 만료되었습니다. 다시 로그인 해주세요.");
-          // router.push("/members/login");
-        } else if (error.response.status === 404) {
-          console.error(
-            `404 Error: Endpoint not found. Check URL: ${error.config?.url}`,
-            error
-          ); // 전체 에러 로깅
-          alert(
-            `요청한 팔로워/팔로잉 목록을 찾을 수 없습니다: ${errorMessage}`
-          ); // 사용자 정의 메시지와 백엔드 오류 메시지 함께 표시
-        }
-      } else {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error); // 'error' unknown 타입 처리
-        console.error("목록 로딩 중 오류 발생:", error); // 전체 에러 로깅
-        alert(`목록 로딩 중 오류가 발생했습니다: ${errorMessage}`); // 오류 메시지 표시
-      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleFollowToggle = async (targetUserId: number) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+    const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
+
+    if (!isLogin) {
       alert("로그인이 필요합니다.");
       return; // 토큰 없으면 요청 중단
     }
@@ -150,8 +124,8 @@ const UserFollower: React.FC<UserFollowerProps> = ({
         withCredentials: true, // 쿠키 포함
         headers: {
           "Content-Type": "application/json", // Content-Type 유지
-          Authorization: `Bearer ${token}`,
         },
+
         data: undefined, // 본문 데이터 없음 (쿼리 파라미터 사용)
       });
 
@@ -437,17 +411,6 @@ const UserFollower: React.FC<UserFollowerProps> = ({
                 </div>
 
                 {/* 팔로우/언팔로우 버튼 */}
-                <button
-                  onClick={() => handleFollowToggle(user.id)} // handleFollowToggle 호출
-                  className={`ml-2 text-sm font-semibold px-4 py-1 rounded-md transition-colors ${
-                    user.isFollowing // isFollowing에 따라 스타일 결정
-                      ? "bg-gray-100 text-gray-900 hover:bg-gray-200" // 팔로잉 상태 스타일
-                      : "bg-blue-500 text-white hover:bg-blue-600" // 팔로우 안 하는 상태 스타일
-                  }`}
-                >
-                  {user.isFollowing ? "팔로잉" : "팔로우"}{" "}
-                  {/* isFollowing에 따라 텍스트 결정 */}
-                </button>
               </div>
             ))
           )}

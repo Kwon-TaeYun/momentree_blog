@@ -46,7 +46,9 @@ export default function BlogPage() {
     const fetchBloggers = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"}/api/v1/members/top5`
+          `${
+            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          }/api/v1/members/top5`
         );
         const data = await res.json();
         console.log("🔥 인기 블로거 응답 데이터:", data);
@@ -117,9 +119,6 @@ export default function BlogPage() {
                 </div>
                 <span className="text-sm font-medium text-center">
                   {blogger.name}
-                </span>
-                <span className="text-xs text-gray-500">
-                  팔로워 {blogger.followerCount?.toLocaleString() || "0"}
                 </span>
               </Link>
             ))}
@@ -221,7 +220,6 @@ export default function BlogPage() {
                         </span>
                       </span>
                     </div>
-
                   </div>
                 </div>
               </Link>

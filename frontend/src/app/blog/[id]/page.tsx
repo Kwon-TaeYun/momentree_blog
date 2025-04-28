@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 
-
 // S3 이미지 URL 처리를 위한 유틸리티 함수
 const getS3ImageUrl = (imageKey: string | null) => {
   if (!imageKey) return null;
@@ -37,6 +36,7 @@ interface BoardListResponseDto {
   imageUrl: string | null;
   likeCount: number;
   commentCount: number;
+  mainPhotoUrl: string | null;
 }
 
 interface PagedBoards {
@@ -55,7 +55,6 @@ interface BlogDetails {
   userEmail: string; // 블로그 주인 유저의 이메일
   profileImage: string; // 블로그 주인 유저의 프로필 이미지 URL
   postsCount: number;
-
   followerCount: number;
   followingCount: number;
   isFollowing?: boolean; // 현재 로그인된 유저가 이 블로그 주인 유저를 팔로우하는지 여부
@@ -96,6 +95,7 @@ export default function BlogDetailPage() {
 
   const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
 
+  // 팔로워/팔로잉 수 조회 함수 수정: 유저 ID를 인자로 받도록 변경
   // 팔로워/팔로잉 수 조회 함수 수정: 유저 ID를 인자로 받도록 변경
   const fetchFollowCounts = async (ownerUserId: number) => {
     if (!ownerUserId) {
@@ -239,7 +239,7 @@ export default function BlogDetailPage() {
           : error instanceof Error
           ? error.message
           : String(error);
-      alert(`팔로우 처리 중 네트워크 오류 발생: ${errorMessage}`);
+      alert(`${errorMessage}`);
     }
   };
 
@@ -460,65 +460,36 @@ export default function BlogDetailPage() {
           {/* 오른쪽 메인 컨텐츠 - 게시글 목록 */}
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-6">게시글 목록</h1>
-
-            {/* blogDetail이 존재하고 boards.content가 비어 있지 않으면 게시글 목록 출력 */}
-            {blogDetail?.boards.content.length ? (
-              <div className="space-y-4">
-                {blogDetail.boards.content.map((board) => (
-                  <div
-                    key={board.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/boards/${board.id}`)}
-                  >
-                    <div className="flex gap-4 border-b pb-4">
-                      <div className="w-24 h-24 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
-                        {board.imageUrl && (
-                          <Image
-                            src={getS3ImageUrl(board.imageUrl) || ""}
-                            alt={board.title}
-                            width={96}
-                            height={96}
-                            className="object-cover w-full h-full"
-                          />
+            {boards.length > 0 ? (
+              <>
+                <div className="space-y-4">
+                  {boards.map((board) => (
+                    <div
+                      key={board.id}
+                      className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => router.push(`/boards/${board.id}`)} // 게시글 상세 페이지로 이동
+                    >
+                      <div className="flex items-center space-x-4">
+                        {board.mainPhotoUrl && (
+                          <div className="w-24 h-24 relative rounded-lg overflow-hidden">
+                            <Image
+                              src={board.mainPhotoUrl}
+                              alt={board.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium mb-2">{board.title}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              className="w-4 h-4 mr-1"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                              />
-                            </svg>
-                            {board.likeCount}
-                          </span>
-                          <span className="flex items-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              className="w-4 h-4 mr-1"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {board.commentCount}
-                          </span>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold mb-2">
+                            {board.title}
+                          </h3>
+                          <div className="flex justify-between text-sm text-gray-500">
+                            <div className="flex space-x-4">
+                              <span>❤️ {board.likeCount}</span>
+                              <span>💬 {board.commentCount || 0}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -531,12 +502,9 @@ export default function BlogDetailPage() {
               <div className="text-center py-10 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">아직 작성한 게시글이 없습니다.</p>
               </div>
-            ) : (
-              <p>게시글이 없습니다.</p> // 게시글이 없을 경우 안내 메시지 추가
             )}
           </div>
         </div>
-
         {/* 팔로워/팔로잉 모달 */}
         <UserFollower
           isOpen={showFollowModal}
