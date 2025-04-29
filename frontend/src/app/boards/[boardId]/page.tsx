@@ -21,11 +21,11 @@ const Viewer = dynamic(
   }
 );
 
-// // Toast UI Editor CSS
-// import "@toast-ui/editor/dist/toastui-editor.css";
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
 
-// // Toast UI Editor CSS
-// import "@toast-ui/editor/dist/toastui-editor.css";
+// Toast UI Editor CSS
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 동적 임포트로 LikeList 컴포넌트 가져오기
 import LikeList from "../../../components/LikeList"; // Ensure the alias resolves correctly
