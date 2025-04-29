@@ -8,6 +8,11 @@ import styled from "styled-components";
 const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
 const redirectUrlAfterSocialLogin = `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}/home`;
 export default function LoginPage() {
+  console.log(
+    process.env.NEXT_PUBLIC_API_BASE_URL +
+      ":::" +
+      process.env.NEXT_PUBLIC_FRONT_BASE_URL
+  );
   const [formData, setFormData] = useState({
     email: "",
     password: "",
