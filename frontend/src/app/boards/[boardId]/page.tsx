@@ -31,9 +31,7 @@ import "@toast-ui/editor/dist/toastui-editor.css";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 동적 임포트로 LikeList 컴포넌트 가져오기
-const LikeList = dynamic(() => import("@/components/LikeList"), {
-  ssr: false, // 클라이언트 사이드에서만 렌더링
-});
+import LikeList from "@/components/LikeList"; // Ensure the alias resolves correctly
 
 interface Post {
   boardId: number;
