@@ -26,7 +26,7 @@ export default function LoginPage() {
 
     try {
       const response = await fetch(
-        `https://api.blog.momentree.site/api/v1/members/login`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/login`,
         {
           method: "POST",
           headers: {

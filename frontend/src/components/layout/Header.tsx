@@ -40,6 +40,7 @@ export default function Header() {
 
   // Improved logout function
   const handleLogout = () => {
+    console.log(process.env.NEXT_PUBLIC_API_BASE_URL);
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/logout`, {
       method: "DELETE",
       credentials: "include",
@@ -66,6 +67,7 @@ export default function Header() {
   // Check login status on component mount and whenever isLogin changes
   useEffect(() => {
     const checkLoginStatus = () => {
+      console.log(process.env.NEXT_PUBLIC_API_BASE_URL);
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/me`, {
         credentials: "include",
       })
