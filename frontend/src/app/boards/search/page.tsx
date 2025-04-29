@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +15,16 @@ interface SearchResult {
 }
 
 export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={<div className="text-center py-20 text-black">로딩 중...</div>}
+    >
+      <SearchPageContent />
+    </Suspense>
+  );
+}
+
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword");
