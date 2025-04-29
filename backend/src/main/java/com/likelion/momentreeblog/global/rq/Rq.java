@@ -104,9 +104,8 @@ public class Rq {
     public void deleteCookie(String name) {
         ResponseCookie cookie = ResponseCookie.from(name, null)
                 .path("/")
-                .domain("localhost")
-                .sameSite("Strict")
-                .secure(true)
+                .sameSite("Lax")         // 또는 필요 시 "None"
+                .secure(true)            // HTTPS를 쓰는 경우 유지
                 .httpOnly(true)
                 .maxAge(0)
                 .build();

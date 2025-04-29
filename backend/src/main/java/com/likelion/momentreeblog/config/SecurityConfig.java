@@ -36,7 +36,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
 
-                                .requestMatchers("/api/v1/members/**", "/api/v1/boards/**", "/api/s3/presigned-url", "/api/v1/categories/**", "/api/v1/albums/**","/api/v1/boards/*/album/", "www.momentree.site/**").permitAll()
+                                .requestMatchers("/api/v1/members/**", "/api/v1/boards/**", "/api/s3/presigned-url", "/api/v1/categories/**", "/api/v1/albums/**","/api/v1/boards/*/album/", "www.blog.api.momentree.site/**","www.momentree.site/**").permitAll()
 
                                 .requestMatchers("/h2-console/**")
                                 .permitAll()
