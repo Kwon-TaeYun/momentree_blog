@@ -693,7 +693,7 @@ export default function BoardDetail() {
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 mr-3">
                       <Image
-                        src={comment.userProfileUrl ?? "/logo/logo.png"} // 기본 이미지 설정
+                        src={comment.userProfileUrl || "/logo.png"} // 기본 이미지 설정
                         alt={comment.userName || "사용자"}
                         width={32}
                         height={32}
