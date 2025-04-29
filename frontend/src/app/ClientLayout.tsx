@@ -41,12 +41,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <LoginMemberContext.Provider value={loginMemberContextValue}>
+    <LoginMemberContext value={loginMemberContextValue}>
       <main>
         <Header />
         {children}
         <Footer />
       </main>
-    </LoginMemberContext.Provider>
+    </LoginMemberContext>
   );
 }
