@@ -11,8 +11,8 @@ import { useRouter } from "next/navigation";
 
 export default function Header() {
   const socialLoginForKakaoUrl =
-    "http://localhost:8090/oauth2/authorization/kakao";
-  const redirectUrlAfterSocialLogin = "http://localhost:3000/success";
+    "https://api.blog.momentree.site/oauth2/authorization/kakao";
+  const redirectUrlAfterSocialLogin = "http://www.momentree.site/home";
   const {
     loginMember,
     setLoginMember,
@@ -41,7 +41,7 @@ export default function Header() {
 
   // Improved logout function
   const handleLogout = () => {
-    fetch("http://localhost:8090/api/v1/members/logout", {
+    fetch("https://api.blog.momentree.site/api/v1/members/logout", {
       method: "DELETE",
       credentials: "include",
     })
@@ -63,7 +63,7 @@ export default function Header() {
   // Check login status on component mount and whenever isLogin changes
   useEffect(() => {
     const checkLoginStatus = () => {
-      fetch("http://localhost:8090/api/v1/members/me", {
+      fetch("https://api.blog.momentree.site/api/v1/members/me", {
         credentials: "include",
       })
         .then((response) => {
