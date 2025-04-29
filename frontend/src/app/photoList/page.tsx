@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import { useGlobalLoginMember } from "../../stores/auth/loginMember";
 
 // 사진첩 데이터 타입 정의
 interface PhotoAlbum {

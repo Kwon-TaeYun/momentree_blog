@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/Sidebar"; // Ensure the alias resolves correctly
+import Sidebar from "../../../../../components/Sidebar";
 
 export default function MemberEditPage() {
   const router = useRouter();
