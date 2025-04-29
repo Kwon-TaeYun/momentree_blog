@@ -62,7 +62,7 @@ export default function Header() {
   // Check login status on component mount and whenever isLogin changes
   useEffect(() => {
     const checkLoginStatus = () => {
-      fetch("https://api.blog.momentree.site/api/v1/members/me", {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/me`, {
         credentials: "include",
       })
         .then((response) => {
