@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import { useGlobalLoginMember } from "../../../stores/auth/loginMember";
 import "@toast-ui/editor/dist/toastui-editor.css";
 import Image from "next/image"; // Next.js의 Image 컴포넌트를 사용
 
@@ -31,7 +31,7 @@ import "@toast-ui/editor/dist/toastui-editor.css";
 import "@toast-ui/editor/dist/toastui-editor.css";
 
 // 동적 임포트로 LikeList 컴포넌트 가져오기
-import LikeList from "@/components/LikeList"; // Ensure the alias resolves correctly
+import LikeList from "../../../components/LikeList"; // Ensure the alias resolves correctly
 
 interface Post {
   boardId: number;

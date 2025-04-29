@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import { useGlobalLoginMember } from "../../../stores/auth/loginMember";
 
 export default function AccountPage() {
   const router = useRouter();
