@@ -23,8 +23,8 @@ const Editor = dynamic(
 );
 
 // Toast UI Editor CSS
-import "@toast-ui/editor/dist/toastui-editor.css";
-import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
+// import "@toast-ui/editor/dist/toastui-editor.css";
+// import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
 
 // PhotoType enum 정의
 enum PhotoType {
