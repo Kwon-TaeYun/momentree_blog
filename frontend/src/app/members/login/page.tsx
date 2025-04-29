@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
-const redirectUrlAfterSocialLogin = `http://www.momentree.site/home`;
+const redirectUrlAfterSocialLogin = `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}/home`;
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
