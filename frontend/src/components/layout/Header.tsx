@@ -40,7 +40,7 @@ export default function Header() {
 
   // Improved logout function
   const handleLogout = () => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/logout`, {
+    fetch(`https://api.blog.momentree.site/api/v1/members/logout`, {
       method: "DELETE",
       credentials: "include",
     })
