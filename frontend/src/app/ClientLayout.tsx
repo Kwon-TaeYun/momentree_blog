@@ -1,12 +1,12 @@
 "use client";
-import { LoginMemberContext, useLoginMember } from "@/stores/auth/loginMember";
+import { LoginMemberContext, useLoginMember } from "../stores/auth/loginMember";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect } from "react";
 import { BiSearch } from "react-icons/bi"; // BiSearch 아이콘도 필요함
 import React from "react";
-import Footer from "@/components/layout/Footer";
-import Header from "@/components/layout/Header";
+import Footer from "../components/layout/Footer";
+import Header from "../components/layout/Header";
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const {
     loginMember,
