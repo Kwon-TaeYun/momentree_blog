@@ -28,7 +28,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     logoutAndHome,
   };
   useEffect(() => {
-    fetch("http://localhost:8090/api/v1/members/me", {
+    fetch("https://api.blog.momentree.site/api/v1/members/me", {
       credentials: "include",
     })
       .then((response) => response.json())

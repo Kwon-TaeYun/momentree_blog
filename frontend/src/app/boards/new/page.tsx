@@ -99,7 +99,8 @@ export default function CreatePostPage() {
         // 백엔드에 인증 확인 요청
         const response = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/members/me`,
           {
             method: "GET",
@@ -156,7 +157,8 @@ export default function CreatePostPage() {
       // S3 프리사인드 URL 요청
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/s3/presigned-url`,
         {
           method: "POST",
@@ -293,7 +295,8 @@ export default function CreatePostPage() {
 
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/boards`,
         {
           method: "POST",
@@ -346,7 +349,8 @@ export default function CreatePostPage() {
           // S3 프리사인드 URL 요청
           const presignedUrlResponse = await fetch(
             `${
-              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+              process.env.NEXT_PUBLIC_API_BASE_URL ||
+              "https://api.blog.momentree.site"
             }/api/s3/presigned-url`,
             {
               method: "POST",
@@ -418,7 +422,8 @@ export default function CreatePostPage() {
       // S3 프리사인드 URL 요청
       const presignedUrlResponse = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/s3/presigned-url`,
         {
           method: "POST",
@@ -495,7 +500,8 @@ export default function CreatePostPage() {
     try {
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories`,
         {
           method: "GET",
@@ -543,7 +549,8 @@ export default function CreatePostPage() {
       // API 호출
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories/${blogId}`,
         {
           method: "POST",
@@ -596,7 +603,8 @@ export default function CreatePostPage() {
 
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories/${blogId}/${category.name}`,
         {
           method: "DELETE",

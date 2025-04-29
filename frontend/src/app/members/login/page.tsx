@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
-const redirectUrlAfterSocialLogin = `http://localhost:3000/home`;
+const redirectUrlAfterSocialLogin = `http://www.momentree.site/home`;
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8090/api/v1/members/login`,
+        `https://api.blog.momentree.site/api/v1/members/login`,
         {
           method: "POST",
           headers: {

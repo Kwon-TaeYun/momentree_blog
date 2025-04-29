@@ -80,7 +80,7 @@ export default function SignUp() {
 
     try {
       const response = await fetch(
-        "http://localhost:8090/api/v1/members/signup",
+        "https://api.blog.momentree.site/api/v1/members/signup",
         {
           method: "POST",
           headers: {

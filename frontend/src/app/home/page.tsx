@@ -47,7 +47,8 @@ export default function BlogPage() {
       try {
         const res = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/members/top5`
         );
         const data = await res.json();
@@ -67,7 +68,9 @@ export default function BlogPage() {
     // 최신 콘텐츠 가져오기
     const fetchTopPosts = async () => {
       try {
-        const res = await fetch("http://localhost:8090/api/v1/boards/latest");
+        const res = await fetch(
+          "https://api.blog.momentree.site/api/v1/boards/latest"
+        );
         const data: Post[] = await res.json(); // 응답 데이터를 Post[] 타입으로 지정
         console.log("최신 콘텐츠 API 응답:", data); // 여기에 구조 확인 로그 추가 // 백엔드 응답 구조에 따라 설정. 만약 { data: Post[] } 형태가 아니라면 그냥 data를 setTopPosts로 설정
 
@@ -79,7 +82,9 @@ export default function BlogPage() {
 
     const fetchRealtimePosts = async () => {
       try {
-        const res = await fetch("http://localhost:8090/api/v1/boards/popular");
+        const res = await fetch(
+          "https://api.blog.momentree.site/api/v1/boards/popular"
+        );
         const data: Post[] = await res.json(); // 응답 데이터를 Post[] 타입으로 지정
         console.log("실시간 인기글 API 응답:", data); // 응답 데이터 구조 확인 로그
         setRealtimePosts(data);

@@ -5,8 +5,8 @@ import Image from "next/image";
 // @ts-ignore - JSX element type errors
 export default function Home() {
   const socialLoginForKakaoUrl =
-    "http://localhost:8090/oauth2/authorization/kakao";
-  const redirectUrlAfterSocialLogin = "http://localhost:3000";
+    "hhttps://api.blog.momentree.site/oauth2/authorization/kakao";
+  const redirectUrlAfterSocialLogin = "http://www.momentree.site";
   return (
     <main className="flex flex-col min-h-screen bg-white text-black">
       {/* 메인 컨텐츠 */}

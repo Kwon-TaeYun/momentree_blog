@@ -16,7 +16,7 @@ export default function FindPassword() {
 
     try {
       const response = await fetch(
-        `http://localhost:8090/api/v1/members/search?name=${encodeURIComponent(
+        `https://api.blog.momentree.site/api/v1/members/search?name=${encodeURIComponent(
           name
         )}&email=${encodeURIComponent(email)}`,
         {

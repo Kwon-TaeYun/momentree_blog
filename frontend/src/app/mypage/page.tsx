@@ -71,7 +71,8 @@ export default function Mypage() {
         // 현재 로그인한 사용자 정보 가져오기 (쿠키 기반 인증)
         const userResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/members/me`,
           {
             method: "GET",
@@ -107,7 +108,8 @@ export default function Mypage() {
           try {
             const profilePhotoResponse = await fetch(
               `${
-                process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+                process.env.NEXT_PUBLIC_API_BASE_URL ||
+                "https://api.blog.momentree.site"
               }/api/V3/profile/photos`,
               {
                 method: "GET",
@@ -180,7 +182,8 @@ export default function Mypage() {
         // 1. S3 PUT 프리사인드 URL 요청 (업로드용)
         const presignedUrlResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/s3/presigned-url`,
           {
             method: "POST",
@@ -226,7 +229,8 @@ export default function Mypage() {
         // 3. 업로드 후 GET 프리사인드 URL 요청 (조회용) - @RequestParam 방식으로 변경
         const getPresignedUrlResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/s3/presigned-url?key=${encodeURIComponent(key)}`,
           {
             method: "GET",
@@ -243,7 +247,8 @@ export default function Mypage() {
         // 4. 프로필 사진 변경 API 호출
         const profileUpdateResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/V3/profile/photos/profile-photo`,
           {
             method: "POST",
@@ -290,7 +295,8 @@ export default function Mypage() {
       // 프로필 사진 기본 이미지로 변경 API 호출 - PUT 메서드 사용
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/V3/profile/photos/default`,
         {
           method: "PUT", // PATCH 대신 PUT 메서드 사용

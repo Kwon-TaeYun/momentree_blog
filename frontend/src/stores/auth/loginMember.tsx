@@ -64,7 +64,7 @@ export function useLoginMember() {
   const isLogin = loginMember.id !== 0;
 
   const logout = (callback: () => void) => {
-    fetch("http://localhost:8090/api/v1/members/logout", {
+    fetch("https://api.blog.momentree.site/api/v1/members/logout", {
       method: "DELETE",
       credentials: "include",
     }).then(() => {

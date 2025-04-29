@@ -55,13 +55,16 @@ export default function PhotoListPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch("http://localhost:8090/api/v1/albums", {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        credentials: "include",
-      });
+      const response = await fetch(
+        "https://api.blog.momentree.site/api/v1/albums",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("사진첩 데이터를 불러오는데 실패했습니다.");
@@ -80,7 +83,7 @@ export default function PhotoListPage() {
         validAlbums.map(async (album: PhotoAlbum) => {
           try {
             const boardResponse = await fetch(
-              `http://localhost:8090/api/v1/boards/${album.boardId}`,
+              `https://api.blog.momentree.site/api/v1/boards/${album.boardId}`,
               {
                 headers: {
                   "Content-Type": "application/json",

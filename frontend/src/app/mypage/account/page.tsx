@@ -22,7 +22,8 @@ export default function AccountPage() {
       // 수정 API 호출
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/members/edit`,
         {
           method: "PUT",

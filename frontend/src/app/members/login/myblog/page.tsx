@@ -72,7 +72,8 @@ export default function MyBlogPage() {
       try {
         const userResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/members/me`,
           {
             credentials: "include",
@@ -119,7 +120,8 @@ export default function MyBlogPage() {
         console.log("게시글 데이터 요청 시작, 유저 ID:", userInfo.id);
         const res = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/boards/searchById`,
           {
             method: "GET",
@@ -200,7 +202,8 @@ export default function MyBlogPage() {
       try {
         const followersResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/follows/members/${userInfo.id}/followers/counts`,
           { credentials: "include" }
         );
@@ -209,7 +212,8 @@ export default function MyBlogPage() {
 
         const followingResponse = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/follows/members/${userInfo.id}/followings/counts`,
           { credentials: "include" }
         );

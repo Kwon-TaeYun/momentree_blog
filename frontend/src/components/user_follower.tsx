@@ -49,7 +49,8 @@ const UserFollower: React.FC<UserFollowerProps> = ({
     setLoading(true);
     try {
       const baseURL =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://api.blog.momentree.site";
 
       const endpoint = `${baseURL}/api/v1/follows/members/${userId}/${
         activeTab === "followers" ? "followers" : "followings"
@@ -108,7 +109,8 @@ const UserFollower: React.FC<UserFollowerProps> = ({
 
     try {
       const apiBaseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090";
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://api.blog.momentree.site";
       const method = isCurrentlyFollowingStatus ? "DELETE" : "POST"; // 상태에 따라 메소드 결정
       const action = isCurrentlyFollowingStatus ? "unfollow" : "follow"; // 상태에 따라 액션 경로 결정
 

@@ -125,7 +125,7 @@ export default function EditPostPage() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `http://localhost:8090/api/v1/boards/${boardId}`,
+          `https://api.blog.momentree.site/api/v1/boards/${boardId}`,
           {
             method: "GET",
             credentials: "include",
@@ -295,7 +295,8 @@ export default function EditPostPage() {
       // S3 프리사인드 URL 요청
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/s3/presigned-url`,
         {
           method: "POST",
@@ -395,7 +396,8 @@ export default function EditPostPage() {
           // S3 업로드를 위한 프리사인드 URL 요청
           const presignedUrlResponse = await fetch(
             `${
-              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+              process.env.NEXT_PUBLIC_API_BASE_URL ||
+              "https://api.blog.momentree.site"
             }/api/s3/presigned-url`,
             {
               method: "POST",
@@ -526,7 +528,7 @@ export default function EditPostPage() {
       console.log("서버로 전송되는 데이터:", requestData); // 디버깅용 로그
 
       const response = await fetch(
-        `http://localhost:8090/api/v1/boards/${boardId}`,
+        `https://api.blog.momentree.site/api/v1/boards/${boardId}`,
         {
           method: "PUT",
           headers: {
@@ -576,7 +578,8 @@ export default function EditPostPage() {
       // 서버에서 카테고리 정보 가져오기
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories/${categoryId}`,
         {
           method: "GET",
@@ -604,7 +607,8 @@ export default function EditPostPage() {
     try {
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories`,
         {
           method: "GET",
@@ -664,7 +668,8 @@ export default function EditPostPage() {
       // API 호출
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories/${blogId}`,
         {
           method: "POST",
@@ -743,7 +748,8 @@ export default function EditPostPage() {
 
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://api.blog.momentree.site"
         }/api/v1/categories/${blogId}/${category.name}`,
         {
           method: "DELETE",

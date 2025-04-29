@@ -41,7 +41,8 @@ function SearchPageContent() {
         setLoading(true);
         const response = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            "https://api.blog.momentree.site"
           }/api/v1/boards/search?keyword=${encodeURIComponent(keyword)}`,
           {
             credentials: "include",
