@@ -16,8 +16,8 @@ const getS3ImageUrl = (imageKey: string | null) => {
 };
 
 import axios from "axios"; // axios 사용을 위해 임포트 (fetch 대신 axios 사용)
-import UserFollower from "@/components/user_follower";
-import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import UserFollower from "../../../components/user_follower";
+import { useLoginMember } from "../../../stores/auth/loginMember";
 
 interface CommentDto {
   id: number;
@@ -93,7 +93,7 @@ export default function BlogDetailPage() {
     "followers" | "following"
   >("followers");
 
-  const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
+  const { loginMember, isLogin, setLoginMember } = useLoginMember();
 
   // 팔로워/팔로잉 수 조회 함수 수정: 유저 ID를 인자로 받도록 변경
   // 팔로워/팔로잉 수 조회 함수 수정: 유저 ID를 인자로 받도록 변경
