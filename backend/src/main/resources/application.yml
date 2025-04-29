@@ -72,7 +72,7 @@ custom:
   prod:
     cookieDomain: momentree.site
     frontUrl: "https://www.${custom.prod.cookieDomain}"
-    backUrl: "https://api.${custom.prod.cookieDomain}"
+    backUrl: "https://blog.api.${custom.prod.cookieDomain}"
   site:
     name: "BLOG DEV"
     cookieDomain: "${custom.dev.cookieDomain}"
