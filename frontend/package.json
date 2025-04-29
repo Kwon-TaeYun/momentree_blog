@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm install --legacy-peer-deps && rimraf .next && next build",
+    "clean": "rimraf .next node_modules/.cache",
+    "build": "npm run clean && next build",
     "start": "next start",
     "lint": "next lint"
   },
