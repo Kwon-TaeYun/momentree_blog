@@ -48,8 +48,6 @@ export default function Header() {
       .then((response) => {
         if (response.ok) {
           // Clear login state
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
 
           // 전역 상태 초기화
           setNoLoginMember();
