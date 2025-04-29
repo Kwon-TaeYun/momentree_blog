@@ -469,8 +469,7 @@ export default function BoardDetail() {
       try {
         const response = await fetch(
           `${
-            process.env.NEXT_PUBLIC_API_BASE_URL ||
-            "https://api.blog.momentree.site"
+            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8090"
           }/api/v1/boards/${boardIdNumber}`,
           {
             method: "DELETE",
