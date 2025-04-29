@@ -379,7 +379,6 @@ export default function BoardDetail() {
         // 새 댓글을 배열 끝에 추가
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
-        window.location.reload();
       } else {
         alert("댓글 작성에 실패했습니다.");
       }
