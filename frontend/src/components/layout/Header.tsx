@@ -10,9 +10,8 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function Header() {
-  const socialLoginForKakaoUrl =
-    "https://api.blog.momentree.site/oauth2/authorization/kakao";
-  const redirectUrlAfterSocialLogin = "http://www.momentree.site/home";
+  const socialLoginForKakaoUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/oauth2/authorization/kakao`;
+  const redirectUrlAfterSocialLogin = `${process.env.NEXT_PUBLIC_FRONT_BASE_URL}/home`;
   const {
     loginMember,
     setLoginMember,
@@ -41,7 +40,7 @@ export default function Header() {
 
   // Improved logout function
   const handleLogout = () => {
-    fetch("https://api.blog.momentree.site/api/v1/members/logout", {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/logout`, {
       method: "DELETE",
       credentials: "include",
     })
