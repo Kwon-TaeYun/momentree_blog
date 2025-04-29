@@ -168,7 +168,7 @@ export default function Header() {
           </form>
 
           {/* 글쓰기 버튼 - 로그인한 사용자에게만 표시 */}
-          {isLogin && (
+          {isUserLoggedIn && (
             <Link
               href="/boards/new"
               className="bg-[#2c714c] text-white px-4 py-2 rounded-full font-medium shadow-sm hover:bg-[#225c3d] transition-colors"
@@ -177,7 +177,7 @@ export default function Header() {
             </Link>
           )}
 
-          {isLogin ? (
+          {isUserLoggedIn ? (
             <div className="flex items-center gap-4">
               <div>{loginMember.name}님 환영합니다!</div>
 
