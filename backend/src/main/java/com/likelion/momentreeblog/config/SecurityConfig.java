@@ -86,7 +86,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:3000",     // 개발 환경
             "https://cdpn.io",          // 기존 설정
-            AppConfig.getSiteFrontUrl()  // 기존 설정
+            AppConfig.getSiteFrontUrl(),  // 기존 설정
+                "https://www.momentree.site"
         ));
         
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));

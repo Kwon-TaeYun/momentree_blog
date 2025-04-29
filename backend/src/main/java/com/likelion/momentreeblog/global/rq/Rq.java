@@ -104,8 +104,9 @@ public class Rq {
     public void deleteCookie(String name) {
         ResponseCookie cookie = ResponseCookie.from(name, null)
                 .path("/")
-                .sameSite("Lax")         // 또는 필요 시 "None"
-                .secure(true)            // HTTPS를 쓰는 경우 유지
+                .domain(".momentree.site") // ← 점(.) 붙이면 모든 서브도메인에서 유효
+                .sameSite("None")          // 서로 다른 도메인 간 요청엔 무조건 None
+                .secure(true)              // HTTPS 필수
                 .httpOnly(true)
                 .maxAge(0)
                 .build();
