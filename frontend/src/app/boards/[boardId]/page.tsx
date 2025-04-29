@@ -460,7 +460,7 @@ export default function BoardDetail() {
 
   // 게시글 삭제 핸들러
   const handleDelete = async () => {
-    if (!isAuthenticated || !isAuthor) {
+    if (!isAuthor) {
       alert("게시글 삭제 권한이 없습니다.");
       return;
     }
@@ -476,7 +476,6 @@ export default function BoardDetail() {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
-              ...(token && { Authorization: `Bearer ${token}` }),
             },
             credentials: "include",
           }
