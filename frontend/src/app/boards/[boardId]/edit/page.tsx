@@ -24,8 +24,8 @@ const Editor = dynamic(
 );
 
 // Toast UI Editor CSS 파일들
-import "@toast-ui/editor/dist/toastui-editor.css";
-import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
+// import "@toast-ui/editor/dist/toastui-editor.css";
+// import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
 
 // formData의 타입 정의
 interface FormDataType {
