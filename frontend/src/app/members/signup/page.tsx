@@ -24,7 +24,7 @@ export default function SignUp() {
 
     try {
       const response = await fetch(
-        `http://localhost:8090/api/v1/members/check-email`,
+        `https://api.blog.momentree.site/api/v1/members/check-email`,
         {
           method: "POST",
           headers: {
