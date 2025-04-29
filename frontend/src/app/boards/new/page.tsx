@@ -7,7 +7,7 @@ import { FaImage, FaTimes } from "react-icons/fa";
 import { BsTag } from "react-icons/bs";
 import dynamic from "next/dynamic";
 import type { EditorInstance } from "@toast-ui/react-editor";
-import { useGlobalLoginMember } from "../../../../stores/auth/loginMember";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 // Toast UI Editor 동적 임포트
 const Editor = dynamic(
