@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import UserFollower from "../../../../components/user_follower";
-import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+// import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 
 interface Post {
   id: number;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios"; // axios 임포트 필요
-import { useGlobalLoginMember } from "@/stores/auth/loginMember";
+import { useGlobalLoginMember } from "../stores/auth/loginMember";
 
 interface UserFollowerProps {
   isOpen: boolean;

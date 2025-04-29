@@ -3,7 +3,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { BiSearch } from "react-icons/bi";
 import React from "react";
-import { LoginMemberContext, useLoginMember } from "@/stores/auth/loginMember";
+import {
+  LoginMemberContext,
+  useLoginMember,
+} from "../../stores/auth/loginMember";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
