@@ -82,9 +82,9 @@ public class Rq {
     public void setCookie(String name, String value) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .path("/")
-                .domain("localhost")
-                .sameSite("Strict")
-                .secure(true)
+                .domain(".momentree.site") // ← 점(.) 붙여야 www 포함한 모든 하위 도메인 대응 가능
+                .sameSite("None")          // ← 크로스 도메인 필수
+                .secure(true)              // ← HTTPS 필수
                 .httpOnly(true)
                 .build();
         resp.addHeader("Set-Cookie", cookie.toString());
