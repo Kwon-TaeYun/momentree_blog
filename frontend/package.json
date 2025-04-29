@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "clean": "rimraf .next node_modules/.cache",
-    "build": "npm run clean && NODE_ENV=production next build",
+    "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint"
   },
