@@ -93,7 +93,7 @@ export default function BoardDetail() {
   const [isAuthor, setIsAuthor] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(0);
-  const [token, setToken] = useState<string | null>(null);
+  // const [token, setToken] = useState<string | null>(null);
   const [isLikeListOpen, setIsLikeListOpen] = useState<boolean>(false);
   const viewerRef = useRef(null);
 
@@ -105,13 +105,13 @@ export default function BoardDetail() {
   const boardIdNumber = Number(boardId); // boardId를 숫자로 변환
 
   // 토큰 가져오기
-  useEffect(() => {
-    // 로컬 스토리지에서 토큰 가져오기 (클라이언트 사이드에서만 실행)
-    const storedToken = localStorage.getItem("accessToken");
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
+  // useEffect(() => {
+  //   // 로컬 스토리지에서 토큰 가져오기 (클라이언트 사이드에서만 실행)
+  //   const storedToken = localStorage.getItem("accessToken");
+  //   if (storedToken) {
+  //     setToken(storedToken);
+  //   }
+  // }, []);
 
   // 로그인 상태 및 현재 사용자 정보 확인
   useEffect(() => {
@@ -122,11 +122,11 @@ export default function BoardDetail() {
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/me`,
           {
             credentials: "include",
-            headers: token
-              ? {
-                  Authorization: `Bearer ${token}`,
-                }
-              : {},
+            // headers: token
+            //   ? {
+            //       Authorization: `Bearer ${token}`,
+            //     }
+            //   : {},
           }
         );
 
@@ -146,7 +146,7 @@ export default function BoardDetail() {
     };
 
     checkAuth();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (currentUser !== null || !loading) {
@@ -156,16 +156,16 @@ export default function BoardDetail() {
         setLoading(true);
         try {
           const headers: HeadersInit = {};
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          }
+          // if (token) {
+          //   headers["Authorization"] = `Bearer ${token}`;
+          // }
 
           // 게시글 데이터 가져오기
           const postResponse = await fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}`,
             {
               credentials: "include",
-              headers,
+              // headers,
             }
           );
 
@@ -295,7 +295,7 @@ export default function BoardDetail() {
 
       fetchPost();
     }
-  }, [boardIdNumber, currentUser, token]);
+  }, [boardIdNumber, currentUser]);
 
   // 좋아요 토글 핸들러
   const handleLikeToggle = async () => {
@@ -311,15 +311,14 @@ export default function BoardDetail() {
         "Content-Type": "application/json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      // if (token) {
+      //   headers["Authorization"] = `${token}`;
+      // }
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/likes`,
         {
           method: method,
-          headers,
           credentials: "include",
         }
       );
@@ -353,9 +352,9 @@ export default function BoardDetail() {
         "Content-Type": "application/json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      // if (token) {
+      //   headers["Authorization"] = `Bearer ${token}`;
+      // }
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
@@ -399,9 +398,9 @@ export default function BoardDetail() {
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      // if (token) {
+      //   headers["Authorization"] = `Bearer ${token}`;
+      // }
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
@@ -437,9 +436,9 @@ export default function BoardDetail() {
 
     try {
       const headers: HeadersInit = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      // if (token) {
+      //   headers["Authorization"] = `Bearer ${token}`;
+      // }
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments/${commentId}`,

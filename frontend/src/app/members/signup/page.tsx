@@ -24,7 +24,7 @@ export default function SignUp() {
 
     try {
       const response = await fetch(
-        `https://api.blog.momentree.site/api/v1/members/check-email`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/check-email`,
         {
           method: "POST",
           headers: {
@@ -80,7 +80,7 @@ export default function SignUp() {
 
     try {
       const response = await fetch(
-        "https://api.blog.momentree.site/api/v1/members/signup",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/signup`,
         {
           method: "POST",
           headers: {
