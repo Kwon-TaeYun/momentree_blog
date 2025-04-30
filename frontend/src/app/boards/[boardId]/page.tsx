@@ -119,7 +119,7 @@ export default function BoardDetail() {
       try {
         // 쿠키 기반 인증
         const response = await fetch(
-          "https://api.blog.momentree.site/api/v1/members/me",
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/me`,
           {
             credentials: "include",
             headers: token
@@ -162,7 +162,7 @@ export default function BoardDetail() {
 
           // 게시글 데이터 가져오기
           const postResponse = await fetch(
-            `https://api.blog.momentree.site/api/v1/boards/${boardIdNumber}`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}`,
             {
               credentials: "include",
               headers,
@@ -234,7 +234,7 @@ export default function BoardDetail() {
 
           // 댓글 데이터 따로 가져오기
           const commentsResponse = await fetch(
-            `https://api.blog.momentree.site/api/v1/boards/${boardIdNumber}/comments`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
             {
               credentials: "include",
               headers,
@@ -316,7 +316,7 @@ export default function BoardDetail() {
       }
 
       const response = await fetch(
-        `https://api.blog.momentree.site/api/v1/boards/${boardIdNumber}/likes`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/likes`,
         {
           method: method,
           headers,
@@ -358,7 +358,7 @@ export default function BoardDetail() {
       }
 
       const res = await fetch(
-        `https://api.blog.momentree.site/api/v1/boards/${boardIdNumber}/comments`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
         {
           method: "POST",
           headers,
@@ -404,7 +404,7 @@ export default function BoardDetail() {
       }
 
       const res = await fetch(
-        `https://api.blog.momentree.site/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
         {
           method: "PUT",
           headers,
@@ -442,7 +442,7 @@ export default function BoardDetail() {
       }
 
       const res = await fetch(
-        `https://api.blog.momentree.site/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments/${commentId}`,
         {
           method: "DELETE",
           headers,
