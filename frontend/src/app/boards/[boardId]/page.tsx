@@ -374,19 +374,14 @@ export default function BoardDetail() {
         const region = process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
         const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
 
-        const userProfileUrl = savedComment.userProfileUrl
-          ? savedComment.userProfileUrl.startsWith("http")
-            ? savedComment.userProfileUrl
-            : savedComment.userProfileUrl.startsWith("uploads/")
-            ? `${S3_PUBLIC_BASE}/${savedComment.userProfileUrl}`
-            : `${S3_PUBLIC_BASE}/uploads/${savedComment.userProfileUrl}`
-          : "/logo.png";
+        // 로그인된 사용자의 프로필 URL 사용
+        const userProfileUrl = loginMember.profilePhotoUrl || "/logo.png";
 
         const newComment = {
           ...savedComment,
           userProfileUrl,
-          author: savedComment.userName || currentUser?.name || "알 수 없음",
-          userId: currentUser?.id,
+          userName: loginMember.name, // 로그인된 사용자 이름 사용
+          userId: loginMember.id, // 로그인된 사용자 ID 사용
           createdAt: savedComment.createdAt || new Date().toISOString(),
         };
 

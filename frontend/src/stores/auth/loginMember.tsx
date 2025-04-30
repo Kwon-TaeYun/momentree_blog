@@ -9,7 +9,7 @@ type Member = {
   email: string;
   blogName: string;
   blogId: number;
-  // profileImage?: string;
+  profilePhotoUrl: string;
 };
 
 export const LoginMemberContext = createContext<{
@@ -37,7 +37,7 @@ function createEmptyMember(): Member {
     name: "",
     blogName: "",
     blogId: 0,
-    // profileImage: "",
+    profilePhotoUrl: "",
   };
 }
 
