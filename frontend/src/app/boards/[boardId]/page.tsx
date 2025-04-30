@@ -75,6 +75,7 @@ interface User {
 export default function BoardDetail() {
   const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
   console.log("loginMember: " + loginMember);
+  console.log("loginMember.name: " + loginMember.name);
   const router = useRouter();
   const { boardId } = useParams(); // boardId는 string 타입으로 반환됩니다.
   const [post, setPost] = useState<Post | null>(null);
