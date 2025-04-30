@@ -460,10 +460,10 @@ export default function BoardDetail() {
 
   // 게시글 삭제 핸들러
   const handleDelete = async () => {
-    if (!isAuthor) {
-      alert("게시글 삭제 권한이 없습니다.");
-      return;
-    }
+    // if (!isAuthor) {
+    //   alert("게시글 삭제 권한이 없습니다.");
+    //   return;
+    // }
 
     if (confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       try {
