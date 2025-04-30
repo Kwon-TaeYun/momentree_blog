@@ -271,9 +271,14 @@ export default function MyBlogPage() {
                       priority
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl font-semibold text-gray-400">
-                      {userInfo.name.charAt(0)}
-                    </div>
+                    <Image
+                      src="/logo.png"
+                      alt="기본 프로필"
+                      fill
+                      sizes="128px"
+                      className="object-cover"
+                      priority
+                    />
                   )}
                 </div>
                 <h2 className="text-xl font-bold mb-1">
