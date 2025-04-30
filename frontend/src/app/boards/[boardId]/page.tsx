@@ -340,7 +340,7 @@ export default function BoardDetail() {
     }
   };
 
-  // handleCommentSubmit 함수 수정
+  // 댓글을 가져오는 부분 수정
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -368,14 +368,28 @@ export default function BoardDetail() {
 
       if (res.ok) {
         const savedComment = await res.json();
-        // 서버에서 받은 날짜 데이터를 그대로 사용
+
+        // 새 댓글의 프로필 URL 처리
+        const bucket = process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
+        const region = process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
+        const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
+
+        const userProfileUrl = savedComment.userProfileUrl
+          ? savedComment.userProfileUrl.startsWith("http")
+            ? savedComment.userProfileUrl
+            : savedComment.userProfileUrl.startsWith("uploads/")
+            ? `${S3_PUBLIC_BASE}/${savedComment.userProfileUrl}`
+            : `${S3_PUBLIC_BASE}/uploads/${savedComment.userProfileUrl}`
+          : "/logo.png";
+
         const newComment = {
           ...savedComment,
+          userProfileUrl,
           author: savedComment.userName || currentUser?.name || "알 수 없음",
           userId: currentUser?.id,
-          // createdAt을 서버에서 받은 값 그대로 사용
           createdAt: savedComment.createdAt || new Date().toISOString(),
         };
+
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
       } else {
