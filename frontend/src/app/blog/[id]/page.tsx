@@ -154,11 +154,11 @@ export default function BlogDetailPage() {
       return;
     }
 
-    if (!isLogin) {
-      alert("로그인이 필요합니다.");
-      // 필요시 로그인 페이지로 리다이렉트
-      return;
-    }
+    // if (!isLogin) {
+    //   alert("로그인이 필요합니다.");
+    //   // 필요시 로그인 페이지로 리다이렉트
+    //   return;
+    // }
 
     // 현재 isFollowing 상태를 사용하여 POST 또는 DELETE 결정
     const currentFollowStatus = isFollowing; // 토글 전 상태를 저장
