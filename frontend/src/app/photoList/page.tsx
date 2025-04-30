@@ -54,13 +54,13 @@ export default function PhotoListPage() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
+      // const token = localStorage.getItem("accessToken");
       const response = await fetch(
         "https://api.blog.momentree.site/api/v1/albums",
         {
           headers: {
             "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
+            // ...(token && { Authorization: `Bearer ${token}` }),
           },
           credentials: "include",
         }
@@ -87,7 +87,7 @@ export default function PhotoListPage() {
               {
                 headers: {
                   "Content-Type": "application/json",
-                  ...(token && { Authorization: `Bearer ${token}` }),
+                  // ...(token && { Authorization: `Bearer ${token}` }),
                 },
                 credentials: "include",
               }
