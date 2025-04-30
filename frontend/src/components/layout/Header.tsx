@@ -54,7 +54,7 @@ export default function Header() {
           setIsUserLoggedIn(false);
 
           // Force page refresh to clear any cached state
-          window.location.href = "/";
+          // window.location.href = "/";
         }
       })
       .catch((error) => {
