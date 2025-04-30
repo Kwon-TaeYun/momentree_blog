@@ -283,6 +283,7 @@ public class BoardApiV1Controller {
     ) {
         try {
             Long userId = customUserDetails.getUserId();
+            log.info("userId:::" + userId);
             CommentDto savedComment = commentService.createComment(boardId, userId, dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
         } catch (IllegalArgumentException e) {

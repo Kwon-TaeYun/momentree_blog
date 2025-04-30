@@ -30,7 +30,7 @@ spring:
 #    password:
 #    driver-class-name: org.h2.Driver
   datasource:
-    url: jdbc:mysql://localhost:3308/momentreedb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/momentreedb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: teamdebug
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
