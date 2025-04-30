@@ -137,7 +137,7 @@ export default function WithdrawPage() {
       sessionStorage.removeItem("currentUser");
 
       // Redirect to login page after logout
-      window.location.href = "/login";
+      window.location.href = "/members/login";
     } catch (err: any) {
       console.error("회원 탈퇴 오류:", err);
       setError(err.message || "회원 탈퇴 처리 중 오류가 발생했습니다.");
