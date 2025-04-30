@@ -276,34 +276,15 @@ public class BoardApiV1Controller {
     }
 
 
-    // 댓글 생성
-//    @PostMapping("/{boardId}/comments")
-//    public ResponseEntity<?> createComment(
-//            @PathVariable(name = "boardId") Long boardId,
-//            @RequestBody @Valid CommentRequestDto dto
-//    ) {
-//        try {
-//            String accessToken = rq.getCookieValue("accessToken");
-//            Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
-//            log.info("userId:::" + userId);
-//            CommentDto savedComment = commentService.createComment(boardId, userId, dto);
-//            return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 작성 실패: " + e.getMessage());
-//        }
-//    }
-
+     //g댓글 생성
     @PostMapping("/{boardId}/comments")
     public ResponseEntity<?> createComment(
             @PathVariable(name = "boardId") Long boardId,
-            @RequestBody @Valid CommentRequestDto dto,
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
+            @RequestBody @Valid CommentRequestDto dto
     ) {
         try {
-//            String accessToken = rq.getCookieValue("accessToken");
-            Long userId = customUserDetails.getUserId();
+            String accessToken = rq.getCookieValue("accessToken");
+            Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
             log.info("userId:::" + userId);
             CommentDto savedComment = commentService.createComment(boardId, userId, dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
@@ -313,6 +294,25 @@ public class BoardApiV1Controller {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 작성 실패: " + e.getMessage());
         }
     }
+
+//    @PostMapping("/{boardId}/comments")
+//    public ResponseEntity<?> createComment(
+//            @PathVariable(name = "boardId") Long boardId,
+//            @RequestBody @Valid CommentRequestDto dto,
+//            @AuthenticationPrincipal CustomUserDetails customUserDetails
+//    ) {
+//        try {
+////            String accessToken = rq.getCookieValue("accessToken");
+//            Long userId = customUserDetails.getUserId();
+//            log.info("userId:::" + userId);
+//            CommentDto savedComment = commentService.createComment(boardId, userId, dto);
+//            return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("댓글 작성 실패: " + e.getMessage());
+//        }
+//    }
 
     // 댓글 수정
     @PutMapping("/{boardId}/comments/{commentId}")
