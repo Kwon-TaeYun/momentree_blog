@@ -228,18 +228,30 @@ export default function BlogDetailPage() {
         }
       }
     } catch (error) {
-      // 네트워크 오류 또는 fetch/axios 호출 자체에서 발생한 오류
-      console.error("Network or other error during follow toggle:", error);
-      // 오류 메시지 추출 (AxiosError 또는 기본 Error 객체)
-      const errorMessage =
-        axios.isAxiosError(error) && error.response?.data
-          ? typeof error.response.data === "object"
-            ? JSON.stringify(error.response.data)
-            : error.response.data
-          : error instanceof Error
-          ? error.message
-          : String(error);
-      alert(`${errorMessage}`);
+      console.error("Follow toggle error:", error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // HTTP 상태 코드가 있는 응답을 받은 경우
+          if (error.response.status === 401) {
+            alert("로그인을 다시 해주세요.");
+            router.push("/members/login");
+            return;
+          }
+          alert(
+            error.response.data?.message ||
+              "팔로우 처리 중 오류가 발생했습니다."
+          );
+        } else {
+          // 응답을 받지 못한 경우
+          alert("로그인을 다시 해주세요.");
+          router.push("/members/login");
+        }
+      } else {
+        // axios 에러가 아닌 경우
+        alert("로그인을 다시 해주세요.");
+        router.push("/members/login");
+      }
     }
   };
 
