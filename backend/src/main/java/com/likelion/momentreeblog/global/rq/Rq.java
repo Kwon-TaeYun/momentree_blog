@@ -82,7 +82,7 @@ public class Rq {
     public void setCookie(String name, String value) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .path("/")
-                .domain("localhost")
+//                .domain("localhost")
                 .sameSite("Strict")
                 .secure(true)
                 .httpOnly(true)
@@ -104,7 +104,7 @@ public class Rq {
     public void deleteCookie(String name) {
         ResponseCookie cookie = ResponseCookie.from(name, null)
                 .path("/")
-                .domain("localhost")
+//                .domain("localhost")
                 .sameSite("Strict")
                 .secure(true)
                 .httpOnly(true)
