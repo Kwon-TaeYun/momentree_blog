@@ -74,6 +74,7 @@ interface User {
 
 export default function BoardDetail() {
   const { loginMember, isLogin, setLoginMember } = useGlobalLoginMember();
+  console.log("loginMember: " + loginMember);
   const router = useRouter();
   const { boardId } = useParams(); // boardId는 string 타입으로 반환됩니다.
   const [post, setPost] = useState<Post | null>(null);
@@ -735,7 +736,36 @@ export default function BoardDetail() {
                     )}
                   </div>
                 </div>
-                <p className="text-gray-700 pl-11">{comment.content}</p>
+                {editingCommentId === comment.id ? (
+                  // 수정 모드일 때 보여줄 폼
+                  <div className="pl-11">
+                    <textarea
+                      value={editCommentText}
+                      onChange={(e) => setEditCommentText(e.target.value)}
+                      className="w-full p-2 border border-gray-200 rounded-md"
+                    />
+                    <div className="flex justify-end space-x-2 mt-2">
+                      <button
+                        onClick={() => handleCommentEdit(comment.id)}
+                        className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditCommentText("");
+                        }}
+                        className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // 일반 모드일 때 보여줄 내용
+                  <p className="text-gray-700 pl-11">{comment.content}</p>
+                )}
               </div>
             ))
           ) : (
