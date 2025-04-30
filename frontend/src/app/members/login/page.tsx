@@ -67,7 +67,7 @@ export default function LoginPage() {
         localStorage.setItem("accessToken", accessToken);
 
         alert("로그인 성공!");
-        router.push(redirectUrlAfterSocialLogin);
+        window.location.href = "/home";
       } else {
         console.warn(
           "로그인 성공 응답을 받았지만, Access Token 필드를 찾을 수 없습니다.",
