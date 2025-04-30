@@ -340,15 +340,10 @@ export default function BoardDetail() {
     }
   };
 
+  // handleCommentSubmit 함수 수정
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
-    if (!isAuthenticated) {
-      alert("로그인이 필요합니다.");
-      router.push("/members/login");
-      return;
-    }
 
     try {
       const headers: HeadersInit = {
@@ -373,13 +368,14 @@ export default function BoardDetail() {
 
       if (res.ok) {
         const savedComment = await res.json();
+        // 서버에서 받은 날짜 데이터를 그대로 사용
         const newComment = {
           ...savedComment,
           author: savedComment.userName || currentUser?.name || "알 수 없음",
           userId: currentUser?.id,
-          createdAt: new Date().toLocaleString(),
+          // createdAt을 서버에서 받은 값 그대로 사용
+          createdAt: savedComment.createdAt || new Date().toISOString(),
         };
-        // 새 댓글을 배열 끝에 추가
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
       } else {
@@ -712,7 +708,9 @@ export default function BoardDetail() {
                     <span className="font-medium">{comment.userName}</span>
                   </div>
                   <div className="text-sm text-gray-400 flex items-center space-x-4">
-                    <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                    <span>
+                      {new Date(comment.createdAt).toLocaleString("ko-KR")}
+                    </span>
                     {currentUser?.id === comment.userId && (
                       <div className="flex space-x-2">
                         <button
