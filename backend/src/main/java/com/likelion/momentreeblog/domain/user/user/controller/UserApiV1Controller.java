@@ -194,8 +194,9 @@ public class UserApiV1Controller {
     }
 
     @GetMapping("/top5")
-    public ResponseEntity<?> getTop5Users() {
+    public ResponseEntity<List<UserResponse>> getTop5Users() {
         List<UserResponse> top5Users = userService.getTop5Bloggers();
-        return ResponseEntity.ok(Map.of("top5Users", top5Users));
+        return ResponseEntity.ok(top5Users);
+
     }
 }
