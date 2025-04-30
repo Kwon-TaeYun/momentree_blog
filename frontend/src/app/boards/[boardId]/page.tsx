@@ -297,20 +297,18 @@ export default function BoardDetail() {
 
   // 좋아요 토글 핸들러
   const handleLikeToggle = async () => {
-    if (!isAuthenticated) {
-      alert("좋아요를 누르려면 로그인이 필요합니다.");
+    if (!isLogin) {
+      alert("로그인이 필요합니다.");
       router.push("/members/login");
       return;
     }
 
     try {
       const method = isLiked ? "DELETE" : "POST";
-
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
 
-      // 토큰이 있으면 헤더에 추가
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
@@ -325,9 +323,8 @@ export default function BoardDetail() {
       );
 
       if (response.ok) {
-        // 좋아요 상태와 개수 업데이트
         setIsLiked(!isLiked);
-        setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1)); // 좋아요 카운트 조정
+        setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
       } else {
         const errorData = await response.json().catch(() => null);
         alert(
@@ -343,7 +340,11 @@ export default function BoardDetail() {
   // 댓글을 가져오는 부분 수정
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    if (!commentText.trim() || !isLogin) {
+      alert("로그인이 필요합니다.");
+      router.push("/members/login");
+      return;
+    }
 
     try {
       const headers: HeadersInit = {
@@ -369,24 +370,12 @@ export default function BoardDetail() {
       if (res.ok) {
         const savedComment = await res.json();
 
-        // 새 댓글의 프로필 URL 처리
-        const bucket = process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
-        const region = process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2";
-        const S3_PUBLIC_BASE = `https://${bucket}.s3.${region}.amazonaws.com`;
-
-        const userProfileUrl = savedComment.userProfileUrl
-          ? savedComment.userProfileUrl.startsWith("http")
-            ? savedComment.userProfileUrl
-            : savedComment.userProfileUrl.startsWith("uploads/")
-            ? `${S3_PUBLIC_BASE}/${savedComment.userProfileUrl}`
-            : `${S3_PUBLIC_BASE}/uploads/${savedComment.userProfileUrl}`
-          : "/logo.png";
-
+        // 새 댓글에 loginMember 정보 사용
         const newComment = {
           ...savedComment,
-          userProfileUrl,
-          author: savedComment.userName || currentUser?.name || "알 수 없음",
-          userId: currentUser?.id,
+          userProfileUrl: loginMember.profilePhotoUrl || "/logo.png",
+          userName: loginMember.name,
+          userId: loginMember.id,
           createdAt: savedComment.createdAt || new Date().toISOString(),
         };
 
