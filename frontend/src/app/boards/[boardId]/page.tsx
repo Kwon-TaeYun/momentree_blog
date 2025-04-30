@@ -237,7 +237,7 @@ export default function BoardDetail() {
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
             {
               credentials: "include",
-              headers,
+              // headers,
             }
           );
 
@@ -360,7 +360,7 @@ export default function BoardDetail() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
         {
           method: "POST",
-          headers,
+          // headers,
           credentials: "include",
           body: JSON.stringify({
             content: commentText,
