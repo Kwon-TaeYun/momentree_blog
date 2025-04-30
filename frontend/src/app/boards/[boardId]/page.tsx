@@ -348,19 +348,15 @@ export default function BoardDetail() {
     }
 
     try {
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-
-      // if (token) {
-      //   headers["Authorization"] = `Bearer ${token}`;
-      // }
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
         {
           method: "POST",
-          // headers,
+          headers: {
+            // headers 추가
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           credentials: "include",
           body: JSON.stringify({
             content: commentText,
@@ -371,7 +367,6 @@ export default function BoardDetail() {
       if (res.ok) {
         const savedComment = await res.json();
 
-        // 새 댓글에 loginMember 정보 사용
         const newComment = {
           ...savedComment,
           userProfileUrl: loginMember.profilePhotoUrl || "/logo.png",
@@ -383,6 +378,9 @@ export default function BoardDetail() {
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
       } else {
+        if (res.status === 415) {
+          console.error("Content-Type 오류");
+        }
         alert("댓글 작성에 실패했습니다.");
       }
     } catch (error) {
