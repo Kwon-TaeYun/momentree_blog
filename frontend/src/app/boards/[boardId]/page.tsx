@@ -241,6 +241,7 @@ export default function BoardDetail() {
 
           if (commentsResponse.ok) {
             const commentsData = await commentsResponse.json();
+            // 댓글 데이터 처리 부분 수정
             const processComments = (commentsData: any[]) => {
               const bucket =
                 process.env.NEXT_PUBLIC_S3_BUCKET || "momentrees3bucket";
@@ -251,10 +252,12 @@ export default function BoardDetail() {
               return commentsData.map((comment) => ({
                 ...comment,
                 userProfileUrl: comment.userProfileUrl
-                  ? comment.userProfileUrl.startsWith("uploads/")
-                    ? `${S3_PUBLIC_BASE}/${comment.userProfileUrl}`
-                    : comment.userProfileUrl
-                  : "/default-profile.png", // 기본값 처리
+                  ? comment.userProfileUrl.startsWith("http") // http로 시작하는지 먼저 확인
+                    ? comment.userProfileUrl // 이미 완전한 URL이면 그대로 사용
+                    : comment.userProfileUrl.startsWith("uploads/")
+                    ? `${S3_PUBLIC_BASE}/${comment.userProfileUrl}` // uploads/로 시작하면 S3 URL 생성
+                    : `${S3_PUBLIC_BASE}/uploads/${comment.userProfileUrl}` // 그 외의 경우 uploads/ 추가
+                  : "/logo.png", // userProfileUrl이 없는 경우 기본 이미지
               }));
             };
             const processedComments = processComments(commentsData);
@@ -691,11 +694,12 @@ export default function BoardDetail() {
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 mr-3">
                       <Image
-                        src={comment.userProfileUrl || "/logo.png"} // 기본 이미지 설정
+                        src={comment.userProfileUrl || "/logo.png"}
                         alt={comment.userName || "사용자"}
                         width={32}
                         height={32}
-                        className="object-cover"
+                        className="object-cover w-8 h-8 rounded-full"
+                        unoptimized
                       />
                     </div>
                     <span className="font-medium">{comment.userName}</span>
