@@ -82,9 +82,9 @@ public class Rq {
     public void setCookie(String name, String value) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .path("/")
-                .domain(".momentree.site") // ← 점(.) 붙여야 www 포함한 모든 하위 도메인 대응 가능
-                .sameSite("None")          // ← 크로스 도메인 필수
-                .secure(true)              // ← HTTPS 필수
+                .domain("localhost")
+                .sameSite("Strict")
+                .secure(true)
                 .httpOnly(true)
                 .build();
         resp.addHeader("Set-Cookie", cookie.toString());
@@ -104,15 +104,16 @@ public class Rq {
     public void deleteCookie(String name) {
         ResponseCookie cookie = ResponseCookie.from(name, null)
                 .path("/")
-                .domain(".momentree.site") // ← 점(.) 붙이면 모든 서브도메인에서 유효
-                .sameSite("None")          // 서로 다른 도메인 간 요청엔 무조건 None
-                .secure(true)              // HTTPS 필수
+                .domain("localhost")
+                .sameSite("Strict")
+                .secure(true)
                 .httpOnly(true)
                 .maxAge(0)
                 .build();
 
         resp.addHeader("Set-Cookie", cookie.toString());
     }
+
 
     public void setHeader(String name, String value) {
         resp.setHeader(name, value);
