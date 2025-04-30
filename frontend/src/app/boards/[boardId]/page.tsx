@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useGlobalLoginMember } from "../../../stores/auth/loginMember";
+import { useGlobalLoginMember } from "@/stores/auth/loginMember";
 // import "@toast-ui/editor/dist/toastui-editor.css";
 import Image from "next/image"; // Next.js의 Image 컴포넌트를 사용
 
