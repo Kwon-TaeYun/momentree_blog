@@ -31,11 +31,12 @@ interface UserInfo {
   username?: string;
   blogName?: string;
   viewCount?: number;
+  // profilePhoto 대신 profilePhotoUrl 사용
+  profilePhotoUrl?: string;
   profilePhoto?: {
     url: string;
     key: string;
   };
-  profileImage?: string;
   posts: number;
   visitors: number;
   followers: number;
@@ -71,10 +72,7 @@ export default function MyBlogPage() {
     const fetchUserInfo = async () => {
       try {
         const userResponse = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_BASE_URL ||
-            "https://api.blog.momentree.site"
-          }/api/v1/members/me`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/members/me`,
           {
             credentials: "include",
           }
@@ -86,14 +84,17 @@ export default function MyBlogPage() {
 
         const userData = await userResponse.json();
 
-        // 프로필 사진 호출 제거 - API 엔드포인트가 존재하지 않음
-        // 대신 게시글 데이터에서 프로필 사진 정보를 가져와서 사용
         setUserInfo({
           id: userData.id,
           name: userData.name || "사용자",
           email: userData.email || "",
-          profilePhoto: undefined, // fetchMyPosts에서 설정
-          profileImage: userData.profileImage || "",
+          // profilePhotoUrl 사용
+          profilePhoto: userData.profilePhotoUrl
+            ? {
+                url: userData.profilePhotoUrl,
+                key: "",
+              }
+            : undefined,
           posts: 0,
           visitors: 0,
           followers: 0,
@@ -261,9 +262,13 @@ export default function MyBlogPage() {
             <div className="bg-white border border-gray-100 rounded-lg p-6 mb-6">
               <div className="flex flex-col items-center">
                 <div className="w-32 h-32 relative rounded-full overflow-hidden mb-4 bg-gray-200">
-                  {userInfo.profilePhoto?.url ? (
+                  {userInfo.profilePhoto?.url || userInfo.profilePhotoUrl ? (
                     <Image
-                      src={userInfo.profilePhoto.url}
+                      src={
+                        userInfo.profilePhoto?.url ||
+                        userInfo.profilePhotoUrl ||
+                        ""
+                      }
                       alt="프로필 이미지"
                       fill
                       sizes="128px"
