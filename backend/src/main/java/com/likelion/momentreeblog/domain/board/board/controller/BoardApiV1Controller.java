@@ -10,6 +10,7 @@ import com.likelion.momentreeblog.domain.board.comment.dto.CommentRequestDto;
 import com.likelion.momentreeblog.domain.board.comment.service.CommentService;
 import com.likelion.momentreeblog.domain.board.like.dto.BoardLikeInfoDto;
 import com.likelion.momentreeblog.domain.board.like.service.LikeService;
+import com.likelion.momentreeblog.global.rq.Rq;
 import com.likelion.momentreeblog.global.util.jwt.JwtTokenizer;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -36,6 +37,7 @@ public class BoardApiV1Controller {
     private final JwtTokenizer jwtTokenizer;
     private final CommentService commentService;
     private final BoardRepository boardRepository;
+    private final Rq rq;
 
     @Operation(summary = "게시글 작성", description = "새로운 게시글 작성")
     @PostMapping
@@ -278,11 +280,11 @@ public class BoardApiV1Controller {
     @PostMapping("/{boardId}/comments")
     public ResponseEntity<?> createComment(
             @PathVariable(name = "boardId") Long boardId,
-            @RequestBody @Valid CommentRequestDto dto,
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
+            @RequestBody @Valid CommentRequestDto dto
     ) {
         try {
-            Long userId = customUserDetails.getUserId();
+            String accessToken = rq.getCookieValue("accessToken");
+            Long userId = jwtTokenizer.getUserIdFromToken(accessToken);
             log.info("userId:::" + userId);
             CommentDto savedComment = commentService.createComment(boardId, userId, dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedComment);
