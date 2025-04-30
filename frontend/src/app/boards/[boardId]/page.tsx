@@ -379,7 +379,7 @@ export default function BoardDetail() {
 
         const newComment = {
           ...savedComment,
-          userProfileUrl,
+          userProfileUrl: loginMember.profilePhotoUrl,
           userName: loginMember.name, // 로그인된 사용자 이름 사용
           userId: loginMember.id, // 로그인된 사용자 ID 사용
           createdAt: savedComment.createdAt || new Date().toISOString(),
