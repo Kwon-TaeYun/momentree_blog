@@ -348,10 +348,10 @@ export default function BoardDetail() {
     }
 
     try {
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
+      // const headers: HeadersInit = {
+      //   "Content-Type": "application/json",
+      //   Accept: "application/json",
+      // };
 
       // if (token) {
       //   headers["Authorization"] = `Bearer ${token}`;
@@ -361,7 +361,7 @@ export default function BoardDetail() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/boards/${boardIdNumber}/comments`,
         {
           method: "POST",
-          headers,
+          // headers,
           credentials: "include",
           body: JSON.stringify({
             content: commentText,
