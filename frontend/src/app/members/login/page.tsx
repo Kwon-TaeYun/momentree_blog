@@ -32,7 +32,7 @@ export default function LoginPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // 중요: 쿠키를 포함한 요청
+          credentials: "include",
           body: JSON.stringify({
             email: formData.email,
             password: formData.password,
@@ -40,32 +40,22 @@ export default function LoginPage() {
         }
       );
 
-      if (!response.ok) {
-        // 로그인 실패 시 에러 메시지 처리
-        const errorData = await response.json().catch(() => response.text()); // JSON 파싱 시도, 실패하면 text 파싱
-        const errorMessage =
-          typeof errorData === "object" &&
-          errorData !== null &&
-          errorData.message
-            ? errorData.message // 메시지 필드가 있다면 사용
-            : typeof errorData === "string"
-            ? errorData // 문자열 에러 메시지
-            : "로그인에 실패했습니다."; // 기본 메시지
+      // 응답 데이터를 먼저 파싱
+      const data = await response.json();
 
-        console.error("로그인 실패:", response.status, errorData);
+      if (!response.ok) {
+        // 서버에서 보낸 에러 메시지 사용
+        const errorMessage = data.message || "로그인에 실패했습니다.";
+        console.error("로그인 실패:", response.status, data);
         alert(errorMessage);
         return;
       }
-
-      // 로그인 성공 시: 응답 본문에서 토큰을 읽어와 localStorage에 저장
-      const data = await response.json();
 
       const accessToken = data.accessToken;
 
       if (accessToken) {
         console.log("로그인 성공! Access token 수신 및 localStorage에 저장.");
         localStorage.setItem("accessToken", accessToken);
-
         alert("로그인 성공!");
         window.location.href = "/home";
       } else {
@@ -78,7 +68,6 @@ export default function LoginPage() {
         );
       }
     } catch (error) {
-      // fetch 자체의 네트워크 오류 등
       console.error("로그인 요청 중 오류 발생:", error);
       const errorMessage =
         error instanceof Error ? error.message : String(error);
