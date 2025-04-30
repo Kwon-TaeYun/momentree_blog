@@ -694,12 +694,19 @@ export default function BoardDetail() {
                   <div className="flex items-center">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 mr-3">
                       <Image
-                        src={comment.userProfileUrl || "/default-profile.png"} // 기본 이미지 설정
+                        src={comment.userProfileUrl || "/logo.png"} // 경로는 맞음
                         alt={comment.userName || "사용자"}
                         width={32}
                         height={32}
                         className="object-cover w-8 h-8 rounded-full"
-                        unoptimized
+                        priority // 이미지 로딩 우선순위 추가
+                        unoptimized // Next.js의 이미지 최적화 비활성화
+                        onError={(e: any) => {
+                          // 이미지 로드 실패시 콘솔에 에러 로그
+                          console.error("Image load failed:", e);
+                          // 이미지 로드 실패시 기본 이미지로 대체
+                          e.target.src = "/logo.png";
+                        }}
                       />
                     </div>
                     <span className="font-medium">{comment.userName}</span>
