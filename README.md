@@ -525,5 +525,11 @@ momentree_blog/
 ## 10. 블로그 형식으로 보기 페이지
 ![image](https://github.com/user-attachments/assets/1ccccc4d-88fe-4102-81bc-f84b90827bef)
 ![image](https://github.com/user-attachments/assets/c39d9278-bf9b-4948-9587-741008e76c6f)
+<br/>
+***ex. 팔로우 기능***
+<br/>
+![6_팔로우기능](https://github.com/user-attachments/assets/e51ccf4d-c1ba-4e4c-9583-531c85c66bdd)
+<br/>
+<br/>
 
 
