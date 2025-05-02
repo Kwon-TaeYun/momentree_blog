@@ -167,7 +167,7 @@
 ﻿
 # 8. Project Structure (프로젝트 구조)
 <br/>
-```plaintext
+```
 momentree_blog/
 ├── .github/
 │   ├── ISSUE_TEMPLATE           
