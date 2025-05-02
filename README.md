@@ -104,6 +104,20 @@
 <br/>
 <br/>
 
+# 4. 기획서, 정의서
+
+## 4.1 기획서
+[기획서](https://docs.google.com/document/d/1yqykSqAJP7rT0gRzcH1ejz4d1ZKBfGOBhKH4VKb8skI/edit?usp=sharing)
+
+## 4.2 정의서
+[정의서](https://docs.google.com/spreadsheets/d/1FCHJoJ2tc7w20aNp11prWuBEmehtbjFN-n2wbCZb0Ok/edit?gid=0#gid=0)
+
+<br/>
+<br/>
+
+# 5. ERD (이미지)
+
+
 # 6. Technology Stack (기술 스택)
 ## 6.1 Language
 |  |  |
