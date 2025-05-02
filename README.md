@@ -115,8 +115,11 @@
 <br/>
 <br/>
 
-# 5. ERD (이미지)
+# 5. ERD
+![Momentree ERD](Momentree_ERD.png)
 
+<br/>
+<br/>
 
 # 6. Technology Stack (기술 스택)
 ## 6.1 Language
