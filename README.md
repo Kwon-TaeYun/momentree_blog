@@ -34,10 +34,7 @@
 ### 7. 시스템 아키텍처
 ### 8. 프로젝트 구조
 ### 9. 실행 화면
-```bash
-$ npm start
-```
-[서비스 링크](https://club-project-one.vercel.app/)
+
 
 <br/>
 <br/>
