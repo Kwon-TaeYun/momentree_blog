@@ -166,13 +166,208 @@
 <br/>
 ﻿
 # 8. Project Structure (프로젝트 구조)
-
+```plaintext
+momentree_blog/
+├── .github/
+│   ├── ISSUE_TEMPLATE           
+│   |   ├── custom.md         # 이슈 작성 시 사용되는 템플릿
+│   └── workflows         
+│       ├── deploy.yml        # 백엔드 CI/CD 시 사용되는 yml 파일
+│       ├── gemini-code-review.yml  # PR 시 AI가 코드 점검해주는 yml 파일
+|
+├── backend/src/main/
+│   ├── java/com/likelion/momentreeblog/              
+│   |   ├── config        
+│   |   |   ├── error         
+│   |   |   |    └── GlobalExceptionError.java         # 전체적인 오류들을 한 곳에 모아둔 java 파일
+│   |   |   ├── s3Config         
+|   |   |   |    └── s3Config.java         # S3 사용 시 설정 정보들
+│   |   |   ├── security       #시큐리티 관련 파일들
+│   |   |   |    ├── dto
+│   |   |   |    |    └── CustomUserDetails.java       
+│   |   |   |    ├── exception
+│   |   |   |    |    ├── CustomAuthenticationEntryPoint.java
+│   |   |   |    |    └── jwtExceptionCode.java      
+│   |   |   |    ├── token
+│   |   |   |    |    └── jwtAuthenticationToken.java 
+│   |   |   |    └── CustomAuthenticationFilter.java           
+│   |   |   ├── securityConfig         # 시큐리티 사용 시 설정 정보들
+│   |   |   └── swaggerConfig         # swagger api 사용 시 설정 정보들
+│   |   ├── domain
+│   |   |   ├── blog/blog      
+│   |   |   |    ├── controller
+│   |   |   |    |    └── BlogApiV1Controller.java
+│   |   |   |    ├── dto
+│   |   |   |    |    ├── BlogCreateRequestDto.java
+│   |   |   |    |    ├── BlogDetailResponseDto.java
+│   |   |   |    |    ├── BlogResponseDto.java
+│   |   |   |    |    ├── BlogRequestDto.java
+│   |   |   |    |    └── BlogUpdateRequestDto.java
+│   |   |   |    ├── entity
+│   |   |   |    |    └── Blog.java
+│   |   |   |    ├── repository
+│   |   |   |    |    └── BlogService.java
+│   |   |   |    └── service
+│   |   |   ├── board       
+│   |   |   |    ├── board
+│   |   |   |    |    ├── controller
+│   |   |   |    |    |   └── BoardApiV1Controller.java
+│   |   |   |    |    ├── dto
+│   |   |   |    |    |   ├── BoardDetailResponseDto.java
+│   |   |   |    |    |   ├── BoardListResponseDto.java
+│   |   |   |    |    |   ├── BoardMyBlogResponseDto.java
+│   |   |   |    |    |   ├── BoardRequestDto.java
+│   |   |   |    |    |   └── BoardResponseDto.java
+│   |   |   |    |    ├── entity
+│   |   |   |    |    |   └── Board.java
+│   |   |   |    |    ├── repository
+│   |   |   |    |    |   └── BoardRepository.java
+│   |   |   |    |    └── service
+│   |   |   |    |        └── BoardService.java
+│   |   |   |    ├── category
+│   |   |   |    |    ├── controller
+│   |   |   |    |    |   └── CategoryController.java
+│   |   |   |    |    ├── dto
+│   |   |   |    |    |   ├── CategoryCreateRequestDto.java
+│   |   |   |    |    |   ├── CategoryResponseDto.java
+│   |   |   |    |    |   └── CategoryUpdateRequestDto.java
+│   |   |   |    |    ├── entity
+│   |   |   |    |    |   └── Category.java
+│   |   |   |    |    ├── repository
+│   |   |   |    |    |   └── CategoryRepository.java
+│   |   |   |    |    └── service
+│   |   |   |    |        └── CategoryService.java
+│   |   |   |    ├── comment
+│   |   |   |    |    ├── dto
+│   |   |   |    |    |   ├── CommentDto.java
+│   |   |   |    |    |   └── CommentRequestDto.java
+│   |   |   |    |    ├── entity
+│   |   |   |    |    |   └── Comment.java
+│   |   |   |    |    ├── repository
+│   |   |   |    |    |   └── CommentRepository.java
+│   |   |   |    |    └── service
+│   |   |   |    |        └── CommentService.java
+│   |   |   |    └── like
+│   |   |   |         ├── dto
+│   |   |   |         |   └── BoardLikeInfoDto.java
+│   |   |   |         ├── entity
+│   |   |   |         |   └── Like.java
+│   |   |   |         ├── repository
+│   |   |   |         |   └── LikeRepository.java
+│   |   |   |         └── service
+│   |   |   |             └── LikeService.java
+│   |   |   ├── photo/photo       
+│   |   |   |    ├── controller
+│   |   |   |    |    ├── BoardPhotoApiV1Controller.java
+│   |   |   |    |    └── ProfilePhotoApiV1Controller.java
+│   |   |   |    ├── dto
+│   |   |   |    |    ├── board
+│   |   |   |    |    |   ├── BoardPhotoResponseDto.java
+│   |   |   |    |    |   └── PhotoAlbumDto.java
+│   |   |   |    |    └── photo
+│   |   |   |    |        └── PhotoUploadResponseDto.java
+│   |   |   |    ├── entity
+│   |   |   |    |    └── Photo.java
+│   |   |   |    ├── photoenum
+│   |   |   |    |    └── PhotoType.java
+│   |   |   |    ├── repository
+│   |   |   |    |    └── PhotoRepository.java
+│   |   |   |    └── service
+│   |   |   |         └── PhotoService.java
+│   |   |   ├── s3       
+│   |   |   |    ├── controller
+│   |   |   |    |    └── S3ApiV1Controller.java
+│   |   |   |    ├── dto
+│   |   |   |    |    ├── request
+│   |   |   |    |    |   ├── PhotoUploadMultiRequestDto.java
+│   |   |   |    |    |   └── PhotoUploadRequestDto.java
+│   |   |   |    |    └── response
+│   |   |   |    |        ├── PresignedUrlMutiResponseDto.java
+│   |   |   |    |        └── PresignedUrlResponseDto.java
+│   |   |   |    └── service
+│   |   |   |         └── S3V1Service.java
+│   |   |   └── user       
+│   |   |        ├── follower/entity
+│   |   |        |    └── FollowerManagement.java
+│   |   |        ├── role/entity
+│   |   |        |    └── Role.java
+│   |   |        └── user
+│   |   |             ├── controller
+│   |   |             |   ├── FollowerApiV1Controller.java
+│   |   |             |   ├── UserApiV1Controller.java
+│   |   |             |   └── UserFindApiV1Controller.java
+│   |   |             ├── dto
+│   |   |             |   ├── UserDeleteRequest.java
+│   |   |             |   ├── UserDto.java
+│   |   |             |   ├── UserFollowerDto.java
+│   |   |             |   ├── UserLikeDto.java
+│   |   |             |   ├── UserLoginDto.java
+│   |   |             |   ├── UserLoginResponseDto.java
+│   |   |             |   ├── UserResponseDto.java
+│   |   |             |   ├── UserSignupDto.java
+│   |   |             |   └── UserUpdateDto.java
+│   |   |             ├── entity
+│   |   |             |   └── User.java
+│   |   |             ├── repository
+│   |   |             |   ├── FollowerRepository.java
+│   |   |             |   ├── UserFindRepository.java
+│   |   |             |   └── UserRepository.java
+│   |   |             ├── service
+│   |   |             |   ├── AuthTokenService.java
+│   |   |             |   ├── FollowerService.java
+│   |   |             |   ├── FollowerServiceImpl.java
+│   |   |             |   ├── UserFindService.java
+│   |   |             |   ├── UserFindServiceImpl.java
+│   |   |             |   └── UserService.java
+│   |   |             └── userenum
+│   |   |                 └── UserService.java    
+│   |   ├── global
+│   |   |   ├── jpa
+│   |   |   |   └── BaseEntity.java
+│   |   |   ├── rq
+│   |   |   |   └── Rq.java
+│   |   |   ├── ut
+│   |   |   |   └── Ut.java
+│   |   |   ├── util
+│   |   |   |   ├── jwt
+│   |   |   |   |    └── JwtTokenizer.java
+│   |   |   |   └── security
+│   |   |   |        ├── CustomAuthorizationRequestResolver.java
+│   |   |   |        ├── CustomOAuth2AuthenticationSuccessHandler.java
+│   |   |   |        ├── CustomOAuth2UserService.java
+│   |   |   |        └── SecurityUser.java
+│   |   |   └── AppConfig.java    
+│   |   ├── main/controller         # 이슈 작성 시 사용되는 템플릿
+│   |   └── MomentreeblogApplication.java   # 이슈 작성 시 사용되는 템플릿
+|   |
+│   └── resources/          
+│       ├── applicaion-dev.yml        # 개발 환경 시 사용되는 환경 설정 yml 파일
+│       ├── application-prod.yml         # 배포 환경 시 사용되는 환경 설정 yml 파일
+│       ├── application-test.yml         # 테스트 케이스 작성 시 사용되는 환경 설정 yml 파일
+│       ├── application-secret.yml         # 공개하면 안되는 정보 작성 시 사용되는 환경 설정 yml 파일
+│       └── application.yml         # 전체적으로 사용되는 환경 설정 yml 파일
+|
+│── frontend/    # 정확한 종속성 버전이 기록된 파일로, 일관된 빌드를 보장
+│   ├── assets/              # 이미지, 폰트 등 정적 파일
+│   ├── components/          # 재사용 가능한 UI 컴포넌트
+│   ├── hooks/               # 커스텀 훅 모음
+│   ├── pages/               # 각 페이지별 컴포넌트
+│   ├── App.js               # 메인 애플리케이션 컴포넌트
+│   ├── index.js             # 엔트리 포인트 파일
+│   ├── index.css            # 전역 css 파일
+│   ├── firebaseConfig.js    # firebase 인스턴스 초기화 파일
+├── infra
+│   ├── .gitignore             
+│   ├── main.tf            
+│   ├── secrets.tf            
+│   └── variables.tf                 
+├── README.md                # 팀 소개 및 프로젝트 소개
+├── .gitignore               # github 커밋 및 push시 안넣는 파일들 , Git 무시 파일 목록
+├── package-lock.json        
+└── docker-compose.yml       # docker에서 프로젝트와 db를 연결시키기 위한 yml 파일
 <br/>
 
-
-
-<br/>
-<br/>
+```
 
 # 9. 실행화면 예시
 
