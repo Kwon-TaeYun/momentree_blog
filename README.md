@@ -376,15 +376,65 @@ momentree_blog/
 │       ├── application-secret.yml         # 공개하면 안되는 정보 작성 시 사용되는 환경 설정 yml 파일
 │       └── application.yml         # 전체적으로 사용되는 환경 설정 yml 파일
 |
-│── frontend/    # 정확한 종속성 버전이 기록된 파일로, 일관된 빌드를 보장
-│   ├── assets/              # 이미지, 폰트 등 정적 파일
-│   ├── components/          # 재사용 가능한 UI 컴포넌트
-│   ├── hooks/               # 커스텀 훅 모음
-│   ├── pages/               # 각 페이지별 컴포넌트
-│   ├── App.js               # 메인 애플리케이션 컴포넌트
-│   ├── index.js             # 엔트리 포인트 파일
-│   ├── index.css            # 전역 css 파일
-│   ├── firebaseConfig.js    # firebase 인스턴스 초기화 파일
+│── frontend/    
+│   ├── public/
+│   |   ├── images/
+│   |   |   ├── logo.png
+│   |   |   └── momentree-logo.svg
+│   |   ├── default-content.jpg
+│   |   ├── file.svg
+│   |   ├── globe.svg
+│   |   ├── kakao_login.svg
+│   |   ├── logo.png
+│   |   ├── next.svg
+│   |   ├── vercel.svg
+│   |   └── window.svg        
+│   ├── src/
+│   |   ├── app/
+│   |   |   ├── blog/[id] - page.tsx
+│   |   |   ├── boards
+│   |   |   |   ├── [boardId]
+│   |   |   |   |   ├── edit - page.tsx
+│   |   |   |   |   ├── photos - page.tsx 
+│   |   |   |   |   └── page.tsx
+│   |   |   |   ├── new - page.tsx
+│   |   |   |   └── search - page.tsx
+│   |   |   ├── home - page.tsx
+│   |   |   ├── members
+│   |   |   |   ├── edit/[id] - page.tsx
+│   |   |   |   ├── find/password - page.tsx
+│   |   |   |   ├── login - page.tsx
+│   |   |   |   └── signup - page.tsx
+│   |   |   ├── mypage
+│   |   |   |   ├── account - page.tsx
+│   |   |   |   ├── withdraw - page.tsx
+│   |   |   |   └── page.tsx
+│   |   |   ├── photoList - page.tsx
+│   |   |   ├── .env
+│   |   |   ├── ClientLayout.tsx
+│   |   |   ├── favicon.ico
+│   |   |   ├── globals.css
+│   |   |   ├── layout.tsx
+│   |   |   ├── page.tsx
+│   |   |   └── prettierrc.json
+│   |   ├── components/
+│   |   |   ├── layout/
+│   |   |   |   ├── Footer.tsx
+│   |   |   |   └── Header.tsx
+│   |   |   ├── likeList.tsx
+│   |   |   ├── Navigation.tsx
+│   |   |   ├── Sidebar.tsx
+│   |   |   └── user_follower.tsx
+│   |   ├── stores/auth/
+│   |   |   └── loginMember.tsx
+│   |   └── toastui-i18n.d.ts       
+│   ├── .env.development              
+│   ├── .env.production               
+│   ├── .gitignore              
+│   ├── packages.json           
+│   ├── next.config.js            
+│   ├── tsconfig.json    
+|   └── etc ....  
 ├── infra
 │   ├── .gitignore             
 │   ├── main.tf            
