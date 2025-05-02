@@ -459,12 +459,12 @@ momentree_blog/
 
 ***ex. 회원가입***
 <br/>
-![1_회원가입_resize](https://github.com/user-attachments/assets/3502d0f4-d2a0-424e-86a0-27af4b5fc70b)
+![1_회원가입](https://github.com/user-attachments/assets/5360910f-85bd-46a2-96e5-c96a32d3d9a2)
 <br/>
 
 ***ex. 로그인***
 <br/>
-![2_로그인-및-좋아요_resize](https://github.com/user-attachments/assets/62747b37-fa75-4075-941e-2e4232d61947)
+![2_로그인 및 좋아요](https://github.com/user-attachments/assets/d0f495b9-fc12-45b7-a693-15497f08b5e2)
 <br/>
 <br/>
 
@@ -475,7 +475,7 @@ momentree_blog/
 <br/>
 ***ex. 마이페이지***
 <br/>
-![4_마이페이지](https://github.com/user-attachments/assets/7369836f-7d62-44df-bc59-46e49af6f80b)
+![4_마이페이지](https://github.com/user-attachments/assets/131c668a-73af-4df9-a8d2-304adff62d46)
 <br/>
 <br/>
 
@@ -511,7 +511,7 @@ momentree_blog/
 <br/>
 ***ex. 검색 기능***
 <br/>
-![3_검색기능-및-좋아요_resize](https://github.com/user-attachments/assets/dac00d4a-412f-4b4d-9471-48e288fec8c9)
+![3_검색기능 및 좋아요](https://github.com/user-attachments/assets/cd175f33-9995-49c0-ac68-9598e73bb74b)
 <br/>
 <br/>
 
