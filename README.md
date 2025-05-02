@@ -132,25 +132,25 @@
 <br/>
 
 ## 6.2 Backend
-|             |  |  |
-|-------------|-----------------|-----------------|
-| Spring Boot |  <img src="https://github.com/user-attachments/assets/e3b49dbb-981b-4804-acf9-012c854a2fd2" alt="React" width="100"> | 18.3.1    |
-| MySQL       |  <img src="https://github.com/user-attachments/assets/c9b26078-5d79-40cc-b120-69d9b3882786" alt="StyledComponents" width="100">| 6.1.12   |
-| Docker      |  <img src="https://github.com/user-attachments/assets/75a46fa7-ebc0-4a9d-b648-c589f87c4b55" alt="MUI" width="100">    | 5.0.0  |
+|          |  |
+|----------|-----------------|
+| Spring Boot | <img src="https://github.com/user-attachments/assets/c91ae7e0-20db-45a0-ab60-77097cd84e92" alt="Spring Boot" width="100" /> 
+| MySQL       |  <img src="https://github.com/user-attachments/assets/693ae058-ab2b-4fc8-a6b6-8b9552dfcf83" alt="MySQL" width="100">   |
+| Docker      |  <img src="https://github.com/user-attachments/assets/aed14a22-87ad-4734-bce1-746c8ae4c535" alt="Docker" width="100">    | 5.0.0  |
 
 <br/>
 
 ## 6.3 Frontend
-|         |  |  |
-|---------|-----------------|-----------------|
-| Next.js |  <img src="https://github.com/user-attachments/assets/e3b49dbb-981b-4804-acf9-012c854a2fd2" alt="React" width="100"> | 18.3.1    |
+|          |  |
+|----------|-----------------|
+| Next.js |  <img src="https://github.com/user-attachments/assets/0c0c8c2f-9aee-4b25-b88f-e2fe3397b3b7" alt="Next.js" width="100"> | 
 
 <br/>
 
 ## 6.4 Cloud Storage
 |        |  |
 |--------|-----------------|
-| AWS S3 |  <img src="https://github.com/user-attachments/assets/483abc38-ed4d-487c-b43a-3963b33430e6" alt="git" width="100">    |
+| AWS S3 |  <img src="https://github.com/user-attachments/assets/e81ea437-de5d-4538-a93b-2cec54da25be" alt="AWS S3" width="100">    |
 
 
 <br/>
@@ -158,7 +158,7 @@
 ## 6.5 Authentication
 |          |  |
 |----------|-----------------|
-| OAuth2.0 |  <img src="https://github.com/user-attachments/assets/483abc38-ed4d-487c-b43a-3963b33430e6" alt="git" width="100">    |
+| OAuth2.0 |  <img src="https://github.com/user-attachments/assets/51d38179-4f40-4162-ba72-65019801cf53" alt="OAuth2.0" width="100">    |
 
 
 <br/>
@@ -175,8 +175,8 @@
 ## 6.7 Cooperation
 |            |  |
 |------------|-----------------|
-| GitHub     |  <img src="https://github.com/user-attachments/assets/483abc38-ed4d-487c-b43a-3963b33430e6" alt="git" width="100">    |
-| Creatie.ai |  <img src="https://github.com/user-attachments/assets/32c615cb-7bc0-45cd-91ea-0d1450bfc8a9" alt="git kraken" width="100">    |
+| GitHub     |  <img src="https://github.com/user-attachments/assets/24e0de28-e2c1-4122-8069-dd599236f8e6" alt="GitHub" width="100">    |
+| Creatie.ai |  <img src="https://github.com/user-attachments/assets/47e5853e-ca82-49a5-be01-aa9219836fbc" alt="git kraken" width="100">    |
 | Notion     |  <img src="https://github.com/user-attachments/assets/34141eb9-deca-416a-a83f-ff9543cc2f9a" alt="Notion" width="100">    |
 
 <br/>
@@ -187,7 +187,7 @@
 <br/>
 <br/>
 
-<img src="https://github.com/user-attachments/assets/483abc38-ed4d-487c-b43a-3963b33430e6" alt="git" width="100">    
+<img src="https://github.com/user-attachments/assets/20eb8440-8a2d-41d6-b566-a2b85f025ede" alt="시스템아키텍처">    
 
 <br/>
 <br/>
