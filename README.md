@@ -164,13 +164,10 @@
 
 <br/>
 <br/>
-﻿
+
+ 
 # 8. Project Structure (프로젝트 구조)
 
-<공란>
-
-
-<br/>
 ```
 momentree_blog/
 ├── .github/
