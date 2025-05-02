@@ -485,6 +485,12 @@ momentree_blog/
 ## 4. 게시글 작성 페이지
 ![image](https://github.com/user-attachments/assets/43dfaeeb-9787-453f-b909-5a50b7a23750)
 ![image](https://github.com/user-attachments/assets/144ab656-59e4-40a0-8545-3c110916421b)
+<br/>
+***ex. 게시글 작성***
+<br/>
+![5_게시글작성](https://github.com/user-attachments/assets/b43adbee-2b31-4dff-815d-83543868d8bd)
+<br/>
+<br/>
 
 
 ## 5. 나의 나무
