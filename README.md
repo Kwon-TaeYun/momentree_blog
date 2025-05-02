@@ -163,7 +163,7 @@
 
 <br/>
 
-## 6.5 CI/CD
+## 6.6 CI/CD
 |         |  |
 |---------|-----------------|
 | AWS EC2 |  <img src="https://github.com/user-attachments/assets/483abc38-ed4d-487c-b43a-3963b33430e6" alt="git" width="100">    |
@@ -172,7 +172,7 @@
 
 <br/>
 
-## 6.4 Cooperation
+## 6.7 Cooperation
 |            |  |
 |------------|-----------------|
 | GitHub     |  <img src="https://github.com/user-attachments/assets/483abc38-ed4d-487c-b43a-3963b33430e6" alt="git" width="100">    |
@@ -399,5 +399,34 @@ momentree_blog/
 ```
 
 # 9. 실행화면 예시
+## 0. 메인 페이지
+![image](https://github.com/user-attachments/assets/51e704b3-f055-4699-ace7-b3667e8f473d)
 
-<공란>
+## 1. 로그인 / 회원가입
+![image](https://github.com/user-attachments/assets/e357298a-115b-4ca1-8b7f-470c91787c19)
+![image](https://github.com/user-attachments/assets/4a518ae9-389d-4534-9acc-3414cad42af9)
+![image](https://github.com/user-attachments/assets/94531b5d-77d8-4f45-a3ad-d6ee1c29bf1a)
+
+## 2. 마이페이지
+![image](https://github.com/user-attachments/assets/599eac65-c989-4686-8799-7afecfe1d475)
+![image](https://github.com/user-attachments/assets/966fcd87-1ce8-4d05-a547-969c30ed4a08)
+![image](https://github.com/user-attachments/assets/d0371998-d97b-40cf-a168-56c3b2338db3)
+
+
+## 3. 홈 페이지
+
+## 4. 게시글 작성 페이지
+
+## 5. 나의 나무
+
+## 6. 게시글 상세 페이지
+
+## 7. 게시글 수정 페이지
+
+## 8. 사진첩 페이지
+
+## 9. 검색 페이지
+
+## 10. 블로그 형식으로 보기 페이지
+
+
