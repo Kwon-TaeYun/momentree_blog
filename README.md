@@ -457,10 +457,27 @@ momentree_blog/
 ![image](https://github.com/user-attachments/assets/4a518ae9-389d-4534-9acc-3414cad42af9)
 ![image](https://github.com/user-attachments/assets/94531b5d-77d8-4f45-a3ad-d6ee1c29bf1a)
 
+***ex. 회원가입***
+<br/>
+![1_회원가입_resize](https://github.com/user-attachments/assets/3502d0f4-d2a0-424e-86a0-27af4b5fc70b)
+<br/>
+
+***ex. 로그인***
+<br/>
+![2_로그인-및-좋아요_resize](https://github.com/user-attachments/assets/62747b37-fa75-4075-941e-2e4232d61947)
+<br/>
+<br/>
+
 ## 2. 마이페이지
 ![image](https://github.com/user-attachments/assets/599eac65-c989-4686-8799-7afecfe1d475)
 ![image](https://github.com/user-attachments/assets/966fcd87-1ce8-4d05-a547-969c30ed4a08)
 ![image](https://github.com/user-attachments/assets/d0371998-d97b-40cf-a168-56c3b2338db3)
+<br/>
+***ex. 마이페이지***
+<br/>
+![4_마이페이지](https://github.com/user-attachments/assets/7369836f-7d62-44df-bc59-46e49af6f80b)
+<br/>
+<br/>
 
 ## 3. 홈 페이지
 ![image](https://github.com/user-attachments/assets/03dfac53-293c-4051-ab3d-ad4b88014b14)
@@ -491,6 +508,12 @@ momentree_blog/
 
 ## 9. 검색 페이지
 ![image](https://github.com/user-attachments/assets/40ef3ece-3abb-49bf-b199-17a1fcce84a0)
+<br/>
+***ex. 검색 기능***
+<br/>
+![3_검색기능-및-좋아요_resize](https://github.com/user-attachments/assets/dac00d4a-412f-4b4d-9471-48e288fec8c9)
+<br/>
+<br/>
 
 
 ## 10. 블로그 형식으로 보기 페이지
