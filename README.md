@@ -193,7 +193,7 @@
 <br/>
 
 
-# 8. Project Structure (프로젝트 구조)
+# 8. Project Structure (프로젝트 구조) (프론트엔드는 수정 예정)
 
 ```
 momentree_blog/
